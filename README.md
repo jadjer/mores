@@ -1,2 +1,1 @@
-# mores
-Moto Resource
+# Mores (Moto Resource)
