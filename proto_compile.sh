@@ -1,3 +1,6 @@
+#!/bin/bash
+
+#
 # Copyright 2022 Pavel Suprunov
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,15 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-# Test your FastAPI endpoints
-
-GET http://127.0.0.1:8000/
-Accept: application/json
-
-###
-
-GET http://127.0.0.1:8000/hello/User
-Accept: application/json
-
-###
+protoc --python_out=. proto/*.proto
