@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package mores;
+
+message Profile {
+  string firstName = 1;
+  string lastName = 2;
+  int32 age = 3;
+
+  enum Gender {
+    MALE = 0;
+    FEMAIL = 1;
+  }
+
+  Gender gender = 4;
+  string phoneNumber = 5;
+}

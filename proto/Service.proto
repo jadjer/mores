@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "proto/Moto.proto";
+
+package mores;
+
+enum ServiceType {
+  NONE = 0;
+}
+
+message Service {
+  Moto moto = 1;
+  ServiceType serviceType = 2;
+}
