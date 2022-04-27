@@ -12,9 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import FastAPI, Header, HTTPException
-
-app = FastAPI()
+from fastapi import Header, HTTPException
 
 
 async def get_token_header(x_token: str = Header(...)):

@@ -12,10 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer
 
 from app.routers import *
-from app.dependencies import app
+# from app.dependencies import app
+
+app = FastAPI()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

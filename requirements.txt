@@ -1,5 +1,6 @@
-fastapi
+fastapi[all]
 python-jose[cryptography]
 python-multipart
 pydantic
 pytest
+unicorn
