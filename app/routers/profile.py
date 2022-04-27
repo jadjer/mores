@@ -12,8 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import app
+from fastapi import APIRouter
 
-if __name__ == '__main__':
-    # app.app()
-    pass
+router = APIRouter()
+
+
+@router.get("/users/", tags=["users"])
+async def read_users():
+    return [{"username": "Rick"}, {"username": "Morty"}]
+
+
+@router.get("/users/me", tags=["users"])
+async def read_user_me():
+    return {"username": "fakecurrentuser"}
+
+
+@router.get("/users/{username}", tags=["users"])
+async def read_user(username: str):
+    return {"username": username}

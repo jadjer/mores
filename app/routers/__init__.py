@@ -12,6 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .Moto_pb2 import *
-from .Profile_pb2 import *
-from .Service_pb2 import *
+from .Service import *
+from .profile import *

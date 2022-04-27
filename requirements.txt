@@ -1,4 +1,5 @@
-fastapi[all]
+fastapi
 python-jose[cryptography]
-protobuf
 python-multipart
+pydantic
+pytest

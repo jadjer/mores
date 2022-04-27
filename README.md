@@ -1,10 +1,7 @@
 # Mores (Moto Resource)
 
----
-Routes
----
-
-***
+## Routes
+### Auth
 ```
 /api/v1/login
 /api/v1/register

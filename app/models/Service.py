@@ -12,8 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import app
+from pydantic import BaseModel
+from .Moto import Moto
 
-if __name__ == '__main__':
-    # app.app()
-    pass
+
+class Service(BaseModel):
+    moto: Moto

@@ -12,8 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import app
+from fastapi.testclient import TestClient
 
-if __name__ == '__main__':
-    # app.app()
-    pass
+from main import app
+
+client = TestClient(app)
+
+
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"msg": "Hello World"}
