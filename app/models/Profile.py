@@ -12,8 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from pydantic import BaseModel
+from sqlalchemy import Boolean, Column, Integer, String
+
+from ..database import Base
 
 
-class Profile(BaseModel):
-    pass
+class ProfileModel(Base):
+    __tablename__ = "profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String)
+    second_name = Column(String)
+    last_name = Column(String)
+    email = Column(String, unique=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)

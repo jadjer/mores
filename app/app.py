@@ -12,14 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import FastAPI
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, Depends
 
-from app.routers import *
-# from app.dependencies import app
+from .routers import *
+from .dependencies import *
+from .database import engine, Base
 
-app = FastAPI()
+Base.metadata.create_all(bind=engine)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+app = FastAPI(dependencies=[
+    # Depends(verify_token),
+    # Depends(verify_key)
+])
+app.include_router(profile.router, prefix="/v1")
 
-app.include_router(profile.router)
+
+@app.get("/")
+async def main():
+    return {"message": "Hello world"}
