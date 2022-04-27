@@ -12,9 +12,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Header, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 
-app = FastAPI()
+from .database import SessionLocal
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+async def verify_token(x_token: str = Header(...)):
+    if x_token != "fake-super-secret-token":
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+
+
+async def verify_key(x_key: str = Header(...)):
+    if x_key != "fake-super-secret-key":
+        raise HTTPException(status_code=400, detail="X-Key header invalid")
+    return x_key
 
 
 async def get_token_header(x_token: str = Header(...)):

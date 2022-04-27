@@ -12,21 +12,31 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-router = APIRouter()
+from ..models import ProfileModel
+from ..schemas import Profile
+from ..cruds import *
 
+from ..dependencies import get_db
 
-@router.get("/users/", tags=["users"])
-async def read_users():
-    return [{"username": "Rick"}, {"username": "Morty"}]
-
-
-@router.get("/users/me", tags=["users"])
-async def read_user_me():
-    return {"username": "fakecurrentuser"}
+router = APIRouter(prefix="/profile")
 
 
-@router.get("/users/{username}", tags=["users"])
-async def read_user(username: str):
-    return {"username": username}
+@router.get("/", tags=["profile"], response_model=Profile)
+async def get_profile(db: Session = Depends(get_db)):
+    db_profile = get_user(db)
+    if not db_profile:
+        raise HTTPException(status_code=400, detail="Profile not found")
+
+    return db_profile
+
+
+@router.post("/create", tags=["profile"])
+async def create_profile(profile: Profile, db: Session = Depends(get_db)):
+    db_profile = create_user(db, profile)
+
+    return profile
+
+

@@ -12,4 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .Profile import ProfileModel
+from .Moto import Moto
+from .Profile import Profile, ProfileCreate
+from .Service import Service
