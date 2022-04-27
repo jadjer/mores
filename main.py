@@ -15,7 +15,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.security import OAuth2PasswordBearer
 
-from proto import *
+from proto import Service
 from google.protobuf.json_format import MessageToDict
 
 app = FastAPI()
@@ -46,3 +46,7 @@ async def get_token():
 @app.get("/items/")
 async def read_items(token: str = Depends(oauth2_scheme)):
     return {"token": token}
+
+
+if __name__ == '__main__':
+    pass
