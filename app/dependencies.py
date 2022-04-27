@@ -12,8 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import app
+from fastapi import FastAPI, Header, HTTPException
 
-if __name__ == '__main__':
-    # app.app()
-    pass
+app = FastAPI()
+
+
+async def get_token_header(x_token: str = Header(...)):
+    if x_token != "fake-super-secret-token":
+        raise HTTPException(status_code=400, detail="X-Token header invalid")
+
+
+async def get_query_token(token: str):
+    if token != "jessica":
+        raise HTTPException(status_code=400, detail="No Jessica token provided")
