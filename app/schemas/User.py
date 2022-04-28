@@ -28,16 +28,24 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Profile(BaseModel):
+class User(BaseModel):
+    id: int
     first_name: str
     second_name: Optional[str]
     last_name: str
+    gender: str
     age: Optional[int]
-    email: str
+    email: Optional[str]
+    phone: Optional[str]
+    is_blocked: bool = False
 
     class Config:
         orm_mode = True
 
 
-class ProfileCreate(Profile):
+class UserAdmin(User):
+    is_admin: bool = False
+
+
+class UserCreate(User):
     password: str

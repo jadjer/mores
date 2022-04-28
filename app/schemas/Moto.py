@@ -12,11 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import Optional
 from pydantic import BaseModel
 
 
 class Moto(BaseModel):
+    id: int
+    owner_id: int
     brand: str
     model: str
     year: int
-    color: str
+    color: Optional[str]
+    name: Optional[str]
+    mileage: int
+    vin: str
+    license: str

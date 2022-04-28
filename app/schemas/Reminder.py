@@ -11,3 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from pydantic import BaseModel
+
+
+class Reminder(BaseModel):
+    id: int
+    moto_id: int
+    service_type_id: int
+    next_mileage: int
+    next_timestamp: str

@@ -11,3 +11,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from pydantic import BaseModel
+
+
+class Post(BaseModel):
+    id: int
+    author_id: int
+    title: str
+    description: str
+    picture: str
+    text: str
+    timestamp: str

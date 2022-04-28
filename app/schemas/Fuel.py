@@ -11,3 +11,26 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from enum import Enum
+from pydantic import BaseModel
+
+
+class FuelType(Enum):
+    PETROL_92 = 1
+    PETROL_95 = 2
+    PETROL_98 = 3
+    PETROL_100 = 4
+    DIESEL = 5
+    GAS = 6
+    ELECTRICITY = 7
+
+
+class Fuel(BaseModel):
+    id: int
+    moto_id: int
+    quantity: int
+    price: float
+    fuel_type: FuelType
+    geo_id: int
+    timestamp: str

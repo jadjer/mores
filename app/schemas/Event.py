@@ -11,3 +11,25 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from enum import Enum
+from pydantic import BaseModel
+
+
+class EventState(Enum):
+    PLANNED = 1
+    DONE = 2
+    CANCELED = 3
+
+
+class Event(BaseModel):
+    id: int
+    author_id: int
+    title: str
+    description: str
+    picture: str
+    text: str
+    datetime: str
+    geo_id: int
+    timestamp: str
+    event_state: EventState

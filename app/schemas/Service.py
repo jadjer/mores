@@ -13,8 +13,12 @@
 #  limitations under the License.
 
 from pydantic import BaseModel
-from .Moto import Moto
 
 
 class Service(BaseModel):
-    moto: Moto
+    id: int
+    moto_id: int
+    geo_id: int
+    service_type_id: int
+    mileage: int
+    timestamp: str

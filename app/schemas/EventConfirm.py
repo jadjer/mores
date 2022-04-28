@@ -11,3 +11,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from enum import Enum
+from pydantic import BaseModel
+
+
+class EventType(Enum):
+    YES = 1
+    NO = 2
+    MAY_BE = 3
+
+
+class EventConfirm(BaseModel):
+    id: int
+    user_id: int
+    event_type: EventType
