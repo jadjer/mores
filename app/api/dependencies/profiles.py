@@ -5,8 +5,8 @@ from starlette.status import HTTP_404_NOT_FOUND
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.db.errors import EntityDoesNotExist
-from app.db.repositories.profiles import ProfilesRepository
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.profiles import Profile
 from app.models.domain.users import User
 from app.resources import strings

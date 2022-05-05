@@ -1,7 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Response
-from starlette import status
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
 
 from app.api.dependencies.articles import (
     check_article_modification_permissions,

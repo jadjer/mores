@@ -4,8 +4,8 @@ from fastapi import Depends, HTTPException, Path
 from starlette import status
 
 from app.api.dependencies import articles, authentication, database
-from app.db.errors import EntityDoesNotExist
-from app.db.repositories.comments import CommentsRepository
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.comments import CommentsRepository
 from app.models.domain.articles import Article
 from app.models.domain.comments import Comment
 from app.models.domain.users import User

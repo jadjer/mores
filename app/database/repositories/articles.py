@@ -3,9 +3,9 @@ from typing import List, Optional, Sequence, Union
 from asyncpg import Connection, Record
 from pypika import Query
 
-from app.db.errors import EntityDoesNotExist
-from app.db.queries.queries import queries
-from app.db.queries.tables import (
+from app.database.errors import EntityDoesNotExist
+from app.database.queries.queries import queries
+from app.database.queries.tables import (
     Parameter,
     articles,
     articles_to_tags,
@@ -13,9 +13,9 @@ from app.db.queries.tables import (
     tags as tags_table,
     users,
 )
-from app.db.repositories.base import BaseRepository
-from app.db.repositories.profiles import ProfilesRepository
-from app.db.repositories.tags import TagsRepository
+from app.database.repositories.base import BaseRepository
+from app.database.repositories.profiles import ProfilesRepository
+from app.database.repositories.tags import TagsRepository
 from app.models.domain.articles import Article
 from app.models.domain.users import User
 

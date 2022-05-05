@@ -5,8 +5,8 @@ from starlette import status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.db.errors import EntityDoesNotExist
-from app.db.repositories.articles import ArticlesRepository
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.articles import ArticlesRepository
 from app.models.domain.articles import Article
 from app.models.domain.users import User
 from app.models.schemas.articles import (

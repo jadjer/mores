@@ -1,8 +1,8 @@
 from typing import Optional
 
-from app.db.errors import EntityDoesNotExist
-from app.db.queries.queries import queries
-from app.db.repositories.base import BaseRepository
+from app.database.errors import EntityDoesNotExist
+from app.database.queries.queries import queries
+from app.database.repositories.base import BaseRepository
 from app.models.domain.users import User, UserInDB
 
 

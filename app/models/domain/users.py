@@ -1,14 +1,27 @@
 from typing import Optional
+from enum import Enum
 
 from app.models.common import DateTimeModelMixin, IDModelMixin
 from app.models.domain.rwmodel import RWModel
 from app.services import security
 
 
+class Gender(Enum):
+    MALE = 1
+    FEMALE = 2
+
+
 class User(RWModel):
+    first_name: str
+    second_name: Optional[str]
+    last_name: str
     username: str
     email: str
-    bio: str = ""
+    gender: Gender
+    age: int
+    phone: str
+    is_admin: bool = False
+    is_blocked: bool = False
     image: Optional[str] = None
 
 

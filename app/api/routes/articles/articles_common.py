@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from starlette import status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies.articles import get_article_by_slug_from_path
 from app.api.dependencies.authentication import get_current_user_authorizer
