@@ -14,9 +14,9 @@ from app.database.queries.tables import (
     users,
 )
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.profiles import ProfilesRepository
+from app.database.repositories.users import UsersRepository
 from app.database.repositories.tags import TagsRepository
-from app.models.domain.articles import Article
+from app.models.domain.posts import Post
 from app.models.domain.users import User
 
 AUTHOR_USERNAME_ALIAS = "author_username"
@@ -28,7 +28,7 @@ CAMEL_OR_SNAKE_CASE_TO_WORDS = r"^[a-z\d_\-]+|[A-Z\d_\-][^A-Z\d_\-]*"
 class ArticlesRepository(BaseRepository):  # noqa: WPS214
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
-        self._profiles_repo = ProfilesRepository(conn)
+        self._profiles_repo = UsersRepository(conn)
         self._tags_repo = TagsRepository(conn)
 
     async def create_article(  # noqa: WPS211
@@ -40,7 +40,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         body: str,
         author: User,
         tags: Optional[Sequence[str]] = None,
-    ) -> Article:
+    ) -> Post:
         async with self.connection.transaction():
             article_row = await queries.create_new_article(
                 self.connection,
@@ -65,12 +65,12 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
     async def update_article(  # noqa: WPS211
         self,
         *,
-        article: Article,
+        article: Post,
         slug: Optional[str] = None,
         title: Optional[str] = None,
         body: Optional[str] = None,
         description: Optional[str] = None,
-    ) -> Article:
+    ) -> Post:
         updated_article = article.copy(deep=True)
         updated_article.slug = slug or updated_article.slug
         updated_article.title = title or article.title
@@ -90,7 +90,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
 
         return updated_article
 
-    async def delete_article(self, *, article: Article) -> None:
+    async def delete_article(self, *, article: Post) -> None:
         async with self.connection.transaction():
             await queries.delete_article(
                 self.connection,
@@ -107,7 +107,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         limit: int = 20,
         offset: int = 0,
         requested_user: Optional[User] = None,
-    ) -> List[Article]:
+    ) -> List[Post]:
         query_params: List[Union[str, int]] = []
         query_params_count = 0
 
@@ -217,7 +217,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         user: User,
         limit: int = 20,
         offset: int = 0,
-    ) -> List[Article]:
+    ) -> List[Post]:
         articles_rows = await queries.get_articles_for_feed(
             self.connection,
             follower_username=user.username,
@@ -239,7 +239,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         *,
         slug: str,
         requested_user: Optional[User] = None,
-    ) -> Article:
+    ) -> Post:
         article_row = await queries.get_article_by_slug(self.connection, slug=slug)
         if article_row:
             return await self._get_article_from_db_record(
@@ -272,7 +272,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
             )
         )["favorited"]
 
-    async def add_article_into_favorites(self, *, article: Article, user: User) -> None:
+    async def add_article_into_favorites(self, *, article: Post, user: User) -> None:
         await queries.add_article_to_favorites(
             self.connection,
             username=user.username,
@@ -282,7 +282,7 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
     async def remove_article_from_favorites(
         self,
         *,
-        article: Article,
+        article: Post,
         user: User,
     ) -> None:
         await queries.remove_article_from_favorites(
@@ -298,8 +298,8 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         slug: str,
         author_username: str,
         requested_user: Optional[User],
-    ) -> Article:
-        return Article(
+    ) -> Post:
+        return Post(
             id_=article_row["id"],
             slug=slug,
             title=article_row["title"],

@@ -21,3 +21,7 @@ passlib
 jwt
 
 PyPika
+
+DateTime
+alembic
+httpx

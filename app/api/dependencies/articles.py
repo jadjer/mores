@@ -1,18 +1,18 @@
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Path, Query
-from starlette import status
+from fastapi import status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.articles import ArticlesRepository
-from app.models.domain.articles import Article
+from app.database.repositories.posts import ArticlesRepository
+from app.models.domain.posts import Post
 from app.models.domain.users import User
-from app.models.schemas.articles import (
+from app.models.schemas.posts import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
-    ArticlesFilters,
+    PostsFilters,
 )
 from app.resources import strings
 from app.services.articles import check_user_can_modify_article
@@ -24,8 +24,8 @@ def get_articles_filters(
     favorited: Optional[str] = None,
     limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
     offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
-) -> ArticlesFilters:
-    return ArticlesFilters(
+) -> PostsFilters:
+    return PostsFilters(
         tag=tag,
         author=author,
         favorited=favorited,
@@ -38,7 +38,7 @@ async def get_article_by_slug_from_path(
     slug: str = Path(..., min_length=1),
     user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
     articles_repo: ArticlesRepository = Depends(get_repository(ArticlesRepository)),
-) -> Article:
+) -> Post:
     try:
         return await articles_repo.get_article_by_slug(slug=slug, requested_user=user)
     except EntityDoesNotExist:
@@ -49,7 +49,7 @@ async def get_article_by_slug_from_path(
 
 
 def check_article_modification_permissions(
-    current_article: Article = Depends(get_article_by_slug_from_path),
+    current_article: Post = Depends(get_article_by_slug_from_path),
     user: User = Depends(get_current_user_authorizer()),
 ) -> None:
     if not check_user_can_modify_article(current_article, user):

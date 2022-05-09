@@ -4,19 +4,18 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
-from app.db.errors import EntityDoesNotExist
-from app.db.repositories.articles import ArticlesRepository
-from app.db.repositories.profiles import ProfilesRepository
-from app.db.repositories.users import UsersRepository
-from app.models.domain.articles import Article
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.posts import ArticlesRepository
+from app.database.repositories.users import UsersRepository
+from app.models.domain.posts import Post
 from app.models.domain.users import UserInDB
-from app.models.schemas.articles import ArticleInResponse, ListOfArticlesInResponse
+from app.models.schemas.posts import PostInResponse, ListOfPostsInResponse
 
 pytestmark = pytest.mark.asyncio
 
 
 async def test_user_can_not_create_article_with_duplicated_slug(
-    app: FastAPI, authorized_client: AsyncClient, test_article: Article
+    app: FastAPI, authorized_client: AsyncClient, test_article: Post
 ) -> None:
     article_data = {
         "title": "Test Slug",

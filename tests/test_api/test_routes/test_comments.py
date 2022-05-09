@@ -6,7 +6,7 @@ from starlette import status
 
 from app.db.repositories.comments import CommentsRepository
 from app.db.repositories.users import UsersRepository
-from app.models.domain.articles import Article
+from app.models.domain.posts import Article
 from app.models.schemas.comments import CommentInResponse, ListOfCommentsInResponse
 
 pytestmark = pytest.mark.asyncio

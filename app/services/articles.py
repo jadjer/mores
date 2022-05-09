@@ -1,8 +1,8 @@
 from slugify import slugify
 
-from app.db.errors import EntityDoesNotExist
-from app.db.repositories.articles import ArticlesRepository
-from app.models.domain.articles import Article
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.posts import ArticlesRepository
+from app.models.domain.posts import Post
 from app.models.domain.users import User
 
 
@@ -19,5 +19,5 @@ def get_slug_for_article(title: str) -> str:
     return slugify(title)
 
 
-def check_user_can_modify_article(article: Article, user: User) -> bool:
+def check_user_can_modify_article(article: Post, user: User) -> bool:
     return article.author.username == user.username

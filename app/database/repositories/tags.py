@@ -1,7 +1,7 @@
 from typing import List, Sequence
 
-from app.db.queries.queries import queries
-from app.db.repositories.base import BaseRepository
+from app.database.queries.queries import queries
+from app.database.repositories.base import BaseRepository
 
 
 class TagsRepository(BaseRepository):

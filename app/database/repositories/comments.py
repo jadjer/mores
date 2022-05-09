@@ -2,11 +2,11 @@ from typing import List, Optional
 
 from asyncpg import Connection, Record
 
-from app.db.errors import EntityDoesNotExist
-from app.db.queries.queries import queries
-from app.db.repositories.base import BaseRepository
-from app.db.repositories.profiles import ProfilesRepository
-from app.models.domain.articles import Article
+from app.database.errors import EntityDoesNotExist
+from app.database.queries.queries import queries
+from app.database.repositories.base import BaseRepository
+from app.database.repositories.users import UsersRepository
+from app.models.domain.posts import Post
 from app.models.domain.comments import Comment
 from app.models.domain.users import User
 
@@ -14,13 +14,13 @@ from app.models.domain.users import User
 class CommentsRepository(BaseRepository):
     def __init__(self, conn: Connection) -> None:
         super().__init__(conn)
-        self._profiles_repo = ProfilesRepository(conn)
+        self._profiles_repo = UsersRepository(conn)
 
     async def get_comment_by_id(
         self,
         *,
         comment_id: int,
-        article: Article,
+        article: Post,
         user: Optional[User] = None,
     ) -> Comment:
         comment_row = await queries.get_comment_by_id_and_slug(
@@ -42,7 +42,7 @@ class CommentsRepository(BaseRepository):
     async def get_comments_for_article(
         self,
         *,
-        article: Article,
+        article: Post,
         user: Optional[User] = None,
     ) -> List[Comment]:
         comments_rows = await queries.get_comments_for_article_by_slug(
@@ -62,7 +62,7 @@ class CommentsRepository(BaseRepository):
         self,
         *,
         body: str,
-        article: Article,
+        article: Post,
         user: User,
     ) -> Comment:
         comment_row = await queries.create_new_comment(

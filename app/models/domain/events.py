@@ -12,11 +12,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import DateTimeModelMixin, IDModelMixin
-from app.models.domain.users import User
+from enum import Enum
+
+import datetime as datetime
+
+from app.models.common import IDModelMixin, DateTimeModelMixin
+from app.models.domain.geos import Geo
 from app.models.domain.rwmodel import RWModel
+from app.models.domain.users import User
 
 
-class Comment(IDModelMixin, DateTimeModelMixin, RWModel):
+class EventState(Enum):
+    PLANNED = 1
+    DONE = 2
+    CANCELED = 3
+
+
+class Event(IDModelMixin, DateTimeModelMixin, RWModel):
     author: User
+    title: str
+    description: str
+    picture: str
     body: str
+    start_at: datetime.datetime
+    geo: Geo
+    state: EventState

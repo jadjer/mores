@@ -9,16 +9,16 @@ from app.api.dependencies.articles import (
 )
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.db.repositories.articles import ArticlesRepository
-from app.models.domain.articles import Article
+from app.database.repositories.posts import ArticlesRepository
+from app.models.domain.posts import Post
 from app.models.domain.users import User
-from app.models.schemas.articles import (
-    ArticleForResponse,
-    ArticleInCreate,
-    ArticleInResponse,
-    ArticleInUpdate,
-    ArticlesFilters,
-    ListOfArticlesInResponse,
+from app.models.schemas.posts import (
+    PostForResponse,
+    PostInCreate,
+    PostInResponse,
+    PostInUpdate,
+    PostsFilters,
+    ListOfPostsInResponse,
 )
 from app.resources import strings
 from app.services.articles import check_article_exists, get_slug_for_article
@@ -26,12 +26,12 @@ from app.services.articles import check_article_exists, get_slug_for_article
 router = APIRouter()
 
 
-@router.get("", response_model=ListOfArticlesInResponse, name="articles:list-articles")
+@router.get("", response_model=ListOfPostsInResponse, name="articles:list-articles")
 async def list_articles(
-    articles_filters: ArticlesFilters = Depends(get_articles_filters),
+    articles_filters: PostsFilters = Depends(get_articles_filters),
     user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
     articles_repo: ArticlesRepository = Depends(get_repository(ArticlesRepository)),
-) -> ListOfArticlesInResponse:
+) -> ListOfPostsInResponse:
     articles = await articles_repo.filter_articles(
         tag=articles_filters.tag,
         author=articles_filters.author,
@@ -41,9 +41,9 @@ async def list_articles(
         requested_user=user,
     )
     articles_for_response = [
-        ArticleForResponse.from_orm(article) for article in articles
+        PostForResponse.from_orm(article) for article in articles
     ]
-    return ListOfArticlesInResponse(
+    return ListOfPostsInResponse(
         articles=articles_for_response,
         articles_count=len(articles),
     )
@@ -52,14 +52,14 @@ async def list_articles(
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
-    response_model=ArticleInResponse,
+    response_model=PostInResponse,
     name="articles:create-article",
 )
 async def create_new_article(
-    article_create: ArticleInCreate = Body(..., embed=True, alias="article"),
+    article_create: PostInCreate = Body(..., embed=True, alias="article"),
     user: User = Depends(get_current_user_authorizer()),
     articles_repo: ArticlesRepository = Depends(get_repository(ArticlesRepository)),
-) -> ArticleInResponse:
+) -> PostInResponse:
     slug = get_slug_for_article(article_create.title)
     if await check_article_exists(articles_repo, slug):
         raise HTTPException(
@@ -75,34 +75,34 @@ async def create_new_article(
         author=user,
         tags=article_create.tags,
     )
-    return ArticleInResponse(article=ArticleForResponse.from_orm(article))
+    return PostInResponse(article=PostForResponse.from_orm(article))
 
 
-@router.get("/{slug}", response_model=ArticleInResponse, name="articles:get-article")
+@router.get("/{slug}", response_model=PostInResponse, name="articles:get-article")
 async def retrieve_article_by_slug(
-    article: Article = Depends(get_article_by_slug_from_path),
-) -> ArticleInResponse:
-    return ArticleInResponse(article=ArticleForResponse.from_orm(article))
+    article: Post = Depends(get_article_by_slug_from_path),
+) -> PostInResponse:
+    return PostInResponse(article=PostForResponse.from_orm(article))
 
 
 @router.put(
     "/{slug}",
-    response_model=ArticleInResponse,
+    response_model=PostInResponse,
     name="articles:update-article",
     dependencies=[Depends(check_article_modification_permissions)],
 )
 async def update_article_by_slug(
-    article_update: ArticleInUpdate = Body(..., embed=True, alias="article"),
-    current_article: Article = Depends(get_article_by_slug_from_path),
+    article_update: PostInUpdate = Body(..., embed=True, alias="article"),
+    current_article: Post = Depends(get_article_by_slug_from_path),
     articles_repo: ArticlesRepository = Depends(get_repository(ArticlesRepository)),
-) -> ArticleInResponse:
+) -> PostInResponse:
     slug = get_slug_for_article(article_update.title) if article_update.title else None
     article = await articles_repo.update_article(
         article=current_article,
         slug=slug,
         **article_update.dict(),
     )
-    return ArticleInResponse(article=ArticleForResponse.from_orm(article))
+    return PostInResponse(article=PostForResponse.from_orm(article))
 
 
 @router.delete(
@@ -113,7 +113,7 @@ async def update_article_by_slug(
     response_class=Response,
 )
 async def delete_article_by_slug(
-    article: Article = Depends(get_article_by_slug_from_path),
+    article: Post = Depends(get_article_by_slug_from_path),
     articles_repo: ArticlesRepository = Depends(get_repository(ArticlesRepository)),
 ) -> None:
     await articles_repo.delete_article(article=article)

@@ -12,11 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import DateTimeModelMixin, IDModelMixin
-from app.models.domain.users import User
+from app.models.common import IDModelMixin, DateTimeModelMixin
+from app.models.domain.geos import Geo
+from app.models.domain.motos import Moto
 from app.models.domain.rwmodel import RWModel
+from app.models.domain.service_types import ServiceType
 
 
-class Comment(IDModelMixin, DateTimeModelMixin, RWModel):
-    author: User
-    body: str
+class Service(IDModelMixin, DateTimeModelMixin, RWModel):
+    moto: Moto
+    geo: Geo
+    type: ServiceType
+    mileage: int
+    date: str
+    price: float

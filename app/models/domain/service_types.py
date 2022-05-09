@@ -12,11 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import DateTimeModelMixin, IDModelMixin
-from app.models.domain.users import User
+from app.models.common import IDModelMixin
 from app.models.domain.rwmodel import RWModel
 
 
-class Comment(IDModelMixin, DateTimeModelMixin, RWModel):
-    author: User
-    body: str
+class ServiceType(IDModelMixin, RWModel):
+    name: str
+    description: str

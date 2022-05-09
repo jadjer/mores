@@ -6,9 +6,9 @@ from asyncpg.pool import Pool
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from app.db.repositories.articles import ArticlesRepository
-from app.db.repositories.users import UsersRepository
-from app.models.domain.articles import Article
+from app.database.repositories.posts import ArticlesRepository
+from app.database.repositories.users import UsersRepository
+from app.models.domain.posts import Post
 from app.models.domain.users import UserInDB
 from app.services import jwt
 from tests.fake_asyncpg_pool import FakeAsyncPGPool
@@ -64,7 +64,7 @@ async def test_user(pool: Pool) -> UserInDB:
 
 
 @pytest.fixture
-async def test_article(test_user: UserInDB, pool: Pool) -> Article:
+async def test_article(test_user: UserInDB, pool: Pool) -> Post:
     async with pool.acquire() as connection:
         articles_repo = ArticlesRepository(connection)
         return await articles_repo.create_article(
