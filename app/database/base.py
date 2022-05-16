@@ -12,17 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-from app.database import Base
-
-
-class TokenModel(Base):
-    __tablename__ = "tokens"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    token = Column(String, nullable=False)
-    is_revoked = Column(Boolean, default=False)
-    user = relationship("User", back_populates="tokens")
+Base = declarative_base()

@@ -12,26 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.database import Base
-from app.schemas import Gender
+from app.database.base import Base
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class TokenModel(Base):
+    __tablename__ = "tokens"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
-
-    vehicles = relationship("Vehicle", back_populates="owner")
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, nullable=False)
+    is_revoked = Column(Boolean, default=False)
+    user = relationship("users", back_populates="tokens")

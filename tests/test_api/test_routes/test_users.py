@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
-from app.db.repositories.users import UsersRepository
+from app.database.repositories.users import UsersRepository
 from app.models.domain.users import UserInDB
 from app.models.schemas.users import UserInResponse
 

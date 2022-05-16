@@ -1,10 +1,10 @@
-from asyncpg.connection import Connection
+from sqlalchemy.orm import Session
 
 
 class BaseRepository:
-    def __init__(self, conn: Connection) -> None:
-        self._conn = conn
+    def __init__(self, session: Session) -> None:
+        self._session = session
 
     @property
-    def connection(self) -> Connection:
-        return self._conn
+    def session(self) -> Session:
+        return self._session

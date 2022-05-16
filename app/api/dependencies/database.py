@@ -1,30 +1,18 @@
-from typing import AsyncGenerator, Callable, Type
+from typing import Callable, Type
 
-from asyncpg.connection import Connection
-from asyncpg.pool import Pool
 from fastapi import Depends
-from starlette.requests import Request
+from fastapi.requests import Request
+from sqlalchemy.orm import Session
 
 from app.database.repositories.base import BaseRepository
 
 
-def _get_db_pool(request: Request) -> Pool:
-    return request.app.state.pool
+def _get_db_session(request: Request) -> Session:
+    return request.app.database_session
 
 
-async def _get_connection_from_pool(
-    pool: Pool = Depends(_get_db_pool),
-) -> AsyncGenerator[Connection, None]:
-    async with pool.acquire() as conn:
-        yield conn
-
-
-def get_repository(
-    repo_type: Type[BaseRepository],
-) -> Callable[[Connection], BaseRepository]:
-    def _get_repo(
-        conn: Connection = Depends(_get_connection_from_pool),
-    ) -> BaseRepository:
-        return repo_type(conn)
+def get_repository(repo_type: Type[BaseRepository]) -> Callable[[Session], BaseRepository]:
+    def _get_repo(session: Session = Depends(_get_db_session)) -> BaseRepository:
+        return repo_type(session)
 
     return _get_repo

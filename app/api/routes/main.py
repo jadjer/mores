@@ -12,7 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uvicorn
+from fastapi import APIRouter
 
-if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True, workers=8)
+router = APIRouter()
+
+
+@router.get("")
+async def main():
+    return "Hello world"
