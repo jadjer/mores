@@ -12,23 +12,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+import enum
+from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime
 
 from app.database.base import Base
-from app.models.domain.users import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class FuelType(enum.Enum):
+    PETROL_92 = 1
+    PETROL_95 = 2
+    PETROL_98 = 3
+    PETROL_100 = 4
+    DIESEL = 5
+    GAS = 6
+    ELECTRICITY = 7
+
+
+class FuelModel(Base):
+    __tablename__ = "fuels"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    quantity = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)
+    fuel_type = Column(Enum(FuelType), default=FuelType.PETROL_95)
+    geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
+    is_full = Column(Boolean, default=False)
+    datetime = Column(DateTime)

@@ -12,23 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
-from app.models.domain.users import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class VehicleModel(Base):
+    __tablename__ = "vehicles"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    brand = Column(String, nullable=False)
+    model = Column(String, nullable=False)
+    year = Column(Integer, nullable=False)
+    color = Column(String, nullable=False)
+    mileage = Column(Integer, nullable=False, default=0)
+
+    owner = relationship("users", back_populates="vehicles")

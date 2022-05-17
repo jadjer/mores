@@ -25,4 +25,5 @@ class TokenModel(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False)
     is_revoked = Column(Boolean, default=False)
+
     user = relationship("users", back_populates="tokens")

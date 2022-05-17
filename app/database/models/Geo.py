@@ -12,23 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Float
 
 from app.database.base import Base
-from app.models.domain.users import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class GeoModel(Base):
+    __tablename__ = "geos"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)

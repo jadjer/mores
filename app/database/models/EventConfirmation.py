@@ -12,23 +12,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+import enum
+from sqlalchemy import Column, Integer, ForeignKey, Enum
 
 from app.database.base import Base
-from app.models.domain.users import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class EventConfirmationType(enum.Enum):
+    YES = 1
+    MAY_BE_YES = 2
+    MAY_BE = 3
+    MAY_BE_NO = 4
+    NO = 5
+
+
+class EventConfirmationModel(Base):
+    __tablename__ = "event_confirmations"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    confirmation_type = Column(Enum(EventConfirmationType), default=EventConfirmationType.MAY_BE)

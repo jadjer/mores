@@ -12,23 +12,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+import enum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
 
 from app.database.base import Base
-from app.models.domain.users import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class EventType(enum.Enum):
+    PLANNED = 1
+    DONE = 2
+    CANCELED = 3
+
+
+class EventModel(Base):
+    __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    thumbnail = Column(String, nullable=False)
+    body = Column(String, nullable=False)
+    started_at = Column(DateTime)
+    geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
+    event_type = Column(Enum(EventType))
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
