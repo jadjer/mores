@@ -1,8 +1,8 @@
-"""empty message
+"""Create tables
 
-Revision ID: df866ca572be
-Revises: 1a90c6c62c6b
-Create Date: 2022-05-17 13:30:56.835068
+Revision ID: 9793a29c0670
+Revises: 
+Create Date: 2022-05-17 13:38:43.209166
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'df866ca572be'
-down_revision = '1a90c6c62c6b'
+revision = '9793a29c0670'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -34,6 +34,23 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_service_types_id'), 'service_types', ['id'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('first_name', sa.String(), nullable=True),
+    sa.Column('second_name', sa.String(), nullable=True),
+    sa.Column('last_name', sa.String(), nullable=True),
+    sa.Column('gender', sa.Enum('MALE', 'FEMALE', name='gender'), nullable=True),
+    sa.Column('age', sa.Integer(), nullable=True),
+    sa.Column('email', sa.String(), nullable=True),
+    sa.Column('phone', sa.String(), nullable=True),
+    sa.Column('password', sa.String(), nullable=True),
+    sa.Column('is_admin', sa.Boolean(), nullable=True),
+    sa.Column('is_blocked', sa.Boolean(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('phone')
+    )
+    op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('events',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=False),
@@ -64,6 +81,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_posts_id'), 'posts', ['id'], unique=False)
+    op.create_table('tokens',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('token', sa.String(), nullable=False),
+    sa.Column('is_revoked', sa.Boolean(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tokens_id'), 'tokens', ['id'], unique=False)
     op.create_table('vehicles',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('owner_id', sa.Integer(), nullable=False),
@@ -152,10 +178,14 @@ def downgrade():
     op.drop_table('comments')
     op.drop_index(op.f('ix_vehicles_id'), table_name='vehicles')
     op.drop_table('vehicles')
+    op.drop_index(op.f('ix_tokens_id'), table_name='tokens')
+    op.drop_table('tokens')
     op.drop_index(op.f('ix_posts_id'), table_name='posts')
     op.drop_table('posts')
     op.drop_index(op.f('ix_events_id'), table_name='events')
     op.drop_table('events')
+    op.drop_index(op.f('ix_users_id'), table_name='users')
+    op.drop_table('users')
     op.drop_index(op.f('ix_service_types_id'), table_name='service_types')
     op.drop_table('service_types')
     op.drop_index(op.f('ix_geos_id'), table_name='geos')

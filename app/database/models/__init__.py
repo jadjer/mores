@@ -12,15 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# from .User import UserModel
-# from .Token import TokenModel
-# from .Vehicle import VehicleModel
-# from .Post import PostModel
-# from .Comment import CommentModel
-# from .Service import ServiceModel
-# from .ServiceType import ServiceTypeModel
-# from .Reminder import ReminderModel
-# from .Fuel import FuelModel, FuelType
-# from .Geo import GeoModel
-# from .Event import EventModel, EventType
-# from .EventConfirmation import EventConfirmationModel, EventConfirmationType
+from .User import UserModel
+from .Token import TokenModel
+from .Vehicle import VehicleModel
+from .Post import PostModel
+from .Comment import CommentModel
+from .Service import ServiceModel
+from .ServiceType import ServiceTypeModel
+from .Reminder import ReminderModel
+from .Fuel import FuelModel, FuelType
+from .Geo import GeoModel
+from .Event import EventModel, EventType
+from .EventConfirmation import EventConfirmationModel, EventConfirmationType

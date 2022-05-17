@@ -5,8 +5,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from app.core.settings.app import AppSettings
-from app.database.base import Base
-from app.database.models import User, Token
 
 
 async def connect_to_db(app: FastAPI, settings: AppSettings) -> None:
@@ -17,10 +15,6 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> None:
         echo=True
     )
     app.state.database_engine = engine
-
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.drop_all)
-    #     await conn.run_sync(Base.metadata.create_all)
 
     async_session = sessionmaker(
         engine,

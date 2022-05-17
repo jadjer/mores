@@ -9,20 +9,7 @@ from alembic import context
 
 from app.core.config import get_app_settings
 from app.database.base import Base
-from app.database.models import (
-    Comment,
-    Event,
-    EventConfirmation,
-    Fuel,
-    Geo,
-    Post,
-    Reminder,
-    Service,
-    ServiceType,
-    Token,
-    User,
-    Vehicle
-)
+from app.database.models import *
 
 settings = get_app_settings()
 database_url = settings.get_database_url
