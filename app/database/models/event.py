@@ -12,16 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import enum
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
 
 from app.database.base import Base
-
-
-class EventType(enum.Enum):
-    PLANNED = 1
-    DONE = 2
-    CANCELED = 3
+from app.models.domain.events import EventState
 
 
 class EventModel(Base):
@@ -35,6 +29,6 @@ class EventModel(Base):
     body = Column(String, nullable=False)
     started_at = Column(DateTime)
     geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
-    event_type = Column(Enum(EventType))
+    event_state = Column(Enum(EventState))
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

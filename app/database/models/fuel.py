@@ -12,20 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import enum
 from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime
 
 from app.database.base import Base
-
-
-class FuelType(enum.Enum):
-    PETROL_92 = 1
-    PETROL_95 = 2
-    PETROL_98 = 3
-    PETROL_100 = 4
-    DIESEL = 5
-    GAS = 6
-    ELECTRICITY = 7
+from app.models.domain.fuels import FuelType
 
 
 class FuelModel(Base):

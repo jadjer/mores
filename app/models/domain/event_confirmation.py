@@ -19,13 +19,15 @@ from app.models.domain.rwmodel import RWModel
 from app.models.domain.users import User
 
 
-class ConfirmType(Enum):
+class EventConfirmationType(Enum):
     YES = 1
-    NO = 2
-    MAY_BE = 3
+    MAY_BE_YES = 2
+    MAY_BY = 3
+    MAY_BE_NO = 4
+    NO = 5
 
 
 class EventConfirm(RWModel):
     event: Event
     user: User
-    type: ConfirmType
+    type: EventConfirmationType

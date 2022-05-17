@@ -1,8 +1,8 @@
 """Create tables
 
-Revision ID: 9793a29c0670
+Revision ID: ff9ca27f5c21
 Revises: 
-Create Date: 2022-05-17 13:38:43.209166
+Create Date: 2022-05-17 15:59:27.165042
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9793a29c0670'
+revision = 'ff9ca27f5c21'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -60,7 +60,7 @@ def upgrade():
     sa.Column('body', sa.String(), nullable=False),
     sa.Column('started_at', sa.DateTime(), nullable=True),
     sa.Column('geo_id', sa.Integer(), nullable=False),
-    sa.Column('event_type', sa.Enum('PLANNED', 'DONE', 'CANCELED', name='eventtype'), nullable=True),
+    sa.Column('event_state', sa.Enum('PLANNED', 'DONE', 'CANCELED', name='eventstate'), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['users.id'], ),
@@ -117,7 +117,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('event_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('confirmation_type', sa.Enum('YES', 'MAY_BE_YES', 'MAY_BE', 'MAY_BE_NO', 'NO', name='eventconfirmationtype'), nullable=True),
+    sa.Column('confirmation_type', sa.Enum('YES', 'MAY_BE_YES', 'MAY_BY', 'MAY_BE_NO', 'NO', name='eventconfirmationtype'), nullable=True),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')

@@ -3,7 +3,7 @@ from typing import Optional
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.base import BaseRepository
 from app.models.domain.users import User, UserInDB
-from app.database.models.User import UsersModel
+from app.database.models.user import UsersModel
 
 
 class UsersRepository(BaseRepository):

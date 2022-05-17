@@ -12,18 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import enum
 from sqlalchemy import Column, Integer, ForeignKey, Enum
 
 from app.database.base import Base
-
-
-class EventConfirmationType(enum.Enum):
-    YES = 1
-    MAY_BE_YES = 2
-    MAY_BE = 3
-    MAY_BE_NO = 4
-    NO = 5
+from app.models.domain.event_confirmation import EventConfirmationType
 
 
 class EventConfirmationModel(Base):
@@ -32,4 +24,4 @@ class EventConfirmationModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    confirmation_type = Column(Enum(EventConfirmationType), default=EventConfirmationType.MAY_BE)
+    confirmation_type = Column(Enum(EventConfirmationType), default=EventConfirmationType.MAY_BY)
