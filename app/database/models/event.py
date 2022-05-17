@@ -15,7 +15,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
 
 from app.database.base import Base
-from app.models.domain.events import EventState
+from app.models.domain.event import EventState
 
 
 class EventModel(Base):

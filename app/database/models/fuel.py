@@ -15,7 +15,7 @@
 from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime
 
 from app.database.base import Base
-from app.models.domain.fuels import FuelType
+from app.models.domain.fuel import FuelType
 
 
 class FuelModel(Base):

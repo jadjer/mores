@@ -13,14 +13,13 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
+from app.models.domain.vehicle import Moto
 from app.models.domain.rwmodel import RWModel
-from app.models.domain.users import User
+from app.models.domain.service_type import ServiceType
 
 
-class Moto(IDModelMixin, RWModel):
-    owner: User
-    brand: str
-    model: str
-    year: int
-    color: str
-    mileage: int
+class Reminder(IDModelMixin, RWModel):
+    moto: Moto
+    service_type: ServiceType
+    next_mileage: int
+    next_data: str

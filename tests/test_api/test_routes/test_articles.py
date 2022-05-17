@@ -5,11 +5,11 @@ from httpx import AsyncClient
 from starlette import status
 
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.posts import ArticlesRepository
-from app.database.repositories.users import UsersRepository
-from app.models.domain.posts import Post
-from app.models.domain.users import UserInDB
-from app.models.schemas.posts import PostInResponse, ListOfPostsInResponse
+from app.database.repositories.post import ArticlesRepository
+from app.database.repositories.user import UsersRepository
+from app.models.domain.post import Post
+from app.models.domain.user import UserInDB
+from app.models.schemas.post import PostInResponse, ListOfPostsInResponse
 
 pytestmark = pytest.mark.asyncio
 

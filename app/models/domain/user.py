@@ -26,6 +26,7 @@ class Gender(Enum):
 
 
 class User(RWModel):
+    id: int
     first_name: str
     second_name: Optional[str]
     last_name: str

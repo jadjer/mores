@@ -4,9 +4,9 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from starlette import status
 
-from app.database.repositories.users import UsersRepository
-from app.models.domain.users import UserInDB
-from app.models.schemas.users import UserInResponse
+from app.database.repositories.user import UsersRepository
+from app.models.domain.user import UserInDB
+from app.models.schemas.user import UserInResponse
 
 pytestmark = pytest.mark.asyncio
 

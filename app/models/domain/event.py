@@ -12,14 +12,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin
-from app.models.domain.motos import Moto
+from enum import Enum
+
+import datetime as datetime
+
+from app.models.common import IDModelMixin, DateTimeModelMixin
+from app.models.domain.geo import Geo
 from app.models.domain.rwmodel import RWModel
-from app.models.domain.service_types import ServiceType
+from app.models.domain.user import User
 
 
-class Reminder(IDModelMixin, RWModel):
-    moto: Moto
-    service_type: ServiceType
-    next_mileage: int
-    next_data: str
+class EventState(Enum):
+    PLANNED = 1
+    DONE = 2
+    CANCELED = 3
+
+
+class Event(IDModelMixin, DateTimeModelMixin, RWModel):
+    author: User
+    title: str
+    description: str
+    picture: str
+    body: str
+    start_at: datetime.datetime
+    geo: Geo
+    state: EventState

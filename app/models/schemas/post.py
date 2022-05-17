@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from app.models.domain.posts import Post
+from app.models.domain.post import Post
 from app.models.schemas.rwschema import RWSchema
 
 DEFAULT_ARTICLES_LIMIT = 20

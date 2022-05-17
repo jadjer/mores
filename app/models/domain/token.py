@@ -12,17 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin, DateTimeModelMixin
-from app.models.domain.geos import Geo
-from app.models.domain.motos import Moto
+from app.models.common import IDModelMixin
 from app.models.domain.rwmodel import RWModel
-from app.models.domain.service_types import ServiceType
+from app.models.domain.user import User
 
 
-class Service(IDModelMixin, DateTimeModelMixin, RWModel):
-    moto: Moto
-    geo: Geo
-    type: ServiceType
-    mileage: int
-    date: str
-    price: float
+class Token(IDModelMixin, RWModel):
+    user: User
+    token: str
+    is_revoked: bool

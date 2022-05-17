@@ -3,7 +3,7 @@ from datetime import timedelta
 import jwt
 import pytest
 
-from app.models.domain.users import UserInDB
+from app.models.domain.user import UserInDB
 from app.services.jwt import (
     ALGORITHM,
     create_access_token_for_user,

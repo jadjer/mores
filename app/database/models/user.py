@@ -15,7 +15,7 @@
 from sqlalchemy import Boolean, Column, Integer, String, Enum
 
 from app.database.base import Base
-from app.models.domain.users import Gender
+from app.models.domain.user import Gender
 
 
 class UserModel(Base):

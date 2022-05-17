@@ -1,6 +1,6 @@
 from typing import List
 
-from app.models.domain.comments import Comment
+from app.models.domain.comment import Comment
 from app.models.schemas.rwschema import RWSchema
 
 

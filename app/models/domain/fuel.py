@@ -11,12 +11,28 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from enum import Enum
 
-from fastapi import APIRouter
+from app.models.common import IDModelMixin
+from app.models.domain.geo import Geo
+from app.models.domain.vehicle import Moto
+from app.models.domain.rwmodel import RWModel
 
-router = APIRouter()
+
+class FuelType(Enum):
+    PETROL_92 = 1
+    PETROL_95 = 2
+    PETROL_98 = 3
+    PETROL_100 = 4
+    DIESEL = 5
+    GAS = 6
+    ELECTRICITY = 7
 
 
-@router.get("")
-async def main():
-    return "Hello world"
+class Fuel(IDModelMixin, RWModel):
+    moto: Moto
+    quantity: float
+    price: float
+    type: FuelType
+    geo: Geo
+    datetime: str

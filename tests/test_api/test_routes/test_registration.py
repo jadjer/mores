@@ -5,7 +5,7 @@ from httpx import AsyncClient
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
 from app.db.repositories.users import UsersRepository
-from app.models.domain.users import UserInDB
+from app.models.domain.user import UserInDB
 
 pytestmark = pytest.mark.asyncio
 

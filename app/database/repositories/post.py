@@ -1,23 +1,27 @@
+#  Copyright 2022 Pavel Suprunov
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from typing import List, Optional, Sequence, Union
 
-from asyncpg import Connection, Record
-from pypika import Query
+from sqlalchemy.orm import Session
 
 from app.database.errors import EntityDoesNotExist
-from app.database.queries.queries import queries
-from app.database.queries.tables import (
-    Parameter,
-    articles,
-    articles_to_tags,
-    favorites,
-    tags as tags_table,
-    users,
-)
+from app.database.models import *
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.users import UsersRepository
-from app.database.repositories.tags import TagsRepository
-from app.models.domain.posts import Post
-from app.models.domain.users import User
+from app.database.repositories.user import UserRepository
+from app.models.domain.post import Post
+from app.models.domain.user import User
 
 AUTHOR_USERNAME_ALIAS = "author_username"
 SLUG_ALIAS = "slug"
@@ -25,35 +29,23 @@ SLUG_ALIAS = "slug"
 CAMEL_OR_SNAKE_CASE_TO_WORDS = r"^[a-z\d_\-]+|[A-Z\d_\-][^A-Z\d_\-]*"
 
 
-class ArticlesRepository(BaseRepository):  # noqa: WPS214
-    def __init__(self, conn: Connection) -> None:
-        super().__init__(conn)
-        self._profiles_repo = UsersRepository(conn)
-        self._tags_repo = TagsRepository(conn)
+class PostRepository(BaseRepository):
 
-    async def create_article(  # noqa: WPS211
-        self,
-        *,
-        slug: str,
-        title: str,
-        description: str,
-        body: str,
-        author: User,
-        tags: Optional[Sequence[str]] = None,
-    ) -> Post:
-        async with self.connection.transaction():
-            article_row = await queries.create_new_article(
-                self.connection,
-                slug=slug,
-                title=title,
-                description=description,
-                body=body,
-                author_username=author.username,
-            )
+    def __init__(self, session: Session) -> None:
+        super().__init__(session)
+        self._users_repo = UsersRepository(session)
 
-            if tags:
-                await self._tags_repo.create_tags_that_dont_exist(tags=tags)
-                await self._link_article_with_tags(slug=slug, tags=tags)
+    async def create_post(self, author: User, title: str, description: str, thumbnail: str, body: str) -> Post:
+        new_post = PostModel(
+            author_id=author.id,
+            title=title,
+            description=description,
+            thumbnail=thumbnail,
+            body=body
+        )
+
+        self.session.add(new_post)
+        self.session.commit()
 
         return await self._get_article_from_db_record(
             article_row=article_row,
@@ -63,13 +55,13 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         )
 
     async def update_article(  # noqa: WPS211
-        self,
-        *,
-        article: Post,
-        slug: Optional[str] = None,
-        title: Optional[str] = None,
-        body: Optional[str] = None,
-        description: Optional[str] = None,
+            self,
+            *,
+            article: Post,
+            slug: Optional[str] = None,
+            title: Optional[str] = None,
+            body: Optional[str] = None,
+            description: Optional[str] = None,
     ) -> Post:
         updated_article = article.copy(deep=True)
         updated_article.slug = slug or updated_article.slug
@@ -99,14 +91,14 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
             )
 
     async def filter_articles(  # noqa: WPS211
-        self,
-        *,
-        tag: Optional[str] = None,
-        author: Optional[str] = None,
-        favorited: Optional[str] = None,
-        limit: int = 20,
-        offset: int = 0,
-        requested_user: Optional[User] = None,
+            self,
+            *,
+            tag: Optional[str] = None,
+            author: Optional[str] = None,
+            favorited: Optional[str] = None,
+            limit: int = 20,
+            offset: int = 0,
+            requested_user: Optional[User] = None,
     ) -> List[Post]:
         query_params: List[Union[str, int]] = []
         query_params_count = 0
@@ -143,13 +135,13 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
                 articles_to_tags,
             ).on(
                 (articles.id == articles_to_tags.article_id) & (
-                    articles_to_tags.tag == Query.from_(
-                        tags_table,
-                    ).where(
-                        tags_table.tag == Parameter(query_params_count),
-                    ).select(
-                        tags_table.tag,
-                    )
+                        articles_to_tags.tag == Query.from_(
+                    tags_table,
+                ).where(
+                    tags_table.tag == Parameter(query_params_count),
+                ).select(
+                    tags_table.tag,
+                )
                 ),
             )
             # fmt: on
@@ -163,13 +155,13 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
                 users,
             ).on(
                 (articles.author_id == users.id) & (
-                    users.id == Query.from_(
-                        users,
-                    ).where(
-                        users.username == Parameter(query_params_count),
-                    ).select(
-                        users.id,
-                    )
+                        users.id == Query.from_(
+                    users,
+                ).where(
+                    users.username == Parameter(query_params_count),
+                ).select(
+                    users.id,
+                )
                 ),
             )
             # fmt: on
@@ -183,13 +175,13 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
                 favorites,
             ).on(
                 (articles.id == favorites.article_id) & (
-                    favorites.user_id == Query.from_(
-                        users,
-                    ).where(
-                        users.username == Parameter(query_params_count),
-                    ).select(
-                        users.id,
-                    )
+                        favorites.user_id == Query.from_(
+                    users,
+                ).where(
+                    users.username == Parameter(query_params_count),
+                ).select(
+                    users.id,
+                )
                 ),
             )
             # fmt: on
@@ -212,11 +204,11 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         ]
 
     async def get_articles_for_user_feed(
-        self,
-        *,
-        user: User,
-        limit: int = 20,
-        offset: int = 0,
+            self,
+            *,
+            user: User,
+            limit: int = 20,
+            offset: int = 0,
     ) -> List[Post]:
         articles_rows = await queries.get_articles_for_feed(
             self.connection,
@@ -235,10 +227,10 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         ]
 
     async def get_article_by_slug(
-        self,
-        *,
-        slug: str,
-        requested_user: Optional[User] = None,
+            self,
+            *,
+            slug: str,
+            requested_user: Optional[User] = None,
     ) -> Post:
         article_row = await queries.get_article_by_slug(self.connection, slug=slug)
         if article_row:
@@ -280,51 +272,13 @@ class ArticlesRepository(BaseRepository):  # noqa: WPS214
         )
 
     async def remove_article_from_favorites(
-        self,
-        *,
-        article: Post,
-        user: User,
+            self,
+            *,
+            article: Post,
+            user: User,
     ) -> None:
         await queries.remove_article_from_favorites(
             self.connection,
             username=user.username,
             slug=article.slug,
-        )
-
-    async def _get_article_from_db_record(
-        self,
-        *,
-        article_row: Record,
-        slug: str,
-        author_username: str,
-        requested_user: Optional[User],
-    ) -> Post:
-        return Post(
-            id_=article_row["id"],
-            slug=slug,
-            title=article_row["title"],
-            description=article_row["description"],
-            body=article_row["body"],
-            author=await self._profiles_repo.get_profile_by_username(
-                username=author_username,
-                requested_user=requested_user,
-            ),
-            tags=await self.get_tags_for_article_by_slug(slug=slug),
-            favorites_count=await self.get_favorites_count_for_article_by_slug(
-                slug=slug,
-            ),
-            favorited=await self.is_article_favorited_by_user(
-                slug=slug,
-                user=requested_user,
-            )
-            if requested_user
-            else False,
-            created_at=article_row["created_at"],
-            updated_at=article_row["updated_at"],
-        )
-
-    async def _link_article_with_tags(self, *, slug: str, tags: Sequence[str]) -> None:
-        await queries.add_tags_to_article(
-            self.connection,
-            [{SLUG_ALIAS: slug, "tag": tag} for tag in tags],
         )

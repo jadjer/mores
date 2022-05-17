@@ -6,10 +6,10 @@ from fastapi import status
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.posts import ArticlesRepository
-from app.models.domain.posts import Post
-from app.models.domain.users import User
-from app.models.schemas.posts import (
+from app.database.repositories.post import ArticlesRepository
+from app.models.domain.post import Post
+from app.models.domain.user import User
+from app.models.schemas.post import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
     PostsFilters,

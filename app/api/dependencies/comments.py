@@ -5,10 +5,10 @@ from starlette import status
 
 from app.api.dependencies import articles, authentication, database
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.comments import CommentsRepository
-from app.models.domain.posts import Post
-from app.models.domain.comments import Comment
-from app.models.domain.users import User
+from app.database.repositories.comment import CommentsRepository
+from app.models.domain.post import Post
+from app.models.domain.comment import Comment
+from app.models.domain.user import User
 from app.resources import strings
 from app.services.comments import check_user_can_modify_comment
 
