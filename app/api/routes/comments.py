@@ -24,7 +24,7 @@ from app.api.dependencies.comments import (
     get_comment_by_id_from_path,
 )
 from app.api.dependencies.database import get_repository
-from app.database.repositories.comment import CommentsRepository
+from app.database.repositories.comments import CommentsRepository
 from app.models.domain.post import Post
 from app.models.domain.comment import Comment
 from app.models.domain.user import User

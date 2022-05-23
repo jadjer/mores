@@ -28,5 +28,3 @@ class VehicleModel(Base):
     year = Column(Integer, nullable=False)
     color = Column(String, nullable=False)
     mileage = Column(Integer, nullable=False, default=0)
-
-    owner = relationship("users", back_populates="vehicles")

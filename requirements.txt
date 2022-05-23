@@ -9,7 +9,7 @@ slugify
 loguru
 bcrypt
 passlib
-jwt
+PyJWT
 DateTime
 alembic
 httpx

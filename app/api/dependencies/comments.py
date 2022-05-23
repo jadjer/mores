@@ -5,7 +5,7 @@ from starlette import status
 
 from app.api.dependencies import articles, authentication, database
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.comment import CommentsRepository
+from app.database.repositories.comments import CommentsRepository
 from app.models.domain.post import Post
 from app.models.domain.comment import Comment
 from app.models.domain.user import User

@@ -8,7 +8,7 @@ from app.database.repositories.base import BaseRepository
 
 
 def _get_db_session(request: Request) -> Session:
-    return request.app.database_session
+    return request.app.state.database_session
 
 
 def get_repository(repo_type: Type[BaseRepository]) -> Callable[[Session], BaseRepository]:

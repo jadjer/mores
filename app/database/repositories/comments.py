@@ -14,19 +14,21 @@
 
 from typing import List, Optional
 
+from sqlalchemy.orm import Session
+
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.user import UsersRepository
+from app.database.repositories.users import UsersRepository
 from app.models.domain.post import Post
 from app.models.domain.comment import Comment
 from app.models.domain.user import User
 
 
-class CommentRepository(BaseRepository):
+class CommentsRepository(BaseRepository):
 
-    def __init__(self, conn: Connection) -> None:
-        super().__init__(conn)
-        self._profiles_repo = UsersRepository(conn)
+    def __init__(self, session: Session) -> None:
+        super().__init__(session)
+        self._users_repo = UsersRepository(session)
 
     async def get_comment_by_id(
         self,

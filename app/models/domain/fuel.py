@@ -15,7 +15,7 @@ from enum import Enum
 
 from app.models.common import IDModelMixin
 from app.models.domain.geo import Geo
-from app.models.domain.vehicle import Moto
+from app.models.domain.vehicle import Vehicle
 from app.models.domain.rwmodel import RWModel
 
 
@@ -30,7 +30,7 @@ class FuelType(Enum):
 
 
 class Fuel(IDModelMixin, RWModel):
-    moto: Moto
+    vehicle: Vehicle
     quantity: float
     price: float
     type: FuelType

@@ -14,25 +14,31 @@
 
 from typing import Optional
 
+from sqlalchemy import select
+
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import User, UserInDB
 from app.database.models import UserModel
 
 
-class UserRepository(BaseRepository):
+class UsersRepository(BaseRepository):
 
     async def get_user_by_email(self, email: str) -> UserInDB:
-        user = self.session.query(UserModel).filter_by(email=email).first()
+        query = select(UserModel).where(UserModel.email == email)
+        result = await self.session.execute(query)
+        user = result.scalars().first()
         if user:
-            return UserInDB(**user)
+            return UserInDB(**user.__dict__)
 
         raise EntityDoesNotExist("user with email {0} does not exist".format(email))
 
     async def get_user_by_username(self, username: str) -> UserInDB:
-        user = self.session.query(UserModel).filter_by(username=username).first()
+        query = select(UserModel).where(UserModel.username == username)
+        result = await self.session.execute(query)
+        user = result.scalars().first()
         if user:
-            return UserInDB(**user)
+            return UserInDB(**user.__dict__)
 
         raise EntityDoesNotExist("user with username {0} does not exist".format(username))
 
@@ -40,10 +46,16 @@ class UserRepository(BaseRepository):
         user = UserInDB(username=username, email=email)
         user.change_password(password)
 
-        self.session.add(user)
-        self.session.commit()
+        new_user = UserModel(
+            username=user.username,
+            email=user.email,
+            password=user.password,
+        )
 
-        return user.copy(update=dict(user))
+        self.session.add(new_user)
+        await self.session.commit()
+
+        return user
 
     async def update_user(self,
                           user: User,
@@ -64,6 +76,6 @@ class UserRepository(BaseRepository):
             user_in_db.change_password(password)
 
         self.session.add(user_in_db)
-        self.session.commit()
+        await self.session.commit()
 
         return user_in_db

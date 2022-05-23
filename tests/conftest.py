@@ -6,8 +6,8 @@ from asyncpg.pool import Pool
 from fastapi import FastAPI
 from httpx import AsyncClient
 
-from app.database.repositories.post import ArticlesRepository
-from app.database.repositories.user import UsersRepository
+from app.database.repositories.posts import ArticlesRepository
+from app.database.repositories.users import UsersRepository
 from app.models.domain.post import Post
 from app.models.domain.user import UserInDB
 from app.services import jwt

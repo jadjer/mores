@@ -27,7 +27,7 @@ class EventConfirmationType(Enum):
     NO = 5
 
 
-class EventConfirm(RWModel):
+class EventConfirmation(RWModel):
     event: Event
     user: User
     type: EventConfirmationType

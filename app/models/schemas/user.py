@@ -7,12 +7,12 @@ from app.models.schemas.rwschema import RWSchema
 
 
 class UserInLogin(RWSchema):
-    email: EmailStr
+    username: str
     password: str
 
 
 class UserInCreate(UserInLogin):
-    username: str
+    email: EmailStr
 
 
 class UserInUpdate(BaseModel):

@@ -21,32 +21,32 @@ from app.services import security
 
 
 class Gender(Enum):
-    MALE = 1
-    FEMALE = 2
+    UNDEFINED = 1
+    MALE = 2
+    FEMALE = 3
 
 
 class User(RWModel):
-    id: int
-    first_name: str
+    first_name: Optional[str]
     second_name: Optional[str]
-    last_name: str
+    last_name: Optional[str]
     username: str
     email: str
-    gender: Gender
-    age: int
-    phone: str
+    gender: Optional[Gender] = Gender.UNDEFINED
+    age: Optional[int]
+    phone: Optional[str]
+    image: Optional[str] = None
     is_admin: bool = False
     is_blocked: bool = False
-    image: Optional[str] = None
 
 
 class UserInDB(IDModelMixin, DateTimeModelMixin, User):
     salt: str = ""
-    hashed_password: str = ""
+    password: str = ""
 
     def check_password(self, password: str) -> bool:
-        return security.verify_password(self.salt + password, self.hashed_password)
+        return security.verify_password(self.salt + password, self.password)
 
     def change_password(self, password: str) -> None:
         self.salt = security.generate_salt()
-        self.hashed_password = security.get_password_hash(self.salt + password)
+        self.password = security.get_password_hash(self.salt + password)

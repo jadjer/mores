@@ -14,13 +14,13 @@
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.geo import Geo
-from app.models.domain.vehicle import Moto
+from app.models.domain.vehicle import Vehicle
 from app.models.domain.rwmodel import RWModel
 from app.models.domain.service_type import ServiceType
 
 
 class Service(IDModelMixin, DateTimeModelMixin, RWModel):
-    moto: Moto
+    vehicle: Vehicle
     geo: Geo
     type: ServiceType
     mileage: int

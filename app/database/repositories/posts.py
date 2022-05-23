@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from app.database.errors import EntityDoesNotExist
 from app.database.models import *
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.user import UserRepository
+from app.database.repositories.users import UsersRepository
 from app.models.domain.post import Post
 from app.models.domain.user import User
 
@@ -29,7 +29,7 @@ SLUG_ALIAS = "slug"
 CAMEL_OR_SNAKE_CASE_TO_WORDS = r"^[a-z\d_\-]+|[A-Z\d_\-][^A-Z\d_\-]*"
 
 
-class PostRepository(BaseRepository):
+class PostsRepository(BaseRepository):
 
     def __init__(self, session: Session) -> None:
         super().__init__(session)

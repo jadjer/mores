@@ -22,13 +22,17 @@ class UserModel(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+
+    username = Column(String, unique=True)
+    email = Column(String, unique=True)
+    phone = Column(String, unique=True)
+    password = Column(String)
+
     first_name = Column(String)
     second_name = Column(String)
     last_name = Column(String)
     gender = Column(Enum(Gender))
     age = Column(Integer)
-    email = Column(String, unique=True)
-    phone = Column(String, unique=True)
-    password = Column(String)
+
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)

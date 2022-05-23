@@ -19,7 +19,7 @@ from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
-from app.database.repositories.user import UsersRepository
+from app.database.repositories.users import UsersRepository
 from app.models.domain.user import User
 from app.models.schemas.user import UserInResponse, UserInUpdate, UserWithToken
 from app.resources import strings
@@ -31,8 +31,8 @@ router = APIRouter()
 
 @router.get("", response_model=UserInResponse, name="users:get-current-user")
 async def retrieve_current_user(
-    user: User = Depends(get_current_user_authorizer()),
-    settings: AppSettings = Depends(get_app_settings),
+        user: User = Depends(get_current_user_authorizer()),
+        settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponse:
     token = jwt.create_access_token_for_user(
         user,
@@ -40,21 +40,29 @@ async def retrieve_current_user(
     )
     return UserInResponse(
         user=UserWithToken(
+            id=user.id,
+            first_name=user.first_name,
+            second_name=user.second_name,
+            last_name=user.last_name,
             username=user.username,
             email=user.email,
-            bio=user.bio,
+            gender=user.gender,
+            age=user.age,
+            phone=user.phone,
+            is_admin=user.is_admin,
+            is_blocked=user.is_blocked,
             image=user.image,
-            token=token,
+            token=token
         ),
     )
 
 
 @router.put("", response_model=UserInResponse, name="users:update-current-user")
 async def update_current_user(
-    user_update: UserInUpdate = Body(..., embed=True, alias="user"),
-    current_user: User = Depends(get_current_user_authorizer()),
-    users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
-    settings: AppSettings = Depends(get_app_settings),
+        user_update: UserInUpdate = Body(..., embed=True, alias="user"),
+        current_user: User = Depends(get_current_user_authorizer()),
+        users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
+        settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponse:
     if user_update.username and user_update.username != current_user.username:
         if await check_username_is_taken(users_repo, user_update.username):
@@ -78,10 +86,18 @@ async def update_current_user(
     )
     return UserInResponse(
         user=UserWithToken(
+            id=user.id,
+            first_name=user.first_name,
+            second_name=user.second_name,
+            last_name=user.last_name,
             username=user.username,
             email=user.email,
-            bio=user.bio,
+            gender=user.gender,
+            age=user.age,
+            phone=user.phone,
+            is_admin=user.is_admin,
+            is_blocked=user.is_blocked,
             image=user.image,
-            token=token,
+            token=token
         ),
     )

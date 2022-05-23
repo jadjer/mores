@@ -1,14 +1,14 @@
 from slugify import slugify
 
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.post import ArticlesRepository
+from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
 from app.models.domain.user import User
 
 
-async def check_article_exists(articles_repo: ArticlesRepository, slug: str) -> bool:
+async def check_article_exists(posts_repo: PostsRepository, slug: str) -> bool:
     try:
-        await articles_repo.get_article_by_slug(slug=slug)
+        await posts_repo.get_article_by_slug(slug=slug)
     except EntityDoesNotExist:
         return False
 

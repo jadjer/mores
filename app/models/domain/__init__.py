@@ -14,11 +14,11 @@
 
 from .comment import Comment
 from .event import Event, EventState
-from .event_confirmation import EventConfirm, EventConfirmationType
+from .event_confirmation import EventConfirmation, EventConfirmationType
 from .fuel import Fuel, FuelType
 from .geo import Geo
 from .post import Post
-from .remind import Reminder
+from .reminder import Reminder
 from .service import Service, ServiceType
 from .token import Token
 from .user import User, UserInDB, Gender

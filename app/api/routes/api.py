@@ -14,11 +14,16 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import authentication, comments, users
+from app.api.routes import (
+    authentication,
+    # comments,
+    users
+)
+
 # from app.api.routes.articles import api as articles
 
 router = APIRouter()
-router.include_router(authentication.router, tags=["authentication"], prefix="/users")
+router.include_router(authentication.router, tags=["authentication"], prefix="/auth")
 router.include_router(users.router, tags=["users"], prefix="/user")
 # router.include_router(articles.router, tags=["articles"])
 # router.include_router(
