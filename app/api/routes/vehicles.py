@@ -11,3 +11,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get(
+    "",
+
+)
+async def get_vehicle():
+    pass

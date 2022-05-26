@@ -14,8 +14,7 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, Response
-from starlette import status
+from fastapi import APIRouter, Body, Depends, Response, status
 
 from app.api.dependencies.articles import get_article_by_slug_from_path
 from app.api.dependencies.authentication import get_current_user_authorizer
