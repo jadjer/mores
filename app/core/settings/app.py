@@ -17,7 +17,7 @@ import sys
 from typing import Any, Dict, List, Tuple
 
 from loguru import logger
-from pydantic import PostgresDsn, SecretStr
+from pydantic import SecretStr
 
 from app.core.logging import InterceptHandler
 from app.core.settings.base import BaseAppSettings
@@ -37,7 +37,6 @@ class AppSettings(BaseAppSettings):
     database_user: str
     database_pass: str
 
-    # database_url: PostgresDsn
     max_connection_count: int = 10
     min_connection_count: int = 10
 

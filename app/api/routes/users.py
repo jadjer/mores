@@ -12,8 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Body, Depends, HTTPException
-from starlette.status import HTTP_400_BAD_REQUEST
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
@@ -40,7 +39,6 @@ async def retrieve_current_user(
     )
     return UserInResponse(
         user=UserWithToken(
-            id=user.id,
             first_name=user.first_name,
             second_name=user.second_name,
             last_name=user.last_name,
@@ -67,14 +65,14 @@ async def update_current_user(
     if user_update.username and user_update.username != current_user.username:
         if await check_username_is_taken(users_repo, user_update.username):
             raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=strings.USERNAME_TAKEN,
             )
 
     if user_update.email and user_update.email != current_user.email:
         if await check_email_is_taken(users_repo, user_update.email):
             raise HTTPException(
-                status_code=HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=strings.EMAIL_TAKEN,
             )
 
@@ -86,7 +84,6 @@ async def update_current_user(
     )
     return UserInResponse(
         user=UserWithToken(
-            id=user.id,
             first_name=user.first_name,
             second_name=user.second_name,
             last_name=user.last_name,

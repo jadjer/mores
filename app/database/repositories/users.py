@@ -50,6 +50,7 @@ class UsersRepository(BaseRepository):
             username=user.username,
             email=user.email,
             password=user.password,
+            salt=user.salt
         )
 
         self.session.add(new_user)

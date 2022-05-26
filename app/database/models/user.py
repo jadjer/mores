@@ -27,6 +27,7 @@ class UserModel(Base):
     email = Column(String, unique=True)
     phone = Column(String, unique=True)
     password = Column(String)
+    salt = Column(String)
 
     first_name = Column(String)
     second_name = Column(String)
