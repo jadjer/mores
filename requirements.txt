@@ -1,7 +1,10 @@
-fastapi[all]
-python-jose[cryptography]
-python-multipart
-pydantic
-pytest
-unicorn
+fastapi
+pydantic[email]
+uvicorn
 SQLAlchemy
+loguru
+bcrypt
+passlib
+PyJWT
+alembic
+asyncpg
