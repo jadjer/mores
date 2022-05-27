@@ -29,7 +29,7 @@ router = APIRouter()
 
 
 @router.get("", response_model=UserInResponse, name="users:get-current-user")
-async def retrieve_current_user(
+async def get_current_user(
         user: User = Depends(get_current_user_authorizer()),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponse:

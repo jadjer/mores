@@ -14,10 +14,9 @@
 
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Path
-from starlette import status
+from fastapi import Depends, HTTPException, Path, status
 
-from app.api.dependencies import articles, authentication, database
+from app.api.dependencies import posts, authentication, database
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.comments import CommentsRepository
 from app.models.domain.post import Post
@@ -29,7 +28,7 @@ from app.services.comments import check_user_can_modify_comment
 
 async def get_comment_by_id_from_path(
     comment_id: int = Path(..., ge=1),
-    article: Post = Depends(articles.get_article_by_slug_from_path),
+    post: Post = Depends(posts.get_post_by_id_from_path),
     user: Optional[User] = Depends(
         authentication.get_current_user_authorizer(required=False),
     ),
@@ -40,7 +39,7 @@ async def get_comment_by_id_from_path(
     try:
         return await comments_repo.get_comment_by_id(
             comment_id=comment_id,
-            article=article,
+            post=post,
             user=user,
         )
     except EntityDoesNotExist:

@@ -16,7 +16,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, Response, status
 
-from app.api.dependencies.articles import get_article_by_slug_from_path
+from app.api.dependencies.posts import get_post_by_id_from_path
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.comments import (
     check_comment_modification_permissions,
@@ -42,7 +42,7 @@ router = APIRouter()
     name="comments:get-comments-for-article",
 )
 async def list_comments_for_article(
-    article: Post = Depends(get_article_by_slug_from_path),
+    article: Post = Depends(get_post_by_id_from_path),
     user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> ListOfCommentsInResponse:
@@ -58,7 +58,7 @@ async def list_comments_for_article(
 )
 async def create_comment_for_article(
     comment_create: CommentInCreate = Body(..., embed=True, alias="comment"),
-    article: Post = Depends(get_article_by_slug_from_path),
+    article: Post = Depends(get_post_by_id_from_path),
     user: User = Depends(get_current_user_authorizer()),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> CommentInResponse:

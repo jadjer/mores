@@ -14,13 +14,13 @@
 
 from app.models.common import IDModelMixin
 from app.models.domain.rwmodel import RWModel
-from app.models.domain.user import User
 
 
 class Vehicle(IDModelMixin, RWModel):
-    owner: User
     brand: str
     model: str
     year: int
     color: str
     mileage: int
+    vin: str
+    registration_plate: str

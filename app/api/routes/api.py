@@ -16,19 +16,29 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     authentication,
-    # comments,
-    users
+    users,
+    vehicles,
+    services,
+    service_types,
+    reminders,
+    fuels,
+    geos,
+    posts,
+    comments,
+    events,
+    event_confirmations
 )
-
-# from app.api.routes.articles import api as articles
 
 router = APIRouter()
 router.include_router(authentication.router, tags=["authentication"], prefix="/auth")
 router.include_router(users.router, tags=["users"], prefix="/user")
-# router.include_router(articles.router, tags=["articles"])
-# router.include_router(
-#     comments.router,
-#     tags=["comments"],
-#     prefix="/articles/{slug}/comments",
-# )
-# router.include_router(tags.router, tags=["tags"], prefix="/tags")
+router.include_router(vehicles.router, tags=["vehicles"], prefix="/vehicles")
+router.include_router(services.router, tags=["services"], prefix="/services")
+router.include_router(service_types.router, tags=["service_types"], prefix="/services/types")
+router.include_router(reminders.router, tags=["reminders"], prefix="/services/reminders")
+router.include_router(fuels.router, tags=["fuels"], prefix="/services/fuels")
+router.include_router(geos.router, tags=["geos"], prefix="/geos")
+router.include_router(posts.router, tags=["posts"], prefix="/posts")
+router.include_router(comments.router, tags=["comments"], prefix="/posts/{post_id}/comments")
+router.include_router(events.router, tags=["events"], prefix="/events")
+router.include_router(event_confirmations.router, tags=["events"], prefix="/events/{event_id}/confirm")

@@ -92,7 +92,6 @@ class PostsRepository(BaseRepository):
 
     async def filter_articles(  # noqa: WPS211
             self,
-            *,
             tag: Optional[str] = None,
             author: Optional[str] = None,
             favorited: Optional[str] = None,
@@ -226,10 +225,9 @@ class PostsRepository(BaseRepository):
             for article_row in articles_rows
         ]
 
-    async def get_article_by_slug(
+    async def get_article_by_id(
             self,
-            *,
-            slug: str,
+            post_id: int,
             requested_user: Optional[User] = None,
     ) -> Post:
         article_row = await queries.get_article_by_slug(self.connection, slug=slug)

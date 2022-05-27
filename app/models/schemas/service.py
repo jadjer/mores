@@ -11,3 +11,21 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
+from typing import List
+
+from app.models.domain.service import Service
+from app.models.schemas.rwschema import RWSchema
+
+
+class ListOfServicesInResponse(RWSchema):
+    services: List[Service]
+    count: int
+
+
+class ServiceInResponse(RWSchema):
+    service: Service
+
+
+class ServiceInCreate(RWSchema):
+    body: str

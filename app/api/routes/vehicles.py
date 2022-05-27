@@ -12,13 +12,53 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+
+from app.models.schemas.vehicle import VehicleInResponse, ListOfVehiclesInResponse
 
 router = APIRouter()
 
+
 @router.get(
     "",
-
+    response_model=ListOfVehiclesInResponse,
+    name="vehicle:get-all-vehicles"
 )
-async def get_vehicle():
+async def get_vehicles():
+    pass
+
+
+@router.get(
+    "/{vehicle_id}",
+    response_model=VehicleInResponse,
+    name="vehicle:get-vehicle"
+)
+async def get_vehicles(vehicle_id: int):
+    pass
+
+
+@router.post(
+    "",
+    response_model=VehicleInResponse,
+    name="vehicle:create-vehicle"
+)
+async def create_vehicle():
+    pass
+
+
+@router.put(
+    "/{vehicle_id}",
+    response_model=VehicleInResponse,
+    name="vehicle:update-vehicle"
+)
+async def create_vehicle():
+    pass
+
+
+@router.delete(
+    "/{vehicle_id}",
+    response_model=VehicleInResponse,
+    name="vehicle:delete-vehicle"
+)
+async def delete_vehicle():
     pass

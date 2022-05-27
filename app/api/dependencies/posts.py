@@ -29,32 +29,28 @@ from app.models.schemas.post import (
     PostsFilters,
 )
 from app.resources import strings
-from app.services.articles import check_user_can_modify_article
+from app.services.posts import check_user_can_modify_post
 
 
-def get_articles_filters(
-    tag: Optional[str] = None,
+def get_posts_filters(
     author: Optional[str] = None,
-    favorited: Optional[str] = None,
     limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
     offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
 ) -> PostsFilters:
     return PostsFilters(
-        tag=tag,
         author=author,
-        favorited=favorited,
         limit=limit,
         offset=offset,
     )
 
 
-async def get_article_by_slug_from_path(
-    slug: str = Path(..., min_length=1),
+async def get_post_by_id_from_path(
+    post_id: str = Path(..., min_length=1),
     user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
     posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> Post:
     try:
-        return await posts_repo.get_article_by_slug(slug=slug, requested_user=user)
+        return await posts_repo.get_article_by_slug(post_id=post_id, requested_user=user)
     except EntityDoesNotExist:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -63,10 +59,10 @@ async def get_article_by_slug_from_path(
 
 
 def check_article_modification_permissions(
-    current_article: Post = Depends(get_article_by_slug_from_path),
+    current_post: Post = Depends(get_post_by_id_from_path),
     user: User = Depends(get_current_user_authorizer()),
 ) -> None:
-    if not check_user_can_modify_article(current_article, user):
+    if not check_user_can_modify_post(current_post, user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_ARTICLE,

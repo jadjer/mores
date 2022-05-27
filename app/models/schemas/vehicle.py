@@ -12,12 +12,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import List
 
-from fastapi import APIRouter
+from app.models.domain.vehicle import Vehicle
+from app.models.schemas.rwschema import RWSchema
 
-from app.api.routes.articles import articles_common, articles_resource
 
-router = APIRouter()
+class ListOfVehiclesInResponse(RWSchema):
+    vehicles: List[Vehicle]
+    count: int
 
-router.include_router(articles_common.router, prefix="/articles")
-router.include_router(articles_resource.router, prefix="/articles")
+
+class VehicleInResponse(RWSchema):
+    vehicle: Vehicle
+
+
+class VehicleInCreate(RWSchema):
+    body: str
