@@ -24,8 +24,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from app.database.models import LocationModel
 from app.database.repositories.base import BaseRepository
 
 
-class GeosRepository(BaseRepository):
-    pass
+class LocationsRepository(BaseRepository):
+
+    async def create_location(self, name: str, description: str, latitude: float, longitude: float) -> int:
+        location_in_db = LocationModel(name=name, description=description, latitude=latitude, longitude=longitude)
+
+        self.session.add(location_in_db)
+        await self.session.commit()
+        self.session.refresh(location_in_db)
+
+        return location_in_db.id

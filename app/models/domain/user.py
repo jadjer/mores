@@ -12,30 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
-from enum import Enum
-
 from app.models.common import DateTimeModelMixin, IDModelMixin
 from app.models.domain.rwmodel import RWModel
 from app.services import security
 
 
-class Gender(Enum):
-    UNDEFINED = 1
-    MALE = 2
-    FEMALE = 3
-
-
 class User(RWModel):
-    first_name: Optional[str]
-    second_name: Optional[str]
-    last_name: Optional[str]
     username: str
     email: str
-    gender: Optional[Gender] = Gender.UNDEFINED
-    age: Optional[int]
-    phone: Optional[str]
-    image: Optional[str] = None
     is_admin: bool = False
     is_blocked: bool = False
 

@@ -12,10 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, Enum
+from sqlalchemy import Boolean, Column, Integer, String
 
 from app.database.base import Base
-from app.models.domain.user import Gender
 
 
 class UserModel(Base):
@@ -25,15 +24,8 @@ class UserModel(Base):
 
     username = Column(String, unique=True)
     email = Column(String, unique=True)
-    phone = Column(String, unique=True)
     password = Column(String)
     salt = Column(String)
-
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
 
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)

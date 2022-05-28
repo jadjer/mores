@@ -38,7 +38,10 @@ async def login(
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponse:
-    wrong_login_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
+    wrong_login_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.INCORRECT_LOGIN_INPUT,
+    )
 
     try:
         user = await users_repo.get_user_by_username(user_login.username)
@@ -55,17 +58,18 @@ async def login(
 
     return UserInResponse(
         user=UserWithToken(
-            first_name=user.first_name,
-            second_name=user.second_name,
-            last_name=user.last_name,
-            username=user.username,
-            email=user.email,
-            gender=user.gender,
-            age=user.age,
-            phone=user.phone,
-            is_admin=user.is_admin,
-            is_blocked=user.is_blocked,
-            image=user.image,
+            **user.dict(),
+            # first_name=user.first_name,
+            # second_name=user.second_name,
+            # last_name=user.last_name,
+            # username=user.username,
+            # email=user.email,
+            # gender=user.gender,
+            # age=user.age,
+            # phone=user.phone,
+            # is_admin=user.is_admin,
+            # is_blocked=user.is_blocked,
+            # image=user.image,
             token=token
         )
     )
@@ -98,17 +102,18 @@ async def register(
 
     return UserInResponse(
         user=UserWithToken(
-            first_name=user.first_name,
-            second_name=user.second_name,
-            last_name=user.last_name,
-            username=user.username,
-            email=user.email,
-            gender=user.gender,
-            age=user.age,
-            phone=user.phone,
-            is_admin=user.is_admin,
-            is_blocked=user.is_blocked,
-            image=user.image,
+            **user.dict(),
+            # first_name=user.first_name,
+            # second_name=user.second_name,
+            # last_name=user.last_name,
+            # username=user.username,
+            # email=user.email,
+            # gender=user.gender,
+            # age=user.age,
+            # phone=user.phone,
+            # is_admin=user.is_admin,
+            # is_blocked=user.is_blocked,
+            # image=user.image,
             token=token
         )
     )

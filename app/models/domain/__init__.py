@@ -16,7 +16,7 @@ from .comment import Comment
 from .event import Event, EventState
 from .event_confirmation import EventConfirmation, EventConfirmationType
 from .fuel import Fuel, FuelType
-from .geo import Geo
+from .location import Location
 from .post import Post
 from .reminder import Reminder
 from .service import Service, ServiceType

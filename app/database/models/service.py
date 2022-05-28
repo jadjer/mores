@@ -22,7 +22,7 @@ class ServiceModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
-    geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     service_type_id = Column(Integer, ForeignKey("service_types.id"), nullable=False)
     mileage = Column(Float, nullable=False)
     datetime = Column(DateTime, nullable=False)

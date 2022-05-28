@@ -23,7 +23,7 @@ from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User
+from app.models.domain.user import User, UserInDB
 from app.resources import strings
 from app.services import jwt
 
@@ -85,7 +85,7 @@ async def _get_current_user(
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         token: str = Depends(_get_authorization_header_retriever()),
         settings: AppSettings = Depends(get_app_settings),
-) -> User:
+) -> UserInDB:
     try:
         username = jwt.get_username_from_token(
             token,
@@ -110,7 +110,7 @@ async def _get_current_user_optional(
         repo: UsersRepository = Depends(get_repository(UsersRepository)),
         token: str = Depends(_get_authorization_header_retriever(required=False)),
         settings: AppSettings = Depends(get_app_settings),
-) -> Optional[User]:
+) -> Optional[UserInDB]:
     if token:
         return await _get_current_user(repo, token, settings)
 

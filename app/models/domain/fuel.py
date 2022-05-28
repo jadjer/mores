@@ -14,19 +14,19 @@
 from enum import Enum
 
 from app.models.common import IDModelMixin
-from app.models.domain.geo import Geo
+from app.models.domain.location import Location
 from app.models.domain.vehicle import Vehicle
 from app.models.domain.rwmodel import RWModel
 
 
 class FuelType(Enum):
-    PETROL_92 = 1
-    PETROL_95 = 2
-    PETROL_98 = 3
-    PETROL_100 = 4
-    DIESEL = 5
-    GAS = 6
-    ELECTRICITY = 7
+    PETROL_92 = "petrol_92"
+    PETROL_95 = "petrol_95"
+    PETROL_98 = "petrol_98"
+    PETROL_100 = "petrol_100"
+    DIESEL = "diesel"
+    GAS = "gas"
+    ELECTRICITY = "electricity"
 
 
 class Fuel(IDModelMixin, RWModel):
@@ -34,5 +34,5 @@ class Fuel(IDModelMixin, RWModel):
     quantity: float
     price: float
     type: FuelType
-    geo: Geo
+    location: Location
     datetime: str

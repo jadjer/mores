@@ -8,7 +8,7 @@ from app.models.domain.user import User
 from app.models.schemas.jwt import JWTMeta, JWTUser
 
 JWT_SUBJECT = "access"
-ALGORITHM = "RS256"
+ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # one week
 
 

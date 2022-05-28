@@ -24,54 +24,46 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status
+from datetime import datetime
+from typing import Optional, List
+from pydantic import Field
 
-from app.models.domain import Service
-from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse
+from app.models.domain import Event, Location, EventState
+from app.models.schemas.rwschema import RWSchema
 
-router = APIRouter()
-
-
-@router.get(
-    "",
-    response_model=ListOfServicesInResponse,
-    name="geos:get-all-vehicles",
-)
-async def get_vehicles() -> ListOfServicesInResponse:
-    pass
+DEFAULT_ARTICLES_LIMIT = 20
+DEFAULT_ARTICLES_OFFSET = 0
 
 
-@router.get(
-    "/{type_id}",
-    response_model=ServiceInResponse,
-    name="geos:get-vehicle",
-)
-async def get_vehicles(type_id: int):
-    pass
+class EventInResponse(RWSchema):
+    event: Event
 
 
-@router.post(
-    "",
-    response_model=ServiceInResponse,
-    name="geos:create-vehicle",
-)
-async def create_vehicle():
-    pass
+class EventInCreate(RWSchema):
+    title: str
+    description: str
+    thumbnail: str
+    body: str
+    started_at: datetime
+    location: Location
 
 
-@router.put(
-    "/{type_id}",
-    response_model=ServiceInResponse,
-    name="geos:update-vehicle",
-)
-async def create_vehicle(type_id: int):
-    pass
+class EventInUpdate(RWSchema):
+    title: str
+    description: str
+    thumbnail: str
+    body: str
+    started_at: datetime
+    location: Location
+    state: EventState
 
 
-@router.delete(
-    "/{type_id}",
-    response_model=ServiceInResponse,
-    name="geos:delete-vehicle",
-)
-async def delete_vehicle(type_id: int):
-    pass
+class ListOfEventsInResponse(RWSchema):
+    events: List[Event]
+    events_count: int
+
+
+class EventsFilters(RWSchema):
+    author: Optional[str] = None
+    limit: int = Field(DEFAULT_ARTICLES_LIMIT, ge=1)
+    offset: int = Field(DEFAULT_ARTICLES_OFFSET, ge=0)

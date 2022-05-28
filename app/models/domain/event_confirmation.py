@@ -20,11 +20,11 @@ from app.models.domain.user import User
 
 
 class EventConfirmationType(Enum):
-    YES = 1
-    MAY_BE_YES = 2
-    MAY_BY = 3
-    MAY_BE_NO = 4
-    NO = 5
+    YES = "yes"
+    MAY_BE_YES = "may_be_yes"
+    MAY_BY = "may_be"
+    MAY_BE_NO = "may_be_no"
+    NO = "no"
 
 
 class EventConfirmation(RWModel):

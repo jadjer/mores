@@ -28,7 +28,7 @@ class EventModel(Base):
     thumbnail = Column(String, nullable=False)
     body = Column(String, nullable=False)
     started_at = Column(DateTime)
-    geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     event_state = Column(Enum(EventState))
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

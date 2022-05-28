@@ -16,7 +16,7 @@ from app.models.common import IDModelMixin
 from app.models.domain.rwmodel import RWModel
 
 
-class Geo(IDModelMixin, RWModel):
+class Location(IDModelMixin, RWModel):
     name: str
     description: str
     latitude: float

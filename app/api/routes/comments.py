@@ -58,13 +58,13 @@ async def list_comments_for_article(
 )
 async def create_comment_for_article(
     comment_create: CommentInCreate = Body(..., embed=True, alias="comment"),
-    article: Post = Depends(get_post_by_id_from_path),
+    post: Post = Depends(get_post_by_id_from_path),
     user: User = Depends(get_current_user_authorizer()),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> CommentInResponse:
     comment = await comments_repo.create_comment_for_article(
         body=comment_create.body,
-        article=article,
+        article=post,
         user=user,
     )
     return CommentInResponse(comment=comment)

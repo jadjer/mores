@@ -17,23 +17,23 @@ from enum import Enum
 import datetime as datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
-from app.models.domain.geo import Geo
+from app.models.domain.location import Location
 from app.models.domain.rwmodel import RWModel
 from app.models.domain.user import User
 
 
 class EventState(Enum):
-    PLANNED = 1
-    DONE = 2
-    CANCELED = 3
+    PLANNED = "planned"
+    DONE = "done"
+    CANCELED = "canceled"
 
 
 class Event(IDModelMixin, DateTimeModelMixin, RWModel):
     author: User
     title: str
     description: str
-    picture: str
+    thumbnail: str
     body: str
-    start_at: datetime.datetime
-    geo: Geo
-    state: EventState
+    started_at: datetime.datetime
+    location: Location
+    event_state: EventState

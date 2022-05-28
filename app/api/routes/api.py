@@ -22,7 +22,7 @@ from app.api.routes import (
     service_types,
     reminders,
     fuels,
-    geos,
+    locations,
     posts,
     comments,
     events,
@@ -37,7 +37,7 @@ router.include_router(services.router, tags=["services"], prefix="/services")
 router.include_router(service_types.router, tags=["service_types"], prefix="/services/types")
 router.include_router(reminders.router, tags=["reminders"], prefix="/services/reminders")
 router.include_router(fuels.router, tags=["fuels"], prefix="/services/fuels")
-router.include_router(geos.router, tags=["geos"], prefix="/geos")
+router.include_router(locations.router, tags=["locations"], prefix="/locations")
 router.include_router(posts.router, tags=["posts"], prefix="/posts")
 router.include_router(comments.router, tags=["comments"], prefix="/posts/{post_id}/comments")
 router.include_router(events.router, tags=["events"], prefix="/events")
