@@ -12,14 +12,37 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from enum import Enum
+
+from pydantic import HttpUrl, EmailStr
+
 from app.models.common import DateTimeModelMixin, IDModelMixin
 from app.models.domain.rwmodel import RWModel
 from app.services import security
 
 
-class User(RWModel):
+class Gender(Enum):
+    UNDEFINED = "undefined"
+    MALE = "male"
+    FEMALE = "female"
+
+
+class UserShort(RWModel):
     username: str
-    email: str
+    image: HttpUrl
+
+
+class UserLong(UserShort):
+    email: EmailStr
+    first_name: str
+    second_name: str
+    last_name: str
+    gender: Gender = Gender.UNDEFINED
+    age: int
+    phone: str
+
+
+class User(UserLong):
     is_admin: bool = False
     is_blocked: bool = False
 

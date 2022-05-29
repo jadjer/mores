@@ -33,7 +33,9 @@ from app.database.errors import EntityDoesNotExist
 from app.database.models import EventModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
-from app.models.domain import Location, Event, EventState, User, UserInDB
+from app.models.domain.location import Location
+from app.models.domain.event import Event, EventState
+from app.models.domain.user import User, UserInDB
 
 
 class EventsRepository(BaseRepository):

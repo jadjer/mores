@@ -31,7 +31,7 @@ from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.events import get_events_filters
 from app.database.repositories.events import EventsRepository
-from app.models.domain import User, UserInDB
+from app.models.domain.user import User, UserInDB
 from app.models.schemas.events import EventsFilters, ListOfEventsInResponse, EventInResponse, EventInCreate
 
 router = APIRouter()

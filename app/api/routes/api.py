@@ -26,7 +26,7 @@ from app.api.routes import (
     posts,
     comments,
     events,
-    event_confirmations
+    event_confirmations,
 )
 
 router = APIRouter()

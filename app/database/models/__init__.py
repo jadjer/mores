@@ -24,4 +24,3 @@ from .fuel import FuelModel, FuelType
 from .location import LocationModel
 from .event import EventModel, EventState
 from .event_confirmation import EventConfirmationModel, EventConfirmationType
-from .profile import ProfileModel

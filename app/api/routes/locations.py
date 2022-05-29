@@ -29,7 +29,7 @@ from fastapi import APIRouter, status, Body, Depends
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.repositories.locations import LocationsRepository
-from app.models.domain import User
+from app.models.domain.user import User
 from app.models.schemas.location import LocationInCreate, LocationInResponse
 
 router = APIRouter()

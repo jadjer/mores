@@ -38,7 +38,7 @@
 
 from fastapi import APIRouter, status
 
-from app.models.domain import Service
+from app.models.domain.service import Service
 from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse
 
 router = APIRouter()

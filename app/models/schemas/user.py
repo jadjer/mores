@@ -16,7 +16,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, HttpUrl
 
-from app.models.domain.user import User
+from app.models.domain.user import User, Gender
 from app.models.schemas.rwschema import RWSchema
 
 
@@ -33,7 +33,12 @@ class UserInUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    bio: Optional[str] = None
+    first_name: Optional[str] = None
+    second_name: Optional[str] = None
+    last_name: Optional[str] = None
+    gender: Optional[Gender] = Gender.UNDEFINED
+    age: Optional[int]
+    phone: Optional[str] = None
     image: Optional[HttpUrl] = None
 
 
@@ -42,4 +47,8 @@ class UserWithToken(User):
 
 
 class UserInResponse(RWSchema):
+    user: User
+
+
+class UserInResponseWithToken(RWSchema):
     user: UserWithToken

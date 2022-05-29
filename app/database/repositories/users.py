@@ -42,7 +42,7 @@ class UsersRepository(BaseRepository):
 
         raise EntityDoesNotExist("user with username {0} does not exist".format(username))
 
-    async def create_user(self, username: str, email: str, password: str) -> UserInDB:
+    async def create_user(self, username: str, email: str, password: str) -> User:
         user = UserInDB(username=username, email=email)
         user.change_password(password)
 

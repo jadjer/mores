@@ -28,7 +28,7 @@ from datetime import datetime
 from typing import Optional, List
 from pydantic import Field
 
-from app.models.domain import Event, Location, EventState
+from app.models.domain.event import Event, Location, EventState
 from app.models.schemas.rwschema import RWSchema
 
 DEFAULT_ARTICLES_LIMIT = 20

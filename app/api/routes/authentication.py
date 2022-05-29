@@ -22,8 +22,8 @@ from app.database.repositories.users import UsersRepository
 from app.models.schemas.user import (
     UserInCreate,
     UserInLogin,
-    UserInResponse,
     UserWithToken,
+    UserInResponseWithToken,
 )
 from app.resources import strings
 from app.services import jwt
@@ -32,12 +32,12 @@ from app.services.authentication import check_email_is_taken, check_username_is_
 router = APIRouter()
 
 
-@router.post("/login", response_model=UserInResponse, name="auth:login")
+@router.post("/login", response_model=UserInResponseWithToken, name="auth:login")
 async def login(
         user_login: UserInLogin = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         settings: AppSettings = Depends(get_app_settings),
-) -> UserInResponse:
+) -> UserInResponseWithToken:
     wrong_login_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.INCORRECT_LOGIN_INPUT,
@@ -56,31 +56,30 @@ async def login(
         str(settings.secret_key.get_secret_value()),
     )
 
-    return UserInResponse(
+    return UserInResponseWithToken(
         user=UserWithToken(
-            **user.dict(),
-            # first_name=user.first_name,
-            # second_name=user.second_name,
-            # last_name=user.last_name,
-            # username=user.username,
-            # email=user.email,
-            # gender=user.gender,
-            # age=user.age,
-            # phone=user.phone,
-            # is_admin=user.is_admin,
-            # is_blocked=user.is_blocked,
-            # image=user.image,
+            first_name=user.first_name,
+            second_name=user.second_name,
+            last_name=user.last_name,
+            username=user.username,
+            email=user.email,
+            gender=user.gender,
+            age=user.age,
+            phone=user.phone,
+            is_admin=user.is_admin,
+            is_blocked=user.is_blocked,
+            image=user.image,
             token=token
         )
     )
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserInResponse, name="auth:register")
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserInResponseWithToken, name="auth:register")
 async def register(
         user_create: UserInCreate = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         settings: AppSettings = Depends(get_app_settings),
-) -> UserInResponse:
+) -> UserInResponseWithToken:
     if await check_username_is_taken(users_repo, user_create.username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -100,20 +99,19 @@ async def register(
         str(settings.secret_key.get_secret_value()),
     )
 
-    return UserInResponse(
+    return UserInResponseWithToken(
         user=UserWithToken(
-            **user.dict(),
-            # first_name=user.first_name,
-            # second_name=user.second_name,
-            # last_name=user.last_name,
-            # username=user.username,
-            # email=user.email,
-            # gender=user.gender,
-            # age=user.age,
-            # phone=user.phone,
-            # is_admin=user.is_admin,
-            # is_blocked=user.is_blocked,
-            # image=user.image,
+            first_name=user.first_name,
+            second_name=user.second_name,
+            last_name=user.last_name,
+            username=user.username,
+            email=user.email,
+            gender=user.gender,
+            age=user.age,
+            phone=user.phone,
+            is_admin=user.is_admin,
+            is_blocked=user.is_blocked,
+            image=user.image,
             token=token
         )
     )

@@ -85,7 +85,7 @@ async def _get_current_user(
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         token: str = Depends(_get_authorization_header_retriever()),
         settings: AppSettings = Depends(get_app_settings),
-) -> UserInDB:
+) -> User:
     try:
         username = jwt.get_username_from_token(
             token,
@@ -110,7 +110,7 @@ async def _get_current_user_optional(
         repo: UsersRepository = Depends(get_repository(UsersRepository)),
         token: str = Depends(_get_authorization_header_retriever(required=False)),
         settings: AppSettings = Depends(get_app_settings),
-) -> Optional[UserInDB]:
+) -> Optional[User]:
     if token:
         return await _get_current_user(repo, token, settings)
 
