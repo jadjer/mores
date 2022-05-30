@@ -35,6 +35,10 @@ DEFAULT_ARTICLES_LIMIT = 20
 DEFAULT_ARTICLES_OFFSET = 0
 
 
+class EventInRequest(RWSchema):
+    event_id: int
+
+
 class EventInResponse(RWSchema):
     event: Event
 
@@ -63,7 +67,12 @@ class ListOfEventsInResponse(RWSchema):
     events_count: int
 
 
-class EventsFilters(RWSchema):
+class EventID(RWSchema):
+    event_id: int = Field(1, ge=1)
+
+
+class EventsFilter(RWSchema):
     author: Optional[str] = None
+    state: EventState = EventState.PLANNED
     limit: int = Field(DEFAULT_ARTICLES_LIMIT, ge=1)
     offset: int = Field(DEFAULT_ARTICLES_OFFSET, ge=0)

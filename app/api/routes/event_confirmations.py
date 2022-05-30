@@ -24,18 +24,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends
 
-from app.models.domain.service import Service
-from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse
+from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.events import (
+    get_event_id_from_path,
+    get_event_confirmation_from_query
+)
+from app.models.domain.event import EventState
+from app.models.domain.user import UserInDB
 
 router = APIRouter()
 
 
 @router.post(
     "",
-    response_model=ServiceInResponse,
     name="events:confirmation",
 )
-async def confirmation():
+async def confirmation(
+        event_id: int = Depends(get_event_id_from_path),
+        event_confirmation: EventState = Depends(get_event_confirmation_from_query),
+        user: UserInDB = Depends(get_current_user_authorizer(required=True)),
+) -> None:
     pass

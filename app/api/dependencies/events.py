@@ -26,18 +26,34 @@
 
 from typing import Optional
 
-from fastapi import Query
+from fastapi import Query, Path
 
-from app.models.schemas.events import EventsFilters, DEFAULT_ARTICLES_LIMIT, DEFAULT_ARTICLES_OFFSET
+from app.models.domain.event import EventState
+from app.models.domain.event_confirmation import EventConfirmationType
+from app.models.schemas.events import (
+    DEFAULT_ARTICLES_LIMIT,
+    DEFAULT_ARTICLES_OFFSET,
+    EventsFilter,
+)
 
 
 def get_events_filters(
-    author: Optional[str] = None,
-    limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
-    offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
-) -> EventsFilters:
-    return EventsFilters(
+        author: Optional[str] = None,
+        state: EventState = EventState.PLANNED,
+        limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
+        offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
+) -> EventsFilter:
+    return EventsFilter(
         author=author,
+        state=state,
         limit=limit,
         offset=offset,
     )
+
+
+def get_event_id_from_path(event_id: int = Path(..., ge=1)) -> int:
+    return event_id
+
+
+def get_event_confirmation_from_query(confirmation: EventConfirmationType = Query(...)) -> EventConfirmationType:
+    return confirmation

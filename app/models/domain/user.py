@@ -27,22 +27,18 @@ class Gender(Enum):
     FEMALE = "female"
 
 
-class UserShort(RWModel):
+class User(RWModel):
     username: str
-    image: HttpUrl
-
-
-class UserLong(UserShort):
     email: EmailStr
-    first_name: str
-    second_name: str
-    last_name: str
+
+    first_name: str = None
+    second_name: str = None
+    last_name: str = None
     gender: Gender = Gender.UNDEFINED
-    age: int
-    phone: str
+    age: int = None
+    phone: str = None
+    image: HttpUrl = None
 
-
-class User(UserLong):
     is_admin: bool = False
     is_blocked: bool = False
 

@@ -32,7 +32,11 @@ from app.services.authentication import check_email_is_taken, check_username_is_
 router = APIRouter()
 
 
-@router.post("/login", response_model=UserInResponseWithToken, name="auth:login")
+@router.post(
+    "/login",
+    response_model=UserInResponseWithToken,
+    name="auth:login",
+)
 async def login(
         user_login: UserInLogin = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
@@ -51,67 +55,30 @@ async def login(
     if not user.check_password(user_login.password):
         raise wrong_login_error
 
-    token = jwt.create_access_token_for_user(
-        user,
-        str(settings.secret_key.get_secret_value()),
-    )
+    token = jwt.create_access_token_for_user(user, str(settings.secret_key.get_secret_value()))
 
-    return UserInResponseWithToken(
-        user=UserWithToken(
-            first_name=user.first_name,
-            second_name=user.second_name,
-            last_name=user.last_name,
-            username=user.username,
-            email=user.email,
-            gender=user.gender,
-            age=user.age,
-            phone=user.phone,
-            is_admin=user.is_admin,
-            is_blocked=user.is_blocked,
-            image=user.image,
-            token=token
-        )
-    )
+    return UserInResponseWithToken(user=UserWithToken(**user.dict(), token=token))
 
 
-@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserInResponseWithToken, name="auth:register")
+@router.post(
+    "/register",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserInResponseWithToken,
+    name="auth:register",
+)
 async def register(
         user_create: UserInCreate = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
     if await check_username_is_taken(users_repo, user_create.username):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=strings.USERNAME_TAKEN,
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
 
     if await check_email_is_taken(users_repo, user_create.email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=strings.EMAIL_TAKEN,
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
 
     user = await users_repo.create_user(**user_create.dict())
 
-    token = jwt.create_access_token_for_user(
-        user,
-        str(settings.secret_key.get_secret_value()),
-    )
+    token = jwt.create_access_token_for_user(user, str(settings.secret_key.get_secret_value()))
 
-    return UserInResponseWithToken(
-        user=UserWithToken(
-            first_name=user.first_name,
-            second_name=user.second_name,
-            last_name=user.last_name,
-            username=user.username,
-            email=user.email,
-            gender=user.gender,
-            age=user.age,
-            phone=user.phone,
-            is_admin=user.is_admin,
-            is_blocked=user.is_blocked,
-            image=user.image,
-            token=token
-        )
-    )
+    return UserInResponseWithToken(user=UserWithToken(**user.dict(), token=token))

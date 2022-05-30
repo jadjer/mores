@@ -54,7 +54,19 @@ async def update_current_user(
                 detail=strings.EMAIL_TAKEN,
             )
 
-    user = await users_repo.update_user(user=current_user, **user_update.dict())
+    user = await users_repo.update_user(
+        user=current_user,
+        username=user_update.username,
+        email=user_update.email,
+        password=user_update.password,
+        first_name=user_update.first_name,
+        second_name=user_update.second_name,
+        last_name=user_update.last_name,
+        gender=user_update.gender,
+        age=user_update.age,
+        phone=user_update.phone,
+        image=user_update.image,
+    )
 
     return UserInResponse(
         user=user,

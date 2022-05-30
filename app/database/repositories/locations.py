@@ -24,17 +24,52 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from sqlalchemy import select
+
+from app.database.errors import EntityDoesNotExist
 from app.database.models import LocationModel
 from app.database.repositories.base import BaseRepository
+from app.models.domain.location import Location
 
 
 class LocationsRepository(BaseRepository):
 
-    async def create_location(self, name: str, description: str, latitude: float, longitude: float) -> int:
-        location_in_db = LocationModel(name=name, description=description, latitude=latitude, longitude=longitude)
+    async def create_location(
+            self,
+            *,
+            name: str,
+            description: str,
+            latitude: float,
+            longitude: float,
+    ) -> Location:
+        location_in_db = LocationModel(
+            name=name,
+            description=description,
+            latitude=latitude,
+            longitude=longitude,
+        )
 
         self.session.add(location_in_db)
         await self.session.commit()
-        self.session.refresh(location_in_db)
 
-        return location_in_db.id
+        return self._convert_model_to_location(location_in_db)
+
+    async def get_location(self, location_id: int) -> Location:
+        query = select(LocationModel).where(LocationModel.id == location_id)
+        result = await self.session.execute(query)
+
+        location_in_db = result.scalars().first()
+        if not location_in_db:
+            raise EntityDoesNotExist("location with id {0} does not exist".format(location_id))
+
+        return self._convert_model_to_location(location_in_db)
+
+    @staticmethod
+    def _convert_model_to_location(location: LocationModel) -> Location:
+        return Location(
+            id=location.id,
+            name=location.name,
+            description=location.description,
+            latitude=location.latitude,
+            longitude=location.longitude,
+        )
