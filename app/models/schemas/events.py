@@ -35,10 +35,6 @@ DEFAULT_ARTICLES_LIMIT = 20
 DEFAULT_ARTICLES_OFFSET = 0
 
 
-class EventInRequest(RWSchema):
-    event_id: int
-
-
 class EventInResponse(RWSchema):
     event: Event
 

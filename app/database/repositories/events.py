@@ -31,10 +31,11 @@ from sqlalchemy import select, delete, update
 from sqlalchemy.orm import Session
 
 from app.database.errors import EntityDoesNotExist
-from app.database.models import EventModel
+from app.database.models import EventModel, EventConfirmationModel
 from app.database.repositories import UsersRepository
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
+from app.models.domain.event_confirmation import EventConfirmation
 from app.models.domain.location import Location
 from app.models.domain.event import Event, EventState
 from app.models.domain.user import UserInDB
@@ -81,22 +82,23 @@ class EventsRepository(BaseRepository):
 
         return self._convert_model_to_event(author, location_in_db, event)
 
-    async def get_event(self, event_id: int) -> Event:
+    async def get_event_by_id(self, event_id: int) -> Event:
         query = select(EventModel).where(EventModel.id == event_id)
         result = await self.session.execute(query)
+
         event: EventModel = result.scalars().first()
-        if event:
-            user_in_db = await self._users_repo.get_user_by_id(event.author_id)
-            location_in_db = await self._locations_repo.get_location(event.location_id)
+        if not event:
+            raise EntityDoesNotExist("event with id {0} does not exist".format(event_id))
 
-            return Event(**event.__dict__, author=user_in_db, location=location_in_db)
+        user_in_db = await self._users_repo.get_user_by_id(event.author_id)
+        location_in_db = await self._locations_repo.get_location(event.location_id)
 
-        raise EntityDoesNotExist("event with id {0} does not exist".format(event_id))
+        return Event(**event.__dict__, author=user_in_db, location=location_in_db)
 
     async def update_event(
             self,
             *,
-            author: UserInDB,
+            user: UserInDB,
             event_id: int,
             title: str,
             description: str,
@@ -117,15 +119,16 @@ class EventsRepository(BaseRepository):
         )
         result = self.session.execute(query)
 
-        event_in_db = result.scalars().first()
+        event_in_db: EventModel = result.scalars().first()
         if not event_in_db:
             raise EntityDoesNotExist("event with id {0} does not exist".format(event_id))
 
-        return self._convert_model_to_event(author, location, event_in_db)
+        return self._convert_model_to_event(user, location, event_in_db)
 
     async def delete_event(self, event_id: int) -> None:
         query = delete(EventModel).where(EventModel.id == event_id)
         await self.session.execute(query)
+        await self.session.commit()
 
     async def filter_events(
             self,
@@ -134,6 +137,8 @@ class EventsRepository(BaseRepository):
             limit: int = 20,
             offset: int = 0,
     ) -> List[Event]:
+        events: List[Event] = []
+
         query = select(EventModel)
 
         if author:
@@ -146,8 +151,6 @@ class EventsRepository(BaseRepository):
 
         result = await self.session.execute(query)
         events_in_db = result.scalars().all()
-
-        events: List[Event] = []
 
         for event in events_in_db:
             author = await self._users_repo.get_user_by_id(event.author_id)

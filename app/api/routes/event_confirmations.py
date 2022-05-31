@@ -24,26 +24,45 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.database import get_repository
 from app.api.dependencies.events import (
-    get_event_id_from_path,
-    get_event_confirmation_from_query
+    get_event_by_id_from_path,
+    get_event_confirmation_from_query,
 )
-from app.models.domain.event import EventState
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.event_confirmations import EventConfirmationsRepository
+from app.models.domain.event import Event
+from app.models.domain.event_confirmation import EventConfirmationType, EventConfirmation
 from app.models.domain.user import UserInDB
+from app.models.schemas.event_confirmation import EventConfirmationInResponse
 
 router = APIRouter()
 
 
 @router.post(
     "",
+    response_model=EventConfirmationInResponse,
     name="events:confirmation",
+    status_code=status.HTTP_200_OK,
 )
 async def confirmation(
-        event_id: int = Depends(get_event_id_from_path),
-        event_confirmation: EventState = Depends(get_event_confirmation_from_query),
-        user: UserInDB = Depends(get_current_user_authorizer(required=True)),
-) -> None:
-    pass
+        event: Event = Depends(get_event_by_id_from_path),
+        event_confirmation: EventConfirmationType = Depends(get_event_confirmation_from_query),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        confirmation_repo: EventConfirmationsRepository = Depends(get_repository(EventConfirmationsRepository)),
+) -> EventConfirmationInResponse:
+    confirm: EventConfirmation
+
+    try:
+        await confirmation_repo.get_confirmation_by_event_id_for_user(event, user)
+        confirm = await confirmation_repo.update_confirmation_by_event_id_for_user(event, user, event_confirmation)
+
+    except EntityDoesNotExist:
+        confirm = await confirmation_repo.create_confirmation_by_event_id_for_user(event, user, event_confirmation)
+
+    return EventConfirmationInResponse(
+        confirmation=confirm
+    )

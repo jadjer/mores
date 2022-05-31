@@ -26,15 +26,22 @@
 
 from typing import Optional
 
-from fastapi import Query, Path
+from fastapi import Query, Path, Depends, HTTPException, status
 
-from app.models.domain.event import EventState
+from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.database import get_repository
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.events import EventsRepository
+from app.models.domain.event import EventState, Event
 from app.models.domain.event_confirmation import EventConfirmationType
+from app.models.domain.user import User
 from app.models.schemas.events import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
     EventsFilter,
 )
+from app.resources import strings
+from app.services.events import check_user_can_modify_event
 
 
 def get_events_filters(
@@ -55,5 +62,34 @@ def get_event_id_from_path(event_id: int = Path(..., ge=1)) -> int:
     return event_id
 
 
-def get_event_confirmation_from_query(confirmation: EventConfirmationType = Query(...)) -> EventConfirmationType:
+async def get_event_by_id_from_path(
+        event_id: int = Depends(get_event_id_from_path),
+        events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
+) -> Event:
+    try:
+        return await events_repo.get_event_by_id(
+            event_id=event_id,
+        )
+    except EntityDoesNotExist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=strings.EVENT_DOES_NOT_EXIST_ERROR,
+        )
+
+
+def get_event_confirmation_from_query(
+        confirmation: EventConfirmationType = Query(...),
+) -> EventConfirmationType:
     return confirmation
+
+
+def check_event_permissions(
+    event: Event = Depends(get_event_by_id_from_path),
+    user: User = Depends(get_current_user_authorizer()),
+) -> None:
+    if not check_user_can_modify_event(event, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=strings.USER_IS_NOT_AUTHOR_OF_EVENT,
+        )
+

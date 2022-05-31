@@ -23,7 +23,7 @@ from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
 from app.database.errors import EntityDoesNotExist
 from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User, UserInDB
+from app.models.domain.user import User
 from app.resources import strings
 from app.services import jwt
 
