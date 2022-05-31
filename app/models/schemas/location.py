@@ -32,10 +32,3 @@ from app.models.schemas.rwschema import RWSchema
 
 class LocationInResponse(RWSchema):
     location: Location
-
-
-class LocationInCreate(RWSchema):
-    name: str
-    description: Optional[str]
-    latitude: float
-    longitude: float

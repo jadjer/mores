@@ -24,28 +24,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status, Body, Depends
+from fastapi import APIRouter, status, Depends, HTTPException
 
-from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
+from app.api.dependencies.location import get_location_id_from_path
+from app.database.errors import EntityDoesNotExist
 from app.database.repositories.locations import LocationsRepository
-from app.models.domain.user import User
-from app.models.schemas.location import LocationInCreate, LocationInResponse
+from app.models.schemas.location import LocationInResponse
+from app.resources import strings
 
 router = APIRouter()
-
-
-@router.post(
-    "",
-    response_model=LocationInResponse,
-    name="locations:create-location",
-)
-async def create_location(
-        location_create: LocationInCreate = Body(..., embed=True, alias="geo"),
-        user: User = Depends(get_current_user_authorizer()),
-        locations_repo: LocationsRepository = Depends(get_repository(LocationsRepository)),
-) -> LocationInResponse:
-    geo = await locations_repo.create_location(**location_create)
 
 
 @router.get(
@@ -53,23 +41,15 @@ async def create_location(
     response_model=LocationInResponse,
     name="locations:get-location",
 )
-async def get_location(geo_id: int) -> LocationInResponse:
-    pass
+async def get_location(
+        location_id: int = Depends(get_location_id_from_path),
+        locations_repo: LocationsRepository = Depends(get_repository(LocationsRepository)),
+) -> LocationInResponse:
+    try:
+        location = await locations_repo.get_location(location_id)
+        return LocationInResponse(
+            location=location,
+        )
 
-
-@router.put(
-    "/{location_id}",
-    response_model=LocationInResponse,
-    name="locations:update-location",
-)
-async def update_location(geo_id: int) -> LocationInResponse:
-    pass
-
-
-@router.delete(
-    "/{location_id}",
-    response_model=LocationInResponse,
-    name="locations:delete-location",
-)
-async def delete_location(geo_id: int) -> LocationInResponse:
-    pass
+    except EntityDoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)

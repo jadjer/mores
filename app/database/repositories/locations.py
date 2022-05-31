@@ -24,7 +24,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import select
+from typing import Optional
+
+from sqlalchemy import select, insert, delete
 
 from app.database.errors import EntityDoesNotExist
 from app.database.models import LocationModel
@@ -34,14 +36,7 @@ from app.models.domain.location import Location
 
 class LocationsRepository(BaseRepository):
 
-    async def create_location(
-            self,
-            *,
-            name: str,
-            description: str,
-            latitude: float,
-            longitude: float,
-    ) -> Location:
+    async def create_location(self, *, name: str, description: str, latitude: float, longitude: float) -> Location:
         location_in_db = LocationModel(
             name=name,
             description=description,
@@ -63,6 +58,48 @@ class LocationsRepository(BaseRepository):
             raise EntityDoesNotExist("location with id {0} does not exist".format(location_id))
 
         return self._convert_model_to_location(location_in_db)
+
+    async def update_location(
+            self,
+            *,
+            location_id: int,
+            name: Optional[str] = None,
+            description: Optional[str] = None,
+            latitude: Optional[float] = None,
+            longitude: Optional[float] = None,
+    ) -> Location:
+        query = insert(LocationModel).where(LocationModel.id == location_id)
+
+        if name:
+            query = query.values(name=name)
+
+        if description:
+            query = query.values(description=description)
+
+        if latitude:
+            query = query.values(latitude=latitude)
+
+        if longitude:
+            query = query.values(longitude=longitude)
+
+        result = await self.session.execute(query)
+        await self.session.commit()
+
+        location_in_db = result.scalars().first()
+        if not location_in_db:
+            raise EntityDoesNotExist("location with id {0} does not exist".format(location_id))
+
+        return self._convert_model_to_location(location_in_db)
+
+    async def delete_location(self, location_id: int) -> None:
+        query = delete(LocationModel).where(LocationModel.id == location_id)
+
+        result = await self.session.execute(query)
+        await self.session.commit()
+
+        location_in_db = result.scalars().first()
+        if not location_in_db:
+            raise EntityDoesNotExist("location with id {0} does not exist".format(location_id))
 
     @staticmethod
     def _convert_model_to_location(location: LocationModel) -> Location:
