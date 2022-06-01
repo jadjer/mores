@@ -12,36 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Optional
+from typing import List
 
-from app.models.domain.vehicle import Vehicle
+from app.models.domain.service_type import ServiceType
 from app.models.schemas.rwschema import RWSchema
 
 
-class ListOfVehiclesInResponse(RWSchema):
-    vehicles: List[Vehicle]
-    count: int
+class ListOfServicesTypesInResponse(RWSchema):
+    services_types: List[ServiceType]
+    services_types_count: int
 
 
-class VehicleInResponse(RWSchema):
-    vehicle: Vehicle
+class ServiceTypeInResponse(RWSchema):
+    service_type: ServiceType
 
 
-class VehicleInCreate(RWSchema):
-    brand: str
-    model: str
-    year: int
-    color: str
-    mileage: int
-    vin: str
-    registration_plate: str
+class ServiceTypeInCreate(RWSchema):
+    body: str
 
-
-class VehicleInUpdate(RWSchema):
-    brand: Optional[str]
-    model: Optional[str]
-    year: Optional[int]
-    color: Optional[str]
-    mileage: Optional[int]
-    vin: Optional[str]
-    registration_plate: Optional[str]

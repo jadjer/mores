@@ -48,6 +48,21 @@ from app.resources import strings
 router = APIRouter()
 
 
+@router.post(
+    "",
+    response_model=EventInResponse,
+    name="events:create-event",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_event(
+        event_create: EventInCreate = Body(..., embed=True, alias="event"),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
+) -> EventInResponse:
+    event = await events_repo.create_event(**event_create.__dict__, author=user)
+    return EventInResponse(event=event)
+
+
 @router.get(
     "",
     response_model=ListOfEventsInResponse,
@@ -85,21 +100,6 @@ async def get_event(
 
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
-
-
-@router.post(
-    "",
-    response_model=EventInResponse,
-    name="events:create-event",
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_event(
-        event_create: EventInCreate = Body(..., embed=True, alias="event"),
-        user: UserInDB = Depends(get_current_user_authorizer()),
-        events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
-) -> EventInResponse:
-    event = await events_repo.create_event(**event_create.__dict__, author=user)
-    return EventInResponse(event=event)
 
 
 @router.put(

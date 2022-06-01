@@ -24,34 +24,51 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends, Body
 
+from app.api.dependencies.services import get_service_id_from_path
+from app.api.dependencies.authentication import get_current_user_authorizer
 from app.models.domain.service import Service
-from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse
+from app.models.domain.user import User
+from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse, ServiceInCreate
 
 router = APIRouter()
 
 
-@router.get("", response_model=ListOfServicesInResponse, name="vehicle:get-all-vehicles")
-async def get_vehicles() -> ListOfServicesInResponse:
+@router.get("", response_model=ListOfServicesInResponse, name="services:get-all-services")
+async def get_services(
+        user: User = Depends(get_current_user_authorizer()),
+) -> ListOfServicesInResponse:
     pass
 
 
-@router.get("/{type_id}", response_model=ServiceInResponse, name="vehicle:get-vehicle")
-async def get_vehicles(type_id: int):
+@router.post("", response_model=ServiceInResponse, name="services:create-vehicle")
+async def create_service(
+        service_create: ServiceInCreate = Body(..., alias="service"),
+        user: User = Depends(get_current_user_authorizer()),
+) -> ServiceInResponse:
     pass
 
 
-@router.post("", response_model=ServiceInResponse, name="vehicle:create-vehicle")
-async def create_vehicle():
+@router.get("/{service_id}", response_model=ServiceInResponse, name="services:get-service")
+async def get_service(
+        service_id: int = Depends(get_service_id_from_path),
+        user: User = Depends(get_current_user_authorizer()),
+) -> ServiceInResponse:
     pass
 
 
-@router.put("/{type_id}", response_model=ServiceInResponse, name="vehicle:update-vehicle")
-async def create_vehicle(type_id: int):
+@router.put("/{service_id}", response_model=ServiceInResponse, name="services:update-vehicle")
+async def update_service(
+        service_id: int = Depends(get_service_id_from_path),
+        user: User = Depends(get_current_user_authorizer()),
+) -> ServiceInResponse:
     pass
 
 
-@router.delete("/{type_id}", response_model=ServiceInResponse, name="vehicle:delete-vehicle")
-async def delete_vehicle(type_id: int):
+@router.delete("/{service_id}", name="services:delete-vehicle")
+async def delete_service(
+        service_id: int = Depends(get_service_id_from_path),
+        user: User = Depends(get_current_user_authorizer()),
+) -> None:
     pass

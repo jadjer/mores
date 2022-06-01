@@ -12,14 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin
-
-
-class Vehicle(IDModelMixin):
-    brand: str
-    model: str
-    year: int
-    color: str
-    mileage: int
-    vin: str
-    registration_plate: str
+class VehicleAlreadyExist(Exception):
+    """Raised when entity was not found in database."""

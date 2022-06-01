@@ -77,8 +77,8 @@ async def register(
     if await check_email_is_taken(users_repo, user_create.email):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
 
-    user = await users_repo.create_user(**user_create.dict())
+    user = await users_repo.create_user(**user_create.__dict__)
 
     token = jwt.create_access_token_for_user(user, str(settings.secret_key.get_secret_value()))
 
-    return UserInResponseWithToken(user=UserWithToken(**user.dict(), token=token))
+    return UserInResponseWithToken(user=UserWithToken(**user.__dict__, token=token))
