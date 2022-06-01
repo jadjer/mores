@@ -28,3 +28,5 @@ class VehicleModel(Base):
     year = Column(Integer, nullable=False)
     color = Column(String, nullable=False)
     mileage = Column(Integer, nullable=False, default=0)
+    vin = Column(String, unique=True, nullable=True)
+    registration_plate = Column(String, unique=True, nullable=True)

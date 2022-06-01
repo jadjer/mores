@@ -45,9 +45,9 @@ class PostsRepository(BaseRepository):
         )
 
         self.session.add(new_post)
-        self.session.commit()
+        await self.session.commit()
 
-        return await self._get_article_from_db_record(
+        return await self._get_post_from_db_record(
             article_row=article_row,
             slug=slug,
             author_username=article_row[AUTHOR_USERNAME_ALIAS],
@@ -56,7 +56,6 @@ class PostsRepository(BaseRepository):
 
     async def update_article(  # noqa: WPS211
             self,
-            *,
             article: Post,
             slug: Optional[str] = None,
             title: Optional[str] = None,
@@ -204,7 +203,6 @@ class PostsRepository(BaseRepository):
 
     async def get_articles_for_user_feed(
             self,
-            *,
             user: User,
             limit: int = 20,
             offset: int = 0,

@@ -25,15 +25,16 @@ class UserModel(Base):
 
     username = Column(String, unique=True)
     email = Column(String, unique=True)
-    phone = Column(String, unique=True)
     password = Column(String)
     salt = Column(String)
 
-    first_name = Column(String)
-    second_name = Column(String)
-    last_name = Column(String)
-    gender = Column(Enum(Gender))
-    age = Column(Integer)
+    first_name = Column(String, nullable=True)
+    second_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    gender = Column(Enum(Gender), default=Gender.UNDEFINED)
+    age = Column(Integer, nullable=True)
+    phone = Column(String, unique=True)
+    image = Column(String, nullable=True)
 
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)

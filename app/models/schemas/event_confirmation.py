@@ -12,7 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uvicorn
+from app.models.domain.event_confirmation import EventConfirmation
+from app.models.schemas.rwschema import RWSchema
 
-if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8080, reload=True, workers=8)
+
+class EventConfirmationInResponse(RWSchema):
+    confirmation: EventConfirmation

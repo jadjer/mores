@@ -12,8 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
 from enum import Enum
+
+from pydantic import HttpUrl, EmailStr
 
 from app.models.common import DateTimeModelMixin, IDModelMixin
 from app.models.domain.rwmodel import RWModel
@@ -21,21 +22,23 @@ from app.services import security
 
 
 class Gender(Enum):
-    UNDEFINED = 1
-    MALE = 2
-    FEMALE = 3
+    UNDEFINED = "undefined"
+    MALE = "male"
+    FEMALE = "female"
 
 
 class User(RWModel):
-    first_name: Optional[str]
-    second_name: Optional[str]
-    last_name: Optional[str]
     username: str
-    email: str
-    gender: Optional[Gender] = Gender.UNDEFINED
-    age: Optional[int]
-    phone: Optional[str]
-    image: Optional[str] = None
+    email: EmailStr
+
+    first_name: str = None
+    second_name: str = None
+    last_name: str = None
+    gender: Gender = Gender.UNDEFINED
+    age: int = None
+    phone: str = None
+    image: HttpUrl = None
+
     is_admin: bool = False
     is_blocked: bool = False
 

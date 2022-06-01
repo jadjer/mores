@@ -13,21 +13,27 @@
 #  limitations under the License.
 
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.users import UsersRepository
+from app.database.repositories.events import EventsRepository
+from app.models.domain.event import Event
+from app.models.domain.user import User
 
 
-async def check_username_is_taken(repo: UsersRepository, username: str) -> bool:
+async def check_event_exists(events_repo: EventsRepository, event_id: int) -> bool:
     try:
-        await repo.get_user_by_username(username=username)
+        await events_repo.get_event_by_id(event_id)
     except EntityDoesNotExist:
         return False
 
     return True
 
 
-async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
+def check_user_can_modify_event(event: Event, user: User) -> bool:
+    return event.author.username == user.username
+
+
+async def check_event_confirmation_exists(events_repo: EventsRepository, event_id: int, user_id: int) -> bool:
     try:
-        await repo.get_user_by_email(email=email)
+        await events_repo.get_confirmation_by_event_id_for_user(event_id, user_id)
     except EntityDoesNotExist:
         return False
 

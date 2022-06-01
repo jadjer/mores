@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List
+from typing import List, Optional
 
 from app.models.domain.vehicle import Vehicle
 from app.models.schemas.rwschema import RWSchema
@@ -28,4 +28,20 @@ class VehicleInResponse(RWSchema):
 
 
 class VehicleInCreate(RWSchema):
-    body: str
+    brand: str
+    model: str
+    year: int
+    color: str
+    mileage: int
+    vin: str
+    registration_plate: str
+
+
+class VehicleInUpdate(RWSchema):
+    brand: Optional[str]
+    model: Optional[str]
+    year: Optional[int]
+    color: Optional[str]
+    mileage: Optional[int]
+    vin: Optional[str]
+    registration_plate: Optional[str]

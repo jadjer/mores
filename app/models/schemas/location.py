@@ -24,34 +24,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status
+from typing import Optional
 
-from app.models.domain.service import Service
-from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse
-
-router = APIRouter()
+from app.models.domain.location import Location
+from app.models.schemas.rwschema import RWSchema
 
 
-@router.get("", response_model=ListOfServicesInResponse, name="vehicle:get-all-vehicles")
-async def get_vehicles() -> ListOfServicesInResponse:
-    pass
-
-
-@router.get("/{type_id}", response_model=ServiceInResponse, name="vehicle:get-vehicle")
-async def get_vehicles(type_id: int):
-    pass
-
-
-@router.post("", response_model=ServiceInResponse, name="vehicle:create-vehicle")
-async def create_vehicle():
-    pass
-
-
-@router.put("/{type_id}", response_model=ServiceInResponse, name="vehicle:update-vehicle")
-async def create_vehicle(type_id: int):
-    pass
-
-
-@router.delete("/{type_id}", response_model=ServiceInResponse, name="vehicle:delete-vehicle")
-async def delete_vehicle(type_id: int):
-    pass
+class LocationInResponse(RWSchema):
+    location: Location

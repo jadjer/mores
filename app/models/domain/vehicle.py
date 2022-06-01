@@ -13,10 +13,9 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.rwmodel import RWModel
 
 
-class Vehicle(IDModelMixin, RWModel):
+class Vehicle(IDModelMixin):
     brand: str
     model: str
     year: int

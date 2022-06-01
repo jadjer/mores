@@ -12,7 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uvicorn
-
-if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8080, reload=True, workers=8)
+class VehicleAlreadyExist(Exception):
+    """Raised when entity was not found in database."""

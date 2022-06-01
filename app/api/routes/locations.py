@@ -24,8 +24,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.repositories.base import BaseRepository
+from fastapi import APIRouter, status, Depends, HTTPException
+
+from app.api.dependencies.database import get_repository
+from app.api.dependencies.location import get_location_id_from_path
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.locations import LocationsRepository
+from app.models.schemas.location import LocationInResponse
+from app.resources import strings
+
+router = APIRouter()
 
 
-class GeosRepository(BaseRepository):
-    pass
+@router.get(
+    "/{location_id}",
+    response_model=LocationInResponse,
+    name="locations:get-location",
+)
+async def get_location(
+        location_id: int = Depends(get_location_id_from_path),
+        locations_repo: LocationsRepository = Depends(get_repository(LocationsRepository)),
+) -> LocationInResponse:
+    try:
+        location = await locations_repo.get_location(location_id)
+        return LocationInResponse(
+            location=location,
+        )
+
+    except EntityDoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)

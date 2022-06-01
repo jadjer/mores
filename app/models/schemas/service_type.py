@@ -12,7 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import uvicorn
+from typing import List
 
-if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8080, reload=True, workers=8)
+from app.models.domain.service_type import ServiceType
+from app.models.schemas.rwschema import RWSchema
+
+
+class ListOfServicesTypesInResponse(RWSchema):
+    services_types: List[ServiceType]
+    services_types_count: int
+
+
+class ServiceTypeInResponse(RWSchema):
+    service_type: ServiceType
+
+
+class ServiceTypeInCreate(RWSchema):
+    body: str
+

@@ -12,12 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin
-from app.models.domain.rwmodel import RWModel
-
-
-class Geo(IDModelMixin, RWModel):
-    name: str
-    description: str
-    latitude: float
-    longitude: float
+class UserDoesNotExist(Exception):
+    """Raised when entity was not found in database."""

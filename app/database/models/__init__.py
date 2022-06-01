@@ -21,6 +21,6 @@ from .service import ServiceModel
 from .service_type import ServiceTypeModel
 from .reminder import ReminderModel
 from .fuel import FuelModel, FuelType
-from .geo import GeoModel
+from .location import LocationModel
 from .event import EventModel, EventState
 from .event_confirmation import EventConfirmationModel, EventConfirmationType

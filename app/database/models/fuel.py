@@ -26,6 +26,6 @@ class FuelModel(Base):
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     fuel_type = Column(Enum(FuelType), default=FuelType.PETROL_95)
-    geo_id = Column(Integer, ForeignKey("geos.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     is_full = Column(Boolean, default=False)
     datetime = Column(DateTime)

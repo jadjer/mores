@@ -11,8 +11,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-from .comment import ListOfCommentsInResponse, CommentInResponse, CommentInCreate
-from .jwt import JWTMeta, JWTUser
-from .post import PostForResponse, PostInResponse, PostInCreate, PostInUpdate, ListOfPostsInResponse, PostsFilters
-from .user import UserInLogin, UserInCreate, UserInUpdate, UserInResponse, UserWithToken

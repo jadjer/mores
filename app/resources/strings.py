@@ -4,8 +4,15 @@ USER_DOES_NOT_EXIST_ERROR = "user does not exist"
 ARTICLE_DOES_NOT_EXIST_ERROR = "article does not exist"
 ARTICLE_ALREADY_EXISTS = "article already exists"
 USER_IS_NOT_AUTHOR_OF_ARTICLE = "you are not an author of this article"
+USER_IS_NOT_AUTHOR_OF_EVENT = "you are not an author of this event"
+EVENT_DOES_NOT_EXIST_ERROR = "event does not exist"
 
-INCORRECT_LOGIN_INPUT = "incorrect email or password"
+VEHICLE_ALREADY_EXISTS = "Vehicle already exists"
+VEHICLE_CONFLICT_VIN_ERROR = "Vehicle with current VIN already exist"
+VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR = "Vehicle with current REGISTRATION PLATE already exist"
+VEHICLE_DOES_NOT_EXIST_ERROR = "Vehicle does not exist"
+
+INCORRECT_LOGIN_INPUT = "incorrect username or password"
 USERNAME_TAKEN = "user with this username already exists"
 EMAIL_TAKEN = "user with this email already exists"
 

@@ -13,21 +13,31 @@
 #  limitations under the License.
 
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.users import UsersRepository
+from app.database.repositories.vehicles import VehiclesRepository
+from app.models.domain.user import UserInDB
 
 
-async def check_username_is_taken(repo: UsersRepository, username: str) -> bool:
+async def check_vehicle_is_exist(repo: VehiclesRepository, user: UserInDB, vehicle_id: int) -> bool:
     try:
-        await repo.get_user_by_username(username=username)
+        await repo.get_vehicle_by_id(user, vehicle_id)
     except EntityDoesNotExist:
         return False
 
     return True
 
 
-async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
+async def check_vim_is_taken(repo: VehiclesRepository, vin: str) -> bool:
     try:
-        await repo.get_user_by_email(email=email)
+        await repo.get_vehicle_by_vin(vin)
+    except EntityDoesNotExist:
+        return False
+
+    return True
+
+
+async def check_registration_plate_is_taken(repo: VehiclesRepository, registration_plate: str) -> bool:
+    try:
+        await repo.get_vehicle_by_registration_plate(registration_plate)
     except EntityDoesNotExist:
         return False
 

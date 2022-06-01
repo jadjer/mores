@@ -17,11 +17,11 @@ from sqlalchemy import Column, Integer, String, Float
 from app.database.base import Base
 
 
-class GeoModel(Base):
-    __tablename__ = "geos"
+class LocationModel(Base):
+    __tablename__ = "locations"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
