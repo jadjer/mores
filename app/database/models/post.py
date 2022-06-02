@@ -22,9 +22,9 @@ class PostModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
-    thumbnail = Column(String, nullable=False)
+    title = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    thumbnail = Column(String, nullable=True)
     body = Column(String, nullable=False)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

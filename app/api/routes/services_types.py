@@ -14,16 +14,24 @@
 
 from fastapi import APIRouter, status, Depends
 
+from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.database import get_repository
 from app.api.dependencies.services_types import get_service_type_id_from_path
+from app.database.repositories.services_types import ServicesTypesRepository
 from app.models.domain.service import Service
+from app.models.domain.user import UserInDB
 from app.models.schemas.service_type import ServiceTypeInResponse, ListOfServicesTypesInResponse
 
 router = APIRouter()
 
 
 @router.get("", response_model=ListOfServicesTypesInResponse, name="services-types:get-all-vehicles")
-async def get_service_types() -> ListOfServicesTypesInResponse:
-    pass
+async def get_service_types(
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_types_repo: ServicesTypesRepository = Depends(get_repository(ServicesTypesRepository)),
+) -> ListOfServicesTypesInResponse:
+    services_types = await services_types_repo.get_services_types(user)
+    return ListOfServicesTypesInResponse(services_types=services_types, count=len(services_types))
 
 
 @router.post("", response_model=ServiceTypeInResponse, name="services-types:create-vehicle")
