@@ -1,4 +1,4 @@
-version: "3"
+version: "3.9"
 
 networks:
     local_network:
@@ -6,7 +6,6 @@ networks:
 
 volumes:
     postgres_data:
-    pgadmin_data:
 
 services:
     database:
@@ -22,23 +21,6 @@ services:
             - postgres_data:/var/lib/postgresql/data
         networks:
             - local_network
-
-    pgadmin:
-        image: dpage/pgadmin4
-        restart: always
-        depends_on:
-            - database
-        ports:
-            - "10000:80"
-        environment:
-            - PGADMIN_DEFAULT_EMAIL=jadjer@ya.ru
-            - PGADMIN_DEFAULT_PASSWORD=jadjer_for_pgadmin_password
-        volumes:
-            - pgadmin_data:/var/lib/pgadmin
-        networks:
-            - local_network
-        logging:
-            driver: none
 
     app:
         build:
@@ -62,5 +44,3 @@ services:
             - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
         networks:
             - local_network
-        logging:
-            driver: none
