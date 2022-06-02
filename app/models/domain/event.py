@@ -28,7 +28,7 @@ class EventState(Enum):
     CANCELED = "canceled"
 
 
-class Event(IDModelMixin, DateTimeModelMixin, RWModel):
+class Event(IDModelMixin, DateTimeModelMixin):
     author: User
     title: str
     description: str

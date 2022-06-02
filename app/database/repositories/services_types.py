@@ -11,38 +11,21 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+
 from typing import List, Optional
 
-from sqlalchemy import select, and_
+from sqlalchemy import select
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
 from app.database.models import ServiceTypeModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.service_type import ServiceType
-from app.models.domain.user import UserInDB
 
 
 class ServicesTypesRepository(BaseRepository):
 
-    async def get_service_type_model_by_id(self, user: UserInDB, service_type_id: int) -> ServiceTypeModel:
-        query = select(ServiceTypeModel).where(
-            and_(
-                ServiceTypeModel.owner_id == user.id,
-                ServiceTypeModel.id == service_type_id
-            )
-        )
+    async def get_service_type_model_by_id(self, service_type_id: int) -> ServiceTypeModel:
+        query = select(ServiceTypeModel).where(ServiceTypeModel.id == service_type_id)
         result = await self.session.execute(query)
 
         service_type_in_db: ServiceTypeModel = result.scalars().first()
@@ -51,12 +34,12 @@ class ServicesTypesRepository(BaseRepository):
 
         return service_type_in_db
 
-    async def get_service_type_by_id(self, user: UserInDB, vehicle_id: int) -> ServiceType:
-        service_type_model = await self.get_service_type_model_by_id(user, vehicle_id)
+    async def get_service_type_by_id(self, service_type_id: int) -> ServiceType:
+        service_type_model = await self.get_service_type_model_by_id(service_type_id)
         return ServiceType(**service_type_model.__dict__)
 
-    async def get_services_types(self, user: UserInDB) -> List[ServiceType]:
-        query = select(ServiceTypeModel).where(ServiceTypeModel.owner_id == user.id)
+    async def get_services_types(self) -> List[ServiceType]:
+        query = select(ServiceTypeModel)
         result = await self.session.execute(query)
 
         services_types_in_db = result.scalars().all()
@@ -65,7 +48,6 @@ class ServicesTypesRepository(BaseRepository):
 
     async def create_service_type(
             self,
-            user: UserInDB,
             *,
             name: str,
             description: str,
@@ -79,33 +61,35 @@ class ServicesTypesRepository(BaseRepository):
             await self.session.commit()
 
         except Exception:
-            raise VehicleAlreadyExist("Conflict vin or registration plate")
+            raise EntityAlreadyExists("Service type with name {} already exists".format(name))
 
         return ServiceType(**new_service_type.__dict__)
 
     async def update_service_type(
             self,
-            user: UserInDB,
-            vehicle_id: int,
+            service_type_id: int,
             *,
             name: Optional[str],
             description: Optional[str],
     ) -> ServiceType:
-        service_type = await self.get_service_type_model_by_id(user, vehicle_id)
-        service_type.name = name or service_type.name
-        service_type.description = description or service_type.description
+        service_type_model = await self.get_service_type_model_by_id(service_type_id)
+        service_type_model.name = name or service_type_model.name
+        service_type_model.description = description or service_type_model.description
 
         try:
             await self.session.commit()
 
         except Exception:
-            raise VehicleAlreadyExist("Conflict vin or registration plate")
+            raise EntityAlreadyExists("Service type with name {} already exists".format(name))
 
-        return Vehicle(**vehicle.__dict__)
+        return ServiceType(**service_type_model.__dict__)
 
-    async def delete_service_type(self, user: UserInDB, vehicle_id: int) -> None:
-        vehicle = await self.get_vehicle_model_by_id(user, vehicle_id)
+    async def delete_service_type(self, vehicle_id: int) -> None:
+        vehicle = await self.get_service_type_model_by_id(vehicle_id)
 
-        await self.session.delete(vehicle)
-        await self.session.commit()
+        try:
+            self.session.delete(vehicle)
+            await self.session.commit()
 
+        except Exception:
+            raise EntityDoesNotExist("Service type doesn't exists")

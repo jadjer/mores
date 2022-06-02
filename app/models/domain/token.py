@@ -17,7 +17,7 @@ from app.models.domain.rwmodel import RWModel
 from app.models.domain.user import User
 
 
-class Token(IDModelMixin, RWModel):
+class Token(IDModelMixin):
     user: User
     token: str
     is_revoked: bool

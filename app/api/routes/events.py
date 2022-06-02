@@ -33,9 +33,9 @@ from app.api.dependencies.events import (
     get_event_id_from_path,
     check_event_permissions,
 )
-from app.database.errors import EntityDoesNotExist, UserDoesNotExist
+from app.database.errors import EntityDoesNotExist
 from app.database.repositories.events import EventsRepository
-from app.models.domain.user import UserInDB, User
+from app.models.domain.user import UserInDB
 from app.models.schemas.events import (
     EventsFilter,
     ListOfEventsInResponse,
@@ -81,7 +81,7 @@ async def get_events(
         )
         return ListOfEventsInResponse(events=events, events_count=len(events))
 
-    except UserDoesNotExist:
+    except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_DOES_NOT_EXIST_ERROR)
 
 

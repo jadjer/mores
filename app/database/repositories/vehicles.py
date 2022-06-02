@@ -11,25 +11,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
 
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 
-from app.database.errors import EntityDoesNotExist
-from app.database.errors.vehicle_already_exist import VehicleAlreadyExist
+from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
 from app.database.models import VehicleModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import UserInDB
@@ -59,7 +46,12 @@ class VehiclesRepository(BaseRepository):
         return Vehicle(**vehicle_in_db.__dict__)
 
     async def get_vehicle_model_by_id(self, user: UserInDB, vehicle_id: int) -> VehicleModel:
-        query = select(VehicleModel).where(VehicleModel.owner_id == user.id).where(VehicleModel.id == vehicle_id)
+        query = select(VehicleModel).where(
+            and_(
+                VehicleModel.owner_id == user.id,
+                VehicleModel.id == vehicle_id
+            )
+        )
         result = await self.session.execute(query)
 
         vehicle_model_in_db: VehicleModel = result.scalars().first()
@@ -107,7 +99,7 @@ class VehiclesRepository(BaseRepository):
             await self.session.commit()
 
         except Exception:
-            raise VehicleAlreadyExist("Conflict vin or registration plate")
+            raise EntityAlreadyExists("Conflict vin or registration plate")
 
         return Vehicle(**new_vehicle.__dict__)
 
@@ -137,7 +129,7 @@ class VehiclesRepository(BaseRepository):
             await self.session.commit()
 
         except Exception:
-            raise VehicleAlreadyExist("Conflict vin or registration plate")
+            raise EntityAlreadyExists("Conflict vin or registration plate")
 
         return Vehicle(**vehicle.__dict__)
 

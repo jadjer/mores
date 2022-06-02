@@ -12,5 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-class VehicleAlreadyExist(Exception):
-    """Raised when entity was not found in database."""
+from fastapi import APIRouter
+
+from app.api.routes.vehicles import (
+    fuels,
+    reminders,
+    services,
+    vehicles,
+)
+
+router = APIRouter()
+
+router.include_router(vehicles.router, prefix="/vehicles")
+router.include_router(fuels.router, prefix="/vehicles/{vehicle_id}/fuels")
+router.include_router(services.router, prefix="/vehicles/{vehicle_id}/services")
+router.include_router(reminders.router, prefix="/vehicles/{vehicle_id}/reminders")

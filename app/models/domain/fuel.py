@@ -29,7 +29,7 @@ class FuelType(Enum):
     ELECTRICITY = "electricity"
 
 
-class Fuel(IDModelMixin, RWModel):
+class Fuel(IDModelMixin):
     vehicle: Vehicle
     quantity: float
     price: float

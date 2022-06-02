@@ -12,8 +12,5 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import Path
-
-
-def get_service_type_id_from_path(service_type_id: int = Path(..., ge=1)) -> int:
-    return service_type_id
+class EntityAlreadyExists(Exception):
+    """Raised when entity was not found in database."""

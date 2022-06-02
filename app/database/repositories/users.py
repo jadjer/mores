@@ -17,7 +17,7 @@ from typing import Optional
 from pydantic import EmailStr, HttpUrl
 from sqlalchemy import select, update
 
-from app.database.errors import UserDoesNotExist
+from app.database.errors import EntityDoesNotExist
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import UserInDB, Gender
 from app.database.models import UserModel
@@ -31,7 +31,7 @@ class UsersRepository(BaseRepository):
 
         user = result.scalars().first()
         if not user:
-            raise UserDoesNotExist("user with id {0} does not exist".format(user_id))
+            raise EntityDoesNotExist("user with id {0} does not exist".format(user_id))
 
         return UserInDB(**user.__dict__)
 
@@ -41,7 +41,7 @@ class UsersRepository(BaseRepository):
 
         user = result.scalars().first()
         if not user:
-            raise UserDoesNotExist("user with email {0} does not exist".format(email))
+            raise EntityDoesNotExist("user with email {0} does not exist".format(email))
 
         return UserInDB(**user.__dict__)
 
@@ -51,7 +51,7 @@ class UsersRepository(BaseRepository):
 
         user = result.scalars().first()
         if not user:
-            raise UserDoesNotExist("user with username {0} does not exist".format(username))
+            raise EntityDoesNotExist("user with username {0} does not exist".format(username))
 
         return UserInDB(**user.__dict__)
 

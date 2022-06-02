@@ -11,18 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
 
 from datetime import datetime
 from typing import List, Optional
@@ -30,12 +18,12 @@ from typing import List, Optional
 from sqlalchemy import select, delete, update
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExist
-from app.database.models import EventModel, EventConfirmationModel
+from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
+from app.database.models import EventModel
 from app.database.repositories import UsersRepository
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
-from app.models.domain.event_confirmation import EventConfirmation
+from app.database.repositories.posts import PostsRepository
 from app.models.domain.location import Location
 from app.models.domain.event import Event, EventState
 from app.models.domain.user import UserInDB
@@ -46,7 +34,26 @@ class EventsRepository(BaseRepository):
     def __init__(self, session: Session):
         super().__init__(session)
         self._users_repo: UsersRepository = UsersRepository(session)
+        self._posts_repo: PostsRepository = PostsRepository(session)
         self._locations_repo: LocationsRepository = LocationsRepository(session)
+
+    async def get_event_model_by_id(self, event_id: int) -> EventModel:
+        query = select(EventModel).where(EventModel.id == event_id)
+        result = await self.session.execute(query)
+
+        event_model_in_db: EventModel = result.scalars().first()
+        if not event_model_in_db:
+            raise EntityDoesNotExist("event with id {} does not exist".format(event_id))
+
+        return event_model_in_db
+
+    async def get_event_by_id(self, event_id: int) -> Event:
+        event_model = await self.get_event_model_by_id(event_id)
+
+        user_in_db = await self._users_repo.get_user_by_id(event_model.author_id)
+        location_in_db = await self._locations_repo.get_location(event_model.location_id)
+
+        return Event(**event_model.__dict__)
 
     async def create_event(
             self,
@@ -66,34 +73,28 @@ class EventsRepository(BaseRepository):
             longitude=location.longitude,
         )
 
-        event = EventModel(
-            author_id=author.id,
+        post_in_db = await self._posts_repo.create_post(
+            author=author,
             title=title,
             description=description,
             thumbnail=thumbnail,
             body=body,
-            started_at=started_at.replace(tzinfo=None),
-            location_id=location_in_db.id,
-            event_state=EventState.PLANNED,
         )
 
-        self.session.add(event)
-        await self.session.commit()
+        new_event = EventModel()
+        new_event.post_id = post_in_db.id
+        new_event.location_id = location_in_db.id
+        new_event.started_at = started_at
+        new_event.event_state = EventState.PLANNED
 
-        return self._convert_model_to_event(author, location_in_db, event)
+        try:
+            self.session.add(new_event)
+            await self.session.commit()
 
-    async def get_event_by_id(self, event_id: int) -> Event:
-        query = select(EventModel).where(EventModel.id == event_id)
-        result = await self.session.execute(query)
+        except Exception:
+            raise EntityAlreadyExists("Conflict vin or registration plate")
 
-        event: EventModel = result.scalars().first()
-        if not event:
-            raise EntityDoesNotExist("event with id {0} does not exist".format(event_id))
-
-        user_in_db = await self._users_repo.get_user_by_id(event.author_id)
-        location_in_db = await self._locations_repo.get_location(event.location_id)
-
-        return Event(**event.__dict__, author=user_in_db, location=location_in_db)
+        return Event(**new_event.__dict__)
 
     async def update_event(
             self,
@@ -159,17 +160,3 @@ class EventsRepository(BaseRepository):
             events.append(Event(**event.__dict__, author=author, location=location))
 
         return events
-
-    @staticmethod
-    def _convert_model_to_event(author: UserInDB, location: Location, event: EventModel) -> Event:
-        return Event(
-            id=event.id,
-            author=author,
-            title=event.title,
-            description=event.description,
-            thumbnail=event.thumbnail,
-            body=event.body,
-            started_at=event.started_at.replace(tzinfo=None),
-            location=location,
-            event_state=event.event_state,
-        )

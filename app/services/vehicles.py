@@ -42,3 +42,7 @@ async def check_registration_plate_is_taken(repo: VehiclesRepository, registrati
         return False
 
     return True
+
+
+async def check_user_is_owner(repo: VehiclesRepository, user: UserInDB, vehicle_id: int) -> bool:
+    return await check_vehicle_is_exist(repo, user, vehicle_id)

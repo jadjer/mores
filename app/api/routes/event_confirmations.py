@@ -33,7 +33,7 @@ from app.api.dependencies.events import (
     get_event_confirmation_from_query,
 )
 from app.database.errors import EntityDoesNotExist
-from app.database.repositories.event_confirmations import EventConfirmationsRepository
+from app.database.repositories.events_confirmations import EventConfirmationsRepository
 from app.models.domain.event import Event
 from app.models.domain.event_confirmation import EventConfirmationType, EventConfirmation
 from app.models.domain.user import UserInDB

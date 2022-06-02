@@ -12,8 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import Path
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.services_types import ServicesTypesRepository
 
 
-def get_service_type_id_from_path(service_type_id: int = Path(..., ge=1)) -> int:
-    return service_type_id
+async def check_service_type_is_exist(repo: ServicesTypesRepository, service_type_id: int) -> bool:
+    try:
+        await repo.get_service_type_by_id(service_type_id)
+    except EntityDoesNotExist:
+        return False
+
+    return True

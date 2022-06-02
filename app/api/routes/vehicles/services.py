@@ -26,10 +26,11 @@
 
 from fastapi import APIRouter, status, Depends, Body
 
+from app.api.dependencies.database import get_repository
 from app.api.dependencies.services import get_service_id_from_path
 from app.api.dependencies.authentication import get_current_user_authorizer
-from app.models.domain.service import Service
-from app.models.domain.user import User
+from app.database.repositories.services import ServicesRepository
+from app.models.domain.user import UserInDB
 from app.models.schemas.service import ServiceInResponse, ListOfServicesInResponse, ServiceInCreate
 
 router = APIRouter()
@@ -37,15 +38,18 @@ router = APIRouter()
 
 @router.get("", response_model=ListOfServicesInResponse, name="services:get-all-services")
 async def get_services(
-        user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ListOfServicesInResponse:
-    pass
+    vehicles = await services_repo.get_services(user)
+    return ListOfServicesInResponse(vehicles=vehicles, count=len(vehicles))
 
 
 @router.post("", response_model=ServiceInResponse, name="services:create-vehicle")
 async def create_service(
         service_create: ServiceInCreate = Body(..., alias="service"),
-        user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
     pass
 
@@ -53,7 +57,8 @@ async def create_service(
 @router.get("/{service_id}", response_model=ServiceInResponse, name="services:get-service")
 async def get_service(
         service_id: int = Depends(get_service_id_from_path),
-        user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
     pass
 
@@ -61,7 +66,8 @@ async def get_service(
 @router.put("/{service_id}", response_model=ServiceInResponse, name="services:update-vehicle")
 async def update_service(
         service_id: int = Depends(get_service_id_from_path),
-        user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
     pass
 
@@ -69,6 +75,7 @@ async def update_service(
 @router.delete("/{service_id}", name="services:delete-vehicle")
 async def delete_service(
         service_id: int = Depends(get_service_id_from_path),
-        user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> None:
     pass

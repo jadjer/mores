@@ -12,5 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-class UserDoesNotExist(Exception):
-    """Raised when entity was not found in database."""
+from app.database.errors import EntityDoesNotExist
+from app.database.repositories.services import ServicesRepository
+
+
+async def check_service_is_exist(repo: ServicesRepository, service_id: int) -> bool:
+    try:
+        await repo.get_service_by_id(service_id)
+    except EntityDoesNotExist:
+        return False
+
+    return True

@@ -13,4 +13,4 @@
 #  limitations under the License.
 
 from .entity_does_not_exists import EntityDoesNotExist
-from .user_does_not_exists import UserDoesNotExist
+from .entity_already_exists import EntityAlreadyExists

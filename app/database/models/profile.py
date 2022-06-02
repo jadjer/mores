@@ -12,20 +12,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 
 from app.database.base import Base
+from app.models.domain.user import Gender
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class ProfileModel(Base):
+    __tablename__ = "profiles"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    username = Column(String, unique=True)
-    email = Column(String, unique=True)
-    password = Column(String)
-    salt = Column(String)
-
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    first_name = Column(String, nullable=True)
+    second_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    gender = Column(Enum(Gender), default=Gender.UNDEFINED)
+    age = Column(Integer, nullable=True)
+    phone = Column(String, unique=True)
+    image = Column(String, nullable=True)

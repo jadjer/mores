@@ -52,4 +52,4 @@ async def get_location(
         )
 
     except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.LOCATION_DOES_NOT_EXIST_ERROR)

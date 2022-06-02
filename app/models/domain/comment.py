@@ -17,6 +17,6 @@ from app.models.domain.user import User
 from app.models.domain.rwmodel import RWModel
 
 
-class Comment(IDModelMixin, DateTimeModelMixin, RWModel):
+class Comment(IDModelMixin, DateTimeModelMixin):
     author: User
     body: str
