@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-06-02T10:17:41.119Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36" etag="yVM0uruxJ-S6nBrhVZPx" version="18.2.0" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2022-06-02T10:20:14.403Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36" etag="J25D8Eq9MGdYUBMFo5Ve" version="18.2.0" type="github" pages="2">
   <diagram id="uK7g2tgaJ2PW8TSzlvOo" name="Page-1">
     <mxGraphModel dx="3253" dy="2144" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -155,7 +155,7 @@
           <mxGeometry y="150" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="NEuYlTEZo3UmeoKoH1Xz-59" value="Event" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
-          <mxGeometry x="240" y="300" width="140" height="210" as="geometry" />
+          <mxGeometry x="240" y="300" width="140" height="180" as="geometry" />
         </mxCell>
         <mxCell id="NEuYlTEZo3UmeoKoH1Xz-98" value="EVENT_STATE" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" parent="NEuYlTEZo3UmeoKoH1Xz-59" vertex="1">
           <mxGeometry y="30" width="140" height="30" as="geometry" />
@@ -166,14 +166,11 @@
         <mxCell id="quZGR94nTyC4VkamT6Ci-2" value="post_id" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="NEuYlTEZo3UmeoKoH1Xz-59">
           <mxGeometry y="90" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="NEuYlTEZo3UmeoKoH1Xz-68" value="date" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" parent="NEuYlTEZo3UmeoKoH1Xz-59" vertex="1">
+        <mxCell id="NEuYlTEZo3UmeoKoH1Xz-86" value="location_id" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" parent="NEuYlTEZo3UmeoKoH1Xz-59" vertex="1">
           <mxGeometry y="120" width="140" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="NEuYlTEZo3UmeoKoH1Xz-86" value="location_id" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" parent="NEuYlTEZo3UmeoKoH1Xz-59" vertex="1">
+        <mxCell id="quZGR94nTyC4VkamT6Ci-6" value="started_at" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" vertex="1" parent="NEuYlTEZo3UmeoKoH1Xz-59">
           <mxGeometry y="150" width="140" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="NEuYlTEZo3UmeoKoH1Xz-69" value="timestamp" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;" parent="NEuYlTEZo3UmeoKoH1Xz-59" vertex="1">
-          <mxGeometry y="180" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="NEuYlTEZo3UmeoKoH1Xz-70" value="Comment" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;" parent="1" vertex="1">
           <mxGeometry x="-240" y="315" width="140" height="180" as="geometry" />
