@@ -41,6 +41,19 @@ from app.services.vehicles import (
 router = APIRouter()
 
 
+@router.get(
+    "",
+    response_model=ListOfVehiclesInResponse,
+    name="vehicles:get-my-vehicles"
+)
+async def get_vehicles(
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+) -> ListOfVehiclesInResponse:
+    vehicles = await vehicles_repo.get_vehicles(user)
+    return ListOfVehiclesInResponse(vehicles=vehicles, count=len(vehicles))
+
+
 @router.post(
     "",
     response_model=VehicleInResponse,
@@ -59,19 +72,6 @@ async def create_vehicle(
 
     vehicle = await vehicles_repo.create_vehicle(user=user, **vehicle_create.__dict__)
     return VehicleInResponse(vehicle=vehicle)
-
-
-@router.get(
-    "",
-    response_model=ListOfVehiclesInResponse,
-    name="vehicles:get-my-vehicles"
-)
-async def get_vehicles(
-        user: UserInDB = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
-) -> ListOfVehiclesInResponse:
-    vehicles = await vehicles_repo.get_vehicles(user)
-    return ListOfVehiclesInResponse(vehicles=vehicles, count=len(vehicles))
 
 
 @router.get(

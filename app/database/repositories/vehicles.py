@@ -62,15 +62,15 @@ class VehiclesRepository(BaseRepository):
         query = select(VehicleModel).where(VehicleModel.owner_id == user.id).where(VehicleModel.id == vehicle_id)
         result = await self.session.execute(query)
 
-        vehicle_in_db: VehicleModel = result.scalars().first()
-        if not vehicle_in_db:
+        vehicle_model_in_db: VehicleModel = result.scalars().first()
+        if not vehicle_model_in_db:
             raise EntityDoesNotExist("vehicle with id {} does not exist".format(vehicle_id))
 
-        return vehicle_in_db
+        return vehicle_model_in_db
 
     async def get_vehicle_by_id(self, user: UserInDB, vehicle_id: int) -> Vehicle:
-        vehicle = await self.get_vehicle_model_by_id(user, vehicle_id)
-        return Vehicle(**vehicle.__dict__)
+        vehicle_model = await self.get_vehicle_model_by_id(user, vehicle_id)
+        return Vehicle(**vehicle_model.__dict__)
 
     async def get_vehicles(self, user: UserInDB) -> List[Vehicle]:
         query = select(VehicleModel).where(VehicleModel.owner_id == user.id)
@@ -78,7 +78,7 @@ class VehiclesRepository(BaseRepository):
 
         vehicles_in_db = result.scalars().all()
 
-        return [Vehicle(**vehicle.__dict__) for vehicle in vehicles_in_db]
+        return [Vehicle(**vehicle_in_db.__dict__) for vehicle_in_db in vehicles_in_db]
 
     async def create_vehicle(
             self,

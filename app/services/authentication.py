@@ -12,14 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import UserDoesNotExist
 from app.database.repositories.users import UsersRepository
 
 
 async def check_username_is_taken(repo: UsersRepository, username: str) -> bool:
     try:
         await repo.get_user_by_username(username=username)
-    except EntityDoesNotExist:
+    except UserDoesNotExist:
         return False
 
     return True
@@ -28,7 +28,7 @@ async def check_username_is_taken(repo: UsersRepository, username: str) -> bool:
 async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
     try:
         await repo.get_user_by_email(email=email)
-    except EntityDoesNotExist:
+    except UserDoesNotExist:
         return False
 
     return True

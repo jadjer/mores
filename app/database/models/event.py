@@ -22,13 +22,7 @@ class EventModel(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, unique=True, nullable=False)
-    description = Column(String, nullable=True)
-    thumbnail = Column(String, nullable=True)
-    body = Column(String, nullable=False)
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=False)
     started_at = Column(DateTime)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
     event_state = Column(Enum(EventState), default=EventState.PLANNED)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)

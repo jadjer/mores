@@ -20,7 +20,7 @@ from app.models.schemas.rwschema import RWSchema
 
 class ListOfServicesTypesInResponse(RWSchema):
     services_types: List[ServiceType]
-    services_types_count: int
+    count: int
 
 
 class ServiceTypeInResponse(RWSchema):

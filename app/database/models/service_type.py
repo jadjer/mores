@@ -21,5 +21,5 @@ class ServiceTypeModel(Base):
     __tablename__ = "service_types"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     description = Column(String)
