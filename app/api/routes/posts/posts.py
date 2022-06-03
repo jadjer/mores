@@ -11,18 +11,31 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
 
 from app.api.dependencies.posts import (
-    check_article_modification_permissions,
+    check_post_modification_permissions,
     get_posts_filters,
     get_post_id_from_path,
 )
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityCreateError, EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
+from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 from app.models.schemas.post import (
     PostInCreate,
@@ -44,7 +57,7 @@ router = APIRouter()
 )
 async def create_post(
         post_create: PostInCreate = Body(..., embed=True, alias="post"),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
     post_already_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ARTICLE_ALREADY_EXISTS)

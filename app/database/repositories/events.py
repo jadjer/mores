@@ -18,12 +18,12 @@ from typing import List, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExists
+from app.database.errors import EntityDoesNotExists, EntityCreateError
 from app.database.models import EventModel
-from app.database.repositories import UsersRepository
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
 from app.database.repositories.posts import PostsRepository
+from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.location import Location
 from app.models.domain.event import Event, EventState
 from app.models.domain.user import UserInDB
@@ -33,23 +33,22 @@ class EventsRepository(BaseRepository):
 
     def __init__(self, session: Session):
         super().__init__(session)
-        self._users_repo: UsersRepository = UsersRepository(session)
+        self._profiles_repo = ProfilesRepository(session)
         self._posts_repo: PostsRepository = PostsRepository(session)
         self._locations_repo: LocationsRepository = LocationsRepository(session)
 
     async def create_event(
             self,
-            author: UserInDB,
-            *,
+            user_id: int,
             title: str,
             description: str,
             thumbnail: str,
             body: str,
             started_at: datetime,
             location: Location,
-    ) -> Event | None:
+    ) -> Event:
         post_in_db = await self._posts_repo.create_post(
-            author=author,
+            user_id=user_id,
             title=title,
             description=description,
             thumbnail=thumbnail,
@@ -69,7 +68,11 @@ class EventsRepository(BaseRepository):
         new_event.event_state = EventState.PLANNED
 
         self.session.add(new_event)
-        await self.session.commit()
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
 
         return Event(**new_event.__dict__)
 
@@ -83,8 +86,8 @@ class EventsRepository(BaseRepository):
         query = select(EventModel)
 
         if author:
-            user = await self._users_repo.get_user_by_username(author)
-            query = query.where(EventModel.author_id == user.id)
+            profile = await self._profiles_repo.get_profile_by_username(author)
+            query = query.where(EventModel.author_id == profile.user_id)
 
         query = query.where(EventModel.event_state == state)
         query = query.limit(limit)
@@ -96,7 +99,7 @@ class EventsRepository(BaseRepository):
         events: List[Event] = []
 
         for event in events_in_db:
-            author = await self._users_repo.get_user_by_id(event.author_id)
+            author = await self._profiles_repo.get_profile_by_id(event.author_id)
             location = await self._locations_repo.get_location_by_id(event.location_id)
 
             events.append(Event(**event.__dict__, author=author, location=location))
@@ -107,7 +110,7 @@ class EventsRepository(BaseRepository):
         event = await self._get_event_model_by_id(event_id)
 
         post_in_db = await self._posts_repo.get_post_by_id(event.post_id)
-        user_in_db = await self._users_repo.get_user_by_id(event.author_id)
+        user_in_db = await self._profiles_repo.get_profile_by_id(event.author_id)
         location_in_db = await self._locations_repo.get_location_by_id(event.location_id)
 
         return Event(**event.__dict__, **post_in_db.__dict__, author=user_in_db, location=location_in_db)

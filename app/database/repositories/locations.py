@@ -22,7 +22,7 @@ from app.models.domain.location import Location
 
 class LocationsRepository(BaseRepository):
 
-    async def create_location(self, *, description: str, latitude: float, longitude: float) -> Location:
+    async def create_location(self, description: str, latitude: float, longitude: float) -> Location:
         new_location = LocationModel()
         new_location.description = description
         new_location.latitude = latitude

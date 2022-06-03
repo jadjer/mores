@@ -11,6 +11,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 from fastapi import (
     APIRouter,
@@ -20,11 +32,11 @@ from fastapi import (
     HTTPException,
 )
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
-from app.api.dependencies.vehicles import get_vehicle_id_from_path
+from app.api.dependencies.get_id_from_path import get_vehicle_id_from_path
 from app.database.repositories.vehicles import VehiclesRepository
-from app.models.domain.user import UserInDB
+from app.models.domain.profile import Profile
 from app.models.schemas.vehicle import (
     VehicleInResponse,
     ListOfVehiclesInResponse,
@@ -47,10 +59,10 @@ router = APIRouter()
     name="vehicles:get-my-vehicles"
 )
 async def get_vehicles(
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> ListOfVehiclesInResponse:
-    vehicles = await vehicles_repo.get_vehicles(user)
+    vehicles = await vehicles_repo.get_vehicles(profile.user_id)
     return ListOfVehiclesInResponse(vehicles=vehicles, count=len(vehicles))
 
 
@@ -61,7 +73,7 @@ async def get_vehicles(
 )
 async def create_vehicle(
         vehicle_create: VehicleInCreate = Body(..., embed=True, alias="vehicle"),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
     if await check_vim_is_taken(vehicles_repo, vehicle_create.vin):
@@ -70,7 +82,7 @@ async def create_vehicle(
     if await check_registration_plate_is_taken(vehicles_repo, vehicle_create.registration_plate):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR)
 
-    vehicle = await vehicles_repo.create_vehicle(user=user, **vehicle_create.__dict__)
+    vehicle = await vehicles_repo.create_vehicle(user_id=profile.user_id, **vehicle_create.__dict__)
     return VehicleInResponse(vehicle=vehicle)
 
 
@@ -81,7 +93,7 @@ async def create_vehicle(
 )
 async def get_vehicle(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
     if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):
@@ -99,7 +111,7 @@ async def get_vehicle(
 async def update_vehicle(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
         vehicle_update: VehicleInUpdate = Body(..., embed=True, alias="vehicle"),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
     if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):
@@ -121,7 +133,7 @@ async def update_vehicle(
 )
 async def delete_vehicle(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> None:
     if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):

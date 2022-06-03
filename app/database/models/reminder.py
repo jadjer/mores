@@ -13,15 +13,19 @@
 #  limitations under the License.
 
 from sqlalchemy import Column, Integer, ForeignKey, Float, DateTime
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 
 
 class ReminderModel(Base):
-    __tablename__ = "reminders"
+    __tablename__ = "reminder"
 
     id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
-    service_type_id = Column(Integer, ForeignKey("service_types.id"), nullable=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
+    service_type_id = Column(Integer, ForeignKey("service_type.id"), nullable=False)
     next_mileage = Column(Float, nullable=False)
     next_datetime = Column(DateTime, nullable=False)
+
+    vehicle = relationship("VehicleModel")
+    service_type = relationship("ServiceTypeModel")

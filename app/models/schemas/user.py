@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 from typing import Optional
-
 from pydantic import BaseModel, EmailStr
 
 from app.models.domain.user import User
@@ -21,12 +20,12 @@ from app.models.schemas.rwschema import RWSchema
 
 
 class UserInLogin(RWSchema):
-    email: EmailStr
+    username: str
     password: str
 
 
 class UserInCreate(UserInLogin):
-    username: str
+    email: EmailStr
 
 
 class UserInUpdate(BaseModel):
@@ -39,4 +38,8 @@ class UserWithToken(User):
 
 
 class UserInResponse(RWSchema):
+    user: User
+
+
+class UserInResponseWithToken(RWSchema):
     user: UserWithToken

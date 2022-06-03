@@ -13,12 +13,13 @@
 #  limitations under the License.
 
 from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 
 
 class UserModel(Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, index=True)
 
@@ -28,3 +29,5 @@ class UserModel(Base):
 
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
+
+    profile = relationship("ProfileModel", back_populates="user", uselist=False)

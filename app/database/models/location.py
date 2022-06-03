@@ -18,7 +18,7 @@ from app.database.base import Base
 
 
 class LocationModel(Base):
-    __tablename__ = "locations"
+    __tablename__ = "location"
 
     id = Column(Integer, primary_key=True, index=True)
     description = Column(String, nullable=False)

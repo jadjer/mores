@@ -47,8 +47,6 @@ class ProfileInCreate(RWSchema):
 
 class ProfileInUpdate(RWSchema):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
     first_name: Optional[str] = None
     second_name: Optional[str] = None
     last_name: Optional[str] = None

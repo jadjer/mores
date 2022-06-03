@@ -17,13 +17,15 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from app.api.dependencies.database import get_repository
 from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
 from app.models.schemas.user import (
     UserInCreate,
     UserInLogin,
     UserWithToken,
-    UserInResponse
+    UserInResponse,
+    UserInResponseWithToken
 )
 from app.resources import strings
 from app.services import jwt
@@ -35,33 +37,38 @@ router = APIRouter()
 
 @router.post(
     "/login",
-    response_model=UserInResponse,
+    response_model=UserInResponseWithToken,
     name="auth:login",
 )
 async def login(
         user_login: UserInLogin = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
+        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
-) -> UserInResponse:
-    if not await check_email_is_taken(users_repo, user_login.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
+) -> UserInResponseWithToken:
+    incorrect_credentials = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.INCORRECT_LOGIN_INPUT)
 
-    user = await users_repo.get_user_by_email(user_login.email)
+    try:
+        profile = await profiles_repo.get_profile_by_username(user_login.username)
+    except EntityDoesNotExists as exception:
+        raise incorrect_credentials from exception
+
+    user = await users_repo.get_user_by_id(profile.user_id)
     if not user.check_password(user_login.password):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
+        raise incorrect_credentials
 
     token = jwt.create_access_token_for_user(
-        email=user.email,
+        username=profile.username,
         secret_key=settings.secret_key.get_secret_value()
     )
 
-    return UserInResponse(user=UserWithToken(**user.dict(), token=token))
+    return UserInResponseWithToken(user=UserWithToken(token=token, **user.__dict__))
 
 
 @router.post(
     "/register",
     status_code=status.HTTP_201_CREATED,
-    response_model=UserInResponse,
+    response_model=UserInResponseWithToken,
     name="auth:register",
 )
 async def register(
@@ -69,20 +76,22 @@ async def register(
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         profile_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
-) -> UserInResponse:
+) -> UserInResponseWithToken:
+    email_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.EMAIL_TAKEN)
+    username_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.USERNAME_TAKEN)
+
     if await check_email_is_taken(users_repo, user_create.email):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
+        raise email_taken_error
 
     if await check_username_is_taken(profile_repo, user_create.username):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
+        raise username_taken_error
 
-    user = await users_repo.create_user(**user_create.__dict__)
-    profile = await profile_repo.create_profile(user, **user_create.__dict__)
+    user = await users_repo.create_user(email=user_create.email, password=user_create.password)
+    profile = await profile_repo.create_profile(user, username=user_create.username)
 
     token = jwt.create_access_token_for_user(
-        email=user.email,
         username=profile.username,
         secret_key=settings.secret_key.get_secret_value()
     )
 
-    return UserInResponse(user=UserWithToken(**user.__dict__, token=token))
+    return UserInResponseWithToken(user=UserWithToken(token=token, **user.__dict__))

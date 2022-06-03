@@ -26,7 +26,7 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> None:
 
     engine = create_async_engine(
         settings.get_database_url,
-        echo=False
+        echo=True
     )
     app.state.database_engine = engine
 

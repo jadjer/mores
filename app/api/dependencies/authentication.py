@@ -22,8 +22,8 @@ from app.api.dependencies.database import get_repository
 from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
 from app.database.errors import EntityDoesNotExists
-from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User
+from app.database.repositories.profiles import ProfilesRepository
+from app.models.domain.profile import Profile
 from app.resources import strings
 from app.services import jwt
 
@@ -35,13 +35,10 @@ class RWAPIKeyHeader(APIKeyHeader):
         try:
             return await super().__call__(request)
         except StarletteHTTPException as original_auth_exc:
-            raise HTTPException(
-                status_code=original_auth_exc.status_code,
-                detail=strings.AUTHENTICATION_REQUIRED,
-            )
+            raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
-def get_current_user_authorizer() -> Callable:  # type: ignore
+def get_current_profile_authorizer() -> Callable:  # type: ignore
     return _get_current_user
 
 
@@ -49,42 +46,32 @@ def _get_authorization_header(
         api_key: str = Security(RWAPIKeyHeader(name=HEADER_KEY)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> str:
+    wrong_token_prefix = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.WRONG_TOKEN_PREFIX)
+
     try:
         token_prefix, token = api_key.split(" ")
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.WRONG_TOKEN_PREFIX,
-        )
+        raise wrong_token_prefix
+
     if token_prefix != settings.jwt_token_prefix:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.WRONG_TOKEN_PREFIX,
-        )
+        raise wrong_token_prefix
 
     return token
 
 
 async def _get_current_user(
-        users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
+        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         token: str = Depends(_get_authorization_header),
         settings: AppSettings = Depends(get_app_settings),
-) -> User:
-    try:
-        email = jwt.get_email_from_token(
-            token,
-            str(settings.secret_key.get_secret_value()),
-        )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.MALFORMED_PAYLOAD,
-        )
+) -> Profile:
+    malformed_payload = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.MALFORMED_PAYLOAD)
 
     try:
-        return await users_repo.get_user_by_email(email=email)
-    except EntityDoesNotExists:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.MALFORMED_PAYLOAD,
-        )
+        username = jwt.get_username_from_token(token, settings.secret_key.get_secret_value())
+    except ValueError as exception:
+        raise malformed_payload from exception
+
+    try:
+        return await profiles_repo.get_profile_by_username(username)
+    except EntityDoesNotExists as exception:
+        raise malformed_payload from exception

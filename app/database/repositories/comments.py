@@ -17,11 +17,12 @@ from typing import List
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExists, EntityCreateError
+from app.database.errors import EntityDoesNotExists, EntityCreateError, EntityDeleteError, EntityUpdateError
 from app.database.models import CommentModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.users import UsersRepository
 from app.models.domain.comment import Comment
+from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 
 
@@ -31,16 +32,16 @@ class CommentsRepository(BaseRepository):
         super().__init__(session)
         self._users_repo = UsersRepository(session)
 
-    async def create_comment(self, post_id: int, user: UserInDB, body: str) -> Comment:
+    async def create_comment(self, post_id: int, user_id: int, body: str) -> Comment:
         new_comment = CommentModel()
         new_comment.post_id = post_id
-        new_comment.author_id = user.id
+        new_comment.author_id = user_id
         new_comment.body = body
 
         self.session.add(new_comment)
 
         try:
-            self.session.commit()
+            await self.session.commit()
         except Exception as exception:
             raise EntityCreateError from exception
 
@@ -61,32 +62,32 @@ class CommentsRepository(BaseRepository):
 
         return [Comment(**comment_in_db.__dict__) for comment_in_db in comments_in_db]
 
-    async def update_comment(self, comment_id: int, user: UserInDB, body: str) -> Comment:
-        comment_in_db: CommentModel = await self._get_comment_model_by_id(comment_id, user)
+    async def update_comment(self, comment_id: int, user_id: int, body: str) -> Comment:
+        comment_in_db: CommentModel = await self._get_comment_model_by_id(comment_id, user_id)
         comment_in_db.body = body
 
         try:
             await self.session.commit()
         except Exception as exception:
-            raise EntityDoesNotExists from exception
+            raise EntityUpdateError from exception
 
         return Comment(**comment_in_db.__dict__)
 
-    async def delete_comment(self, comment_id: int, user: UserInDB) -> None:
-        comment_in_db = await self._get_comment_model_by_id(comment_id, user)
+    async def delete_comment(self, comment_id: int, user_id: int) -> None:
+        comment_in_db = await self._get_comment_model_by_id(comment_id, user_id)
 
         self.session.delete(comment_in_db)
 
         try:
             await self.session.commit()
         except Exception as exception:
-            raise EntityDoesNotExists from exception
+            raise EntityDeleteError from exception
 
-    async def _get_comment_model_by_id(self, comment_id: int, user: UserInDB) -> CommentModel:
+    async def _get_comment_model_by_id(self, comment_id: int, user_id: int) -> CommentModel:
         query = select(CommentModel).where(
             and_(
                 CommentModel.id == comment_id,
-                CommentModel.author_id == user.id
+                CommentModel.author_id == user_id
             )
         )
 

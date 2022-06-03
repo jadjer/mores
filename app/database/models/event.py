@@ -13,16 +13,20 @@
 #  limitations under the License.
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 from app.models.domain.event import EventState
 
 
 class EventModel(Base):
-    __tablename__ = "events"
+    __tablename__ = "event"
 
     id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("posts.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
     started_at = Column(DateTime)
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
     event_state = Column(Enum(EventState), default=EventState.PLANNED)
+
+    post = relationship("PostModel")
+    location = relationship("LocationModel")

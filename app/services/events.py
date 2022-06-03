@@ -14,8 +14,9 @@
 
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events import EventsRepository
+from app.database.repositories.events_confirmations import EventConfirmationsRepository
 from app.models.domain.event import Event
-from app.models.domain.user import User
+from app.models.domain.profile import Profile
 
 
 async def check_event_exist_by_id(events_repo: EventsRepository, event_id: int) -> bool:
@@ -27,13 +28,17 @@ async def check_event_exist_by_id(events_repo: EventsRepository, event_id: int) 
     return True
 
 
-def check_user_can_modify_event(event: Event, user: User) -> bool:
-    return event.author.username == user.username
+def check_user_can_modify_event(event: Event, profile: Profile) -> bool:
+    return event.author.username == profile.username
 
 
-async def check_event_confirmation_exists(events_repo: EventsRepository, event_id: int, user_id: int) -> bool:
+async def check_event_confirmation_exists(
+        events_confirmation_repo: EventConfirmationsRepository,
+        event_id: int,
+        profile_id: int
+) -> bool:
     try:
-        await events_repo.get_confirmation_by_event_id_for_user(event_id, user_id)
+        await events_confirmation_repo.get_confirmation_by_event_id_for_user(event_id, profile_id)
     except EntityDoesNotExists:
         return False
 

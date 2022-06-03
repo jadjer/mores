@@ -25,7 +25,7 @@ from app.database.models import UserModel
 
 class UsersRepository(BaseRepository):
 
-    async def create_user(self, *, email: EmailStr, password: str) -> UserInDB:
+    async def create_user(self, email: EmailStr, password: str) -> UserInDB:
         user: UserInDB = UserInDB(email=email)
         user.change_password(password)
 
@@ -64,7 +64,6 @@ class UsersRepository(BaseRepository):
     async def update_user(
             self,
             user: UserInDB,
-            *,
             email: Optional[str] = None,
             password: Optional[str] = None,
     ) -> UserInDB:

@@ -17,12 +17,13 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Path, Query
 from fastapi import status
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
+from app.api.dependencies.get_id_from_path import get_post_id_from_path
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
-from app.models.domain.user import User
+from app.models.domain.profile import Profile
 from app.models.schemas.post import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
@@ -44,12 +45,8 @@ def get_posts_filters(
     )
 
 
-def get_post_id_from_path(post_id: int = Path(..., ge=1)) -> int:
-    return post_id
-
-
 async def get_post_by_id_from_path(
-        post_id: int = Path(..., min_length=1),
+        post_id: int = Depends(get_post_id_from_path),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> Post:
     try:
@@ -61,11 +58,11 @@ async def get_post_by_id_from_path(
         )
 
 
-def check_article_modification_permissions(
+def check_post_modification_permissions(
         current_post: Post = Depends(get_post_by_id_from_path),
-        user: User = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
 ) -> None:
-    if not check_user_can_modify_post(current_post, user):
+    if not check_user_can_modify_post(current_post, profile):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_ARTICLE,

@@ -15,5 +15,29 @@
 from fastapi import Path
 
 
+def get_comment_id_from_path(comment_id: int = Path(..., ge=1)) -> int:
+    return comment_id
+
+
+def get_event_id_from_path(event_id: int = Path(..., ge=1)) -> int:
+    return event_id
+
+
+def get_location_id_from_path(location_id: int = Path(..., ge=1)) -> int:
+    return location_id
+
+
+def get_post_id_from_path(post_id: int = Path(..., ge=1)) -> int:
+    return post_id
+
+
+def get_service_id_from_path(service_id: int = Path(..., ge=1)) -> int:
+    return service_id
+
+
 def get_service_type_id_from_path(service_type_id: int = Path(..., ge=1)) -> int:
     return service_type_id
+
+
+def get_vehicle_id_from_path(vehicle_id: int = Path(..., ge=1)) -> int:
+    return vehicle_id

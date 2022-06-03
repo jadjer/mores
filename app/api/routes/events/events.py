@@ -12,11 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import contextlib
-
 from fastapi import APIRouter, status, Depends, Body, HTTPException
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.events import (
     get_events_filters,
@@ -25,7 +23,7 @@ from app.api.dependencies.events import (
 )
 from app.database.errors import EntityDoesNotExists, EntityAlreadyExists, EntityCreateError
 from app.database.repositories.events import EventsRepository
-from app.models.domain.user import UserInDB
+from app.models.domain.profile import Profile
 from app.models.schemas.events import (
     EventsFilter,
     ListOfEventsInResponse,
@@ -46,13 +44,13 @@ router = APIRouter()
 )
 async def create_event(
         event_create: EventInCreate = Body(..., embed=True, alias="event"),
-        user: UserInDB = Depends(get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
     create_error = HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.EVENT_ALREADY_EXISTS)
 
     try:
-        event = await events_repo.create_event(author=user, **event_create.__dict__)
+        event = await events_repo.create_event(author=profile.user_id, **event_create.__dict__)
     except EntityCreateError as exception:
         raise create_error from exception
 
@@ -106,7 +104,7 @@ async def get_event(
     response_model=EventInResponse,
     name="events:update-event",
     dependencies=[
-        Depends(get_current_user_authorizer()),
+        Depends(get_current_profile_authorizer()),
         Depends(check_event_permissions),
     ],
 )
@@ -130,7 +128,7 @@ async def update_event(
     status_code=status.HTTP_204_NO_CONTENT,
     name="events:delete-event",
     dependencies=[
-        Depends(get_current_user_authorizer()),
+        Depends(get_current_profile_authorizer()),
         Depends(check_event_permissions),
     ],
 )

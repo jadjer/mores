@@ -13,15 +13,19 @@
 #  limitations under the License.
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 
 
 class CommentModel(Base):
-    __tablename__ = "comments"
+    __tablename__ = "comment"
 
     id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("posts.id"), nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     body = Column(String, nullable=False)
     datetime = Column(DateTime)
+
+    post = relationship("PostModel", back_populates="comments", uselist=False)
+    author = relationship("UserModel")

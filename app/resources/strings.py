@@ -11,6 +11,8 @@ POST_DOES_NOT_EXISTS = "Post does not exists"
 EVENT_DOES_NOT_EXIST_ERROR = "Event does not exist"
 EVENT_ALREADY_EXISTS = "Event already exists"
 
+PROFILE_DOES_NOT_EXISTS = "Profile does not exists"
+
 VEHICLE_ALREADY_EXISTS = "Vehicle already exists"
 VEHICLE_CONFLICT_VIN_ERROR = "Vehicle with current VIN already exist"
 VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR = "Vehicle with current REGISTRATION PLATE already exist"

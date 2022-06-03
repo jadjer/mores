@@ -11,13 +11,25 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, Response, status
 
 from app.api.dependencies.posts import get_post_id_from_path, get_post_by_id_from_path
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.comments import (
     check_comment_modification_permissions,
     get_comment_by_id_from_path,
@@ -27,6 +39,7 @@ from app.database.errors import EntityCreateError
 from app.database.repositories.comments import CommentsRepository
 from app.models.domain.post import Post
 from app.models.domain.comment import Comment
+from app.models.domain.profile import Profile
 from app.models.domain.user import User, UserInDB
 from app.models.schemas.comment import (
     CommentInCreate,
@@ -46,11 +59,11 @@ router = APIRouter()
 async def create_comment(
     post_id: int = Depends(get_post_id_from_path),
     comment_create: CommentInCreate = Body(..., embed=True, alias="comment"),
-    user: UserInDB = Depends(get_current_user_authorizer()),
+    profile: Profile = Depends(get_current_profile_authorizer()),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> CommentInResponse:
     try:
-        comment = await comments_repo.create_comment(post_id, user, **comment_create.__dict__)
+        comment = await comments_repo.create_comment(post_id, profile.user_id, **comment_create.__dict__)
     except EntityCreateError as exception:
         raise
 

@@ -13,19 +13,23 @@
 #  limitations under the License.
 
 from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 from app.models.domain.fuel import FuelType
 
 
 class FuelModel(Base):
-    __tablename__ = "fuels"
+    __tablename__ = "fuel"
 
     id = Column(Integer, primary_key=True, index=True)
-    vehicle_id = Column(Integer, ForeignKey("vehicles.id"), nullable=False)
+    vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     fuel_type = Column(Enum(FuelType), default=FuelType.PETROL_95)
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
     is_full = Column(Boolean, default=False)
     datetime = Column(DateTime)
+
+    vehicle = relationship("VehicleModel")
+    location = relationship("LocationModel")

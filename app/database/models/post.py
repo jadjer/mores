@@ -13,18 +13,22 @@
 #  limitations under the License.
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 
 
 class PostModel(Base):
-    __tablename__ = "posts"
+    __tablename__ = "post"
 
     id = Column(Integer, primary_key=True, index=True)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     title = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
     thumbnail = Column(String, nullable=True)
     body = Column(String, nullable=False)
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
+
+    author = relationship("UserModel")
+    comments = relationship("CommentModel", back_populates="post")

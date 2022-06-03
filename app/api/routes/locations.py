@@ -27,7 +27,7 @@
 from fastapi import APIRouter, status, Depends, HTTPException
 
 from app.api.dependencies.database import get_repository
-from app.api.dependencies.location import get_location_id_from_path
+from app.api.dependencies.get_id_from_path import get_location_id_from_path
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.locations import LocationsRepository
 from app.models.schemas.location import LocationInResponse
@@ -45,9 +45,14 @@ async def get_location(
         location_id: int = Depends(get_location_id_from_path),
         locations_repo: LocationsRepository = Depends(get_repository(LocationsRepository)),
 ) -> LocationInResponse:
+    location_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.LOCATION_DOES_NOT_EXIST_ERROR
+    )
+
     try:
         location = await locations_repo.get_location_by_id(location_id)
-    except EntityDoesNotExists:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.LOCATION_DOES_NOT_EXIST_ERROR)
+    except EntityDoesNotExists as exception:
+        raise location_not_found from exception
 
     return LocationInResponse(location=location)

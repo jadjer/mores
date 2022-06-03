@@ -18,7 +18,7 @@ from app.database.base import Base
 
 
 class ApiKeyModel(Base):
-    __tablename__ = "api_keys"
+    __tablename__ = "api_key"
 
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String, nullable=False)

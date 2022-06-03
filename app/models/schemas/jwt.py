@@ -14,7 +14,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class JWTMeta(BaseModel):
@@ -24,4 +24,3 @@ class JWTMeta(BaseModel):
 
 class JWTUser(BaseModel):
     username: str
-    email: EmailStr

@@ -36,6 +36,7 @@ class Gender(Enum):
 
 
 class Profile(IDModelMixin):
+    user_id: int
     username: str
     first_name: str = None
     second_name: str = None

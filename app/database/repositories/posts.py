@@ -17,12 +17,16 @@ from typing import List, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExists, EntityAlreadyExists
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityDeleteError,
+    EntityUpdateError,
+    EntityCreateError,
+)
 from app.database.models import *
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
-from app.models.domain.user import UserInDB
 
 
 class PostsRepository(BaseRepository):
@@ -31,9 +35,9 @@ class PostsRepository(BaseRepository):
         super().__init__(session)
         self._profiles_repo = ProfilesRepository(session)
 
-    async def create_post(self, author: UserInDB, title: str, description: str, thumbnail: str, body: str) -> Post:
+    async def create_post(self, user_id: int, title: str, description: str, thumbnail: str, body: str) -> Post:
         new_post = PostModel()
-        new_post.author_id = author.id,
+        new_post.author_id = user_id,
         new_post.title = title,
         new_post.description = description,
         new_post.thumbnail = thumbnail,
@@ -44,7 +48,7 @@ class PostsRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
-            raise EntityAlreadyExists from exception
+            raise EntityCreateError from exception
 
         return Post(**new_post.__dict__)
 
@@ -83,22 +87,20 @@ class PostsRepository(BaseRepository):
         for post_in_db in posts_in_db:
             author = await self._profiles_repo.get_profile_by_id(post_in_db.author_id)
 
-            posts.append(
-                Post(author=author, **post_in_db.__dict__)
-            )
+            posts.append(Post(author=author, **post_in_db.__dict__))
 
         return posts
 
     async def update_post(
             self,
             post_id: int,
-            author: UserInDB,
+            user_id: int,
             title: Optional[str] = None,
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
             body: Optional[str] = None
     ) -> Post:
-        post_in_db = await self._get_post_model_by_id(author, post_id)
+        post_in_db = await self._get_post_model_by_id(post_id, user_id)
         post_in_db.title = title or post_in_db.title
         post_in_db.description = description or post_in_db.description
         post_in_db.thumbnail = thumbnail or post_in_db.thumbnail
@@ -106,20 +108,26 @@ class PostsRepository(BaseRepository):
 
         try:
             await self.session.commit()
-        except Exception:
-            raise EntityAlreadyExists("Conflict post's title")
+        except Exception as exception:
+            raise EntityUpdateError from exception
 
         return Post(**post_in_db.__dict__)
 
-    async def delete_post(self, post_id: int) -> None:
-        self.session.delete(post_id)
-        await self.session.commit()
+    async def delete_post(self, post_id: int, user_id: int) -> None:
+        post = self._get_post_model_by_id(post_id, user_id)
 
-    async def _get_post_model_by_id(self, author: UserInDB, post_id: int) -> PostModel:
+        self.session.delete(post)
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityDeleteError from exception
+
+    async def _get_post_model_by_id(self, post_id: int, user_id: int) -> PostModel:
         query = select(PostModel).where(
             and_(
-                PostModel.author_id == author.id,
-                PostModel.id == post_id
+                PostModel.id == post_id,
+                PostModel.author_id == user_id,
             )
         )
 

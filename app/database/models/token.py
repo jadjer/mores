@@ -13,14 +13,17 @@
 #  limitations under the License.
 
 from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 
 
 class TokenModel(Base):
-    __tablename__ = "tokens"
+    __tablename__ = "token"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     token = Column(String, nullable=False)
     is_revoked = Column(Boolean, default=False)
+
+    user = relationship("UserModel")

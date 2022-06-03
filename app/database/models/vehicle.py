@@ -19,10 +19,10 @@ from app.database.base import Base
 
 
 class VehicleModel(Base):
-    __tablename__ = "vehicles"
+    __tablename__ = "vehicle"
 
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     name = Column(String, nullable=True)
     brand = Column(String, nullable=False)
     model = Column(String, nullable=False)
@@ -31,3 +31,5 @@ class VehicleModel(Base):
     mileage = Column(Integer, nullable=False, default=0)
     vin = Column(String, unique=True, nullable=True)
     registration_plate = Column(String, unique=True, nullable=True)
+
+    owner = relationship("UserModel", foreign_keys=[owner_id])

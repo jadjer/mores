@@ -14,35 +14,33 @@
 
 from fastapi import Depends, HTTPException, Path, status
 
-from app.api.dependencies import authentication
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.comments import CommentsRepository
 from app.models.domain.comment import Comment
-from app.models.domain.user import User, UserInDB
+from app.models.domain.profile import Profile
 from app.resources import strings
 from app.services.comments import check_user_can_modify_comment
 
 
 async def get_comment_by_id_from_path(
         comment_id: int = Path(..., ge=1),
-        user: UserInDB = Depends(get_current_user_authorizer()),
         comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> Comment:
     comment_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.COMMENT_DOES_NOT_EXIST)
 
     try:
-        return await comments_repo.get_comment_by_id(comment_id, user)
+        return await comments_repo.get_comment_by_id(comment_id)
     except EntityDoesNotExists as exception:
         raise comment_not_found from exception
 
 
 def check_comment_modification_permissions(
         comment: Comment = Depends(get_comment_by_id_from_path),
-        user: User = Depends(authentication.get_current_user_authorizer()),
+        profile: Profile = Depends(get_current_profile_authorizer()),
 ) -> None:
-    if not check_user_can_modify_comment(comment, user):
+    if not check_user_can_modify_comment(comment, profile):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_ARTICLE,

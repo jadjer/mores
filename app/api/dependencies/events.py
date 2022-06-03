@@ -28,12 +28,14 @@ from typing import Optional
 
 from fastapi import Query, Path, Depends, HTTPException, status
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_profile_authorizer
 from app.api.dependencies.database import get_repository
+from app.api.dependencies.get_id_from_path import get_event_id_from_path
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events import EventsRepository
 from app.models.domain.event import EventState, Event
 from app.models.domain.event_confirmation import EventConfirmationType
+from app.models.domain.profile import Profile
 from app.models.domain.user import User
 from app.models.schemas.events import (
     DEFAULT_ARTICLES_LIMIT,
@@ -56,10 +58,6 @@ def get_events_filters(
         limit=limit,
         offset=offset,
     )
-
-
-def get_event_id_from_path(event_id: int = Path(..., ge=1)) -> int:
-    return event_id
 
 
 async def get_event_by_id_from_path(
@@ -85,9 +83,9 @@ def get_event_confirmation_from_query(
 
 def check_event_permissions(
     event: Event = Depends(get_event_by_id_from_path),
-    user: User = Depends(get_current_user_authorizer()),
+    profile: Profile = Depends(get_current_profile_authorizer()),
 ) -> None:
-    if not check_user_can_modify_event(event, user):
+    if not check_user_can_modify_event(event, profile):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_EVENT,

@@ -13,13 +13,16 @@
 #  limitations under the License.
 
 from typing import List, Optional
-
 from sqlalchemy import select, and_
 
-from app.database.errors import EntityDoesNotExists, EntityAlreadyExists
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityDeleteError,
+    EntityUpdateError,
+    EntityCreateError,
+)
 from app.database.models import VehicleModel
 from app.database.repositories.base import BaseRepository
-from app.models.domain.user import UserInDB
 from app.models.domain.vehicle import Vehicle
 
 
@@ -27,8 +30,8 @@ class VehiclesRepository(BaseRepository):
 
     async def create_vehicle(
             self,
-            user: UserInDB,
-            *,
+            user_id: int,
+            name: str,
             brand: str,
             model: str,
             year: int,
@@ -38,7 +41,8 @@ class VehiclesRepository(BaseRepository):
             registration_plate: str,
     ) -> Vehicle:
         new_vehicle = VehicleModel()
-        new_vehicle.owner_id = user.id
+        new_vehicle.owner_id = user_id
+        new_vehicle.name = name
         new_vehicle.brand = brand
         new_vehicle.model = model
         new_vehicle.year = year
@@ -47,12 +51,12 @@ class VehiclesRepository(BaseRepository):
         new_vehicle.vin = vin
         new_vehicle.registration_plate = registration_plate
 
-        try:
-            self.session.add(new_vehicle)
-            await self.session.commit()
+        self.session.add(new_vehicle)
 
-        except Exception:
-            raise EntityAlreadyExists("Conflict vin or registration plate")
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
 
         return Vehicle(**new_vehicle.__dict__)
 
@@ -63,6 +67,8 @@ class VehiclesRepository(BaseRepository):
         vehicle_in_db: VehicleModel = result.scalars().first()
         if not vehicle_in_db:
             raise EntityDoesNotExists
+
+        print(vehicle_in_db.__dict__)
 
         return Vehicle(**vehicle_in_db.__dict__)
 
@@ -76,12 +82,12 @@ class VehiclesRepository(BaseRepository):
 
         return Vehicle(**vehicle_in_db.__dict__)
 
-    async def get_vehicle_by_id(self, user: UserInDB, vehicle_id: int) -> Vehicle:
-        vehicle_model = await self._get_vehicle_model_by_id(user, vehicle_id)
+    async def get_vehicle_by_id(self, vehicle_id: int, user_id: int) -> Vehicle:
+        vehicle_model = await self._get_vehicle_model_by_id(vehicle_id, user_id)
         return Vehicle(**vehicle_model.__dict__)
 
-    async def get_vehicles(self, user: UserInDB) -> List[Vehicle]:
-        query = select(VehicleModel).where(VehicleModel.owner_id == user.id)
+    async def get_vehicles(self, user_id: int) -> List[Vehicle]:
+        query = select(VehicleModel).where(VehicleModel.owner_id == user_id)
         result = await self.session.execute(query)
 
         vehicles_in_db = result.scalars().all()
@@ -90,9 +96,8 @@ class VehiclesRepository(BaseRepository):
 
     async def update_vehicle(
             self,
-            user: UserInDB,
             vehicle_id: int,
-            *,
+            user_id: int,
             brand: Optional[str] = None,
             model: Optional[str] = None,
             year: Optional[int] = None,
@@ -101,7 +106,7 @@ class VehiclesRepository(BaseRepository):
             vin: Optional[str] = None,
             registration_plate: Optional[str] = None,
     ) -> Vehicle:
-        vehicle = await self._get_vehicle_model_by_id(user, vehicle_id)
+        vehicle = await self._get_vehicle_model_by_id(vehicle_id, user_id)
         vehicle.brand = brand or vehicle.brand
         vehicle.model = model or vehicle.model
         vehicle.year = year or vehicle.year
@@ -112,23 +117,26 @@ class VehiclesRepository(BaseRepository):
 
         try:
             await self.session.commit()
-
-        except Exception:
-            raise EntityAlreadyExists("Conflict vin or registration plate")
+        except Exception as exception:
+            raise EntityUpdateError from exception
 
         return Vehicle(**vehicle.__dict__)
 
-    async def delete_vehicle(self, user: UserInDB, vehicle_id: int) -> None:
-        vehicle = await self._get_vehicle_model_by_id(user, vehicle_id)
+    async def delete_vehicle(self, vehicle_id: int, user_id: int) -> None:
+        vehicle = await self._get_vehicle_model_by_id(vehicle_id, user_id)
 
         self.session.delete(vehicle)
-        await self.session.commit()
 
-    async def _get_vehicle_model_by_id(self, user: UserInDB, vehicle_id: int) -> VehicleModel:
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityDeleteError from exception
+
+    async def _get_vehicle_model_by_id(self, vehicle_id: int, user_id: int) -> VehicleModel:
         query = select(VehicleModel).where(
             and_(
-                VehicleModel.owner_id == user.id,
-                VehicleModel.id == vehicle_id
+                VehicleModel.id == vehicle_id,
+                VehicleModel.owner_id == user_id,
             )
         )
         result = await self.session.execute(query)
