@@ -18,7 +18,7 @@ from app.models.domain.event import Event
 from app.models.domain.user import User
 
 
-async def check_event_exists(events_repo: EventsRepository, event_id: int) -> bool:
+async def check_event_exist_by_id(events_repo: EventsRepository, event_id: int) -> bool:
     try:
         await events_repo.get_event_by_id(event_id)
     except EntityDoesNotExist:

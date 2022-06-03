@@ -15,7 +15,7 @@
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 
 from app.database.base import Base
-from app.models.domain.user import Gender
+from app.models.domain.profile import Gender
 
 
 class ProfileModel(Base):
@@ -24,6 +24,7 @@ class ProfileModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    username = Column(String, unique=True)
     first_name = Column(String, nullable=True)
     second_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)

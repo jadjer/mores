@@ -17,10 +17,10 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User
+from app.models.domain.user import User, UserInDB
 from app.models.schemas.user import UserInResponse, UserInUpdate
 from app.resources import strings
-from app.services.authentication import check_email_is_taken, check_username_is_taken
+from app.services.authentication import check_email_is_taken
 
 router = APIRouter()
 
@@ -37,37 +37,22 @@ async def get_current_user(
 @router.put("", response_model=UserInResponse, name="users:update-current-user")
 async def update_current_user(
         user_update: UserInUpdate = Body(..., embed=True, alias="user"),
-        current_user: User = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
 ) -> UserInResponse:
-    if user_update.username and user_update.username != current_user.username:
-        if await check_username_is_taken(users_repo, user_update.username):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=strings.USERNAME_TAKEN,
-            )
-
-    if user_update.email and user_update.email != current_user.email:
+    if user_update.email and user_update.email != user.email:
         if await check_email_is_taken(users_repo, user_update.email):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=strings.EMAIL_TAKEN,
             )
 
-    user = await users_repo.update_user(
-        user=current_user,
-        username=user_update.username,
+    user_in_db = await users_repo.update_user(
+        user=user,
         email=user_update.email,
         password=user_update.password,
-        first_name=user_update.first_name,
-        second_name=user_update.second_name,
-        last_name=user_update.last_name,
-        gender=user_update.gender,
-        age=user_update.age,
-        phone=user_update.phone,
-        image=user_update.image,
     )
 
     return UserInResponse(
-        user=user,
+        user=user_in_db,
     )

@@ -14,26 +14,42 @@
 
 from typing import Optional
 
-from pydantic import EmailStr, HttpUrl
-from sqlalchemy import select, update
+from pydantic import EmailStr
+from sqlalchemy import select
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import UserDoesNotExists, UserCreateError, UserUpdateError
 from app.database.repositories.base import BaseRepository
-from app.models.domain.user import UserInDB, Gender
+from app.models.domain.user import UserInDB
 from app.database.models import UserModel
 
 
 class UsersRepository(BaseRepository):
 
+    async def create_user(self, *, email: EmailStr, password: str) -> UserInDB:
+        user: UserInDB = UserInDB(email=email)
+        user.change_password(password)
+
+        new_user = UserModel()
+        new_user.email = user.email
+        new_user.salt = user.salt
+        new_user.password = user.password
+
+        try:
+            self.session.add(new_user)
+            await self.session.commit()
+        except Exception as exception:
+            raise UserCreateError from exception
+
+        user.id = new_user.id
+
+        return user
+
     async def get_user_by_id(self, user_id: int) -> UserInDB:
-        query = select(UserModel).where(UserModel.id == user_id)
-        result = await self.session.execute(query)
+        user_in_db: UserModel = await self._get_user_model_by_id(user_id)
+        if not user_in_db:
+            raise UserDoesNotExists
 
-        user = result.scalars().first()
-        if not user:
-            raise EntityDoesNotExist("user with id {0} does not exist".format(user_id))
-
-        return UserInDB(**user.__dict__)
+        return UserInDB(**user_in_db.__dict__)
 
     async def get_user_by_email(self, email: str) -> UserInDB:
         query = select(UserModel).where(UserModel.email == email)
@@ -41,82 +57,34 @@ class UsersRepository(BaseRepository):
 
         user = result.scalars().first()
         if not user:
-            raise EntityDoesNotExist("user with email {0} does not exist".format(email))
+            raise UserDoesNotExists
 
         return UserInDB(**user.__dict__)
-
-    async def get_user_by_username(self, username: str) -> UserInDB:
-        query = select(UserModel).where(UserModel.username == username)
-        result = await self.session.execute(query)
-
-        user = result.scalars().first()
-        if not user:
-            raise EntityDoesNotExist("user with username {0} does not exist".format(username))
-
-        return UserInDB(**user.__dict__)
-
-    async def create_user(self, *, username: str, email: EmailStr, password: str) -> UserInDB:
-        user_in_db = UserInDB(username=username, email=email)
-        user_in_db.change_password(password)
-
-        user = UserModel(
-            username=user_in_db.username,
-            email=user_in_db.email,
-            password=user_in_db.password,
-            salt=user_in_db.salt
-        )
-
-        self.session.add(user)
-        await self.session.commit()
-
-        user_in_db.id = user.id
-
-        return user_in_db
 
     async def update_user(
             self,
-            *,
             user: UserInDB,
-            username: Optional[str] = None,
+            *,
             email: Optional[str] = None,
             password: Optional[str] = None,
-            first_name: Optional[str] = None,
-            second_name: Optional[str] = None,
-            last_name: Optional[str] = None,
-            gender: Optional[Gender] = None,
-            age: Optional[int] = None,
-            phone: Optional[str] = None,
-            image: Optional[HttpUrl] = None,
     ) -> UserInDB:
-
-        user_in_db = await self.get_user_by_id(user.id)
-        user_in_db.username = username or user_in_db.username
-        user_in_db.email = email or user_in_db.email
-        user_in_db.first_name = first_name or user_in_db.first_name
-        user_in_db.second_name = second_name or user_in_db.second_name
-        user_in_db.last_name = last_name or user_in_db.last_name
-        user_in_db.gender = gender or user_in_db.gender
-        user_in_db.age = age or user_in_db.age
-        user_in_db.phone = phone or user_in_db.phone
-        user_in_db.image = image or user_in_db.image
-
         if password:
-            user_in_db.change_password(password)
+            user.change_password(password)
 
-        query = update(UserModel).where(UserModel.id == user_in_db.id).values(
-            username=user_in_db.username,
-            email=user_in_db.email,
-            password=user_in_db.password,
-            first_name=user_in_db.first_name,
-            second_name=user_in_db.second_name,
-            last_name=user_in_db.last_name,
-            gender=user_in_db.gender,
-            age=user_in_db.age,
-            phone=user_in_db.phone,
-            image=user_in_db.image,
-        )
+        user_in_db: UserModel = await self._get_user_model_by_id(user.id)
+        user_in_db.email = email or user_in_db.email
+        user_in_db.password = password or user_in_db.password
 
-        await self.session.execute(query)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise UserUpdateError from exception
 
-        return user_in_db
+        return UserInDB(**user_in_db.__dict__)
+
+    async def _get_user_model_by_id(self, user_id: int) -> UserModel:
+        user = await self.session.get(UserModel, user_id)
+        if not user:
+            raise UserDoesNotExists
+
+        return user

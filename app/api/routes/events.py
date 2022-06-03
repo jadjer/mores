@@ -23,6 +23,19 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+import contextlib
 
 from fastapi import APIRouter, status, Depends, Body, HTTPException
 
@@ -33,7 +46,7 @@ from app.api.dependencies.events import (
     get_event_id_from_path,
     check_event_permissions,
 )
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
 from app.database.repositories.events import EventsRepository
 from app.models.domain.user import UserInDB
 from app.models.schemas.events import (
@@ -59,7 +72,13 @@ async def create_event(
         user: UserInDB = Depends(get_current_user_authorizer()),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
-    event = await events_repo.create_event(**event_create.__dict__, author=user)
+    create_error = HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.EVENT_ALREADY_EXISTS)
+
+    try:
+        event = await events_repo.create_event(author=user, **event_create.__dict__)
+    except EntityAlreadyExists as existence_error:
+        raise create_error from existence_error
+
     return EventInResponse(event=event)
 
 
@@ -73,16 +92,16 @@ async def get_events(
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> ListOfEventsInResponse:
     try:
-        events = await events_repo.filter_events(
+        events = await events_repo.get_events_with_filter(
             author=events_filter.author,
             state=events_filter.state,
             limit=events_filter.limit,
             offset=events_filter.offset
         )
-        return ListOfEventsInResponse(events=events, events_count=len(events))
-
-    except EntityDoesNotExist:
+    except EntityDoesNotExist  as existence_error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_DOES_NOT_EXIST_ERROR)
+
+    return ListOfEventsInResponse(events=events, events_count=len(events))
 
 
 @router.get(

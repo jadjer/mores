@@ -7,6 +7,7 @@ USER_IS_NOT_AUTHOR_OF_ARTICLE = "you are not an author of this article"
 USER_IS_NOT_AUTHOR_OF_EVENT = "you are not an author of this event"
 
 EVENT_DOES_NOT_EXIST_ERROR = "Event does not exist"
+EVENT_ALREADY_EXISTS = "Event already exists"
 
 VEHICLE_ALREADY_EXISTS = "Vehicle already exists"
 VEHICLE_CONFLICT_VIN_ERROR = "Vehicle with current VIN already exist"

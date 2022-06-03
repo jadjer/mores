@@ -44,11 +44,10 @@ router = APIRouter()
 @router.get(
     "",
     response_model=ListOfPostsInResponse,
-    name="posts:list-articles"
+    name="posts:list-posts"
 )
 async def list_articles(
     articles_filters: PostsFilters = Depends(get_posts_filters),
-    user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
     posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> ListOfPostsInResponse:
     pass

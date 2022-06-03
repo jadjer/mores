@@ -17,14 +17,10 @@ from sqlalchemy import Boolean, Column, Integer, String
 from app.database.base import Base
 
 
-class UserModel(Base):
-    __tablename__ = "users"
+class ApiKeyModel(Base):
+    __tablename__ = "api_keys"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    email = Column(String, unique=True)
-    password = Column(String)
-    salt = Column(String)
-
-    is_admin = Column(Boolean, default=False)
-    is_blocked = Column(Boolean, default=False)
+    key = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    is_revoked = Column(Boolean, default=False)

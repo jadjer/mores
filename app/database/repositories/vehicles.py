@@ -25,53 +25,6 @@ from app.models.domain.vehicle import Vehicle
 
 class VehiclesRepository(BaseRepository):
 
-    async def get_vehicle_by_vin(self, vin: str) -> Vehicle:
-        query = select(VehicleModel).where(VehicleModel.vin == vin)
-        result = await self.session.execute(query)
-
-        vehicle_in_db: VehicleModel = result.scalars().first()
-        if not vehicle_in_db:
-            raise EntityDoesNotExist("vehicle with vin {} does not exist".format(vin))
-
-        return Vehicle(**vehicle_in_db.__dict__)
-
-    async def get_vehicle_by_registration_plate(self, registration_plate: str) -> Vehicle:
-        query = select(VehicleModel).where(VehicleModel.registration_plate == registration_plate)
-        result = await self.session.execute(query)
-
-        vehicle_in_db: VehicleModel = result.scalars().first()
-        if not vehicle_in_db:
-            raise EntityDoesNotExist("vehicle with registration plate {} does not exist".format(registration_plate))
-
-        return Vehicle(**vehicle_in_db.__dict__)
-
-    async def get_vehicle_model_by_id(self, user: UserInDB, vehicle_id: int) -> VehicleModel:
-        query = select(VehicleModel).where(
-            and_(
-                VehicleModel.owner_id == user.id,
-                VehicleModel.id == vehicle_id
-            )
-        )
-        result = await self.session.execute(query)
-
-        vehicle_model_in_db: VehicleModel = result.scalars().first()
-        if not vehicle_model_in_db:
-            raise EntityDoesNotExist("vehicle with id {} does not exist".format(vehicle_id))
-
-        return vehicle_model_in_db
-
-    async def get_vehicle_by_id(self, user: UserInDB, vehicle_id: int) -> Vehicle:
-        vehicle_model = await self.get_vehicle_model_by_id(user, vehicle_id)
-        return Vehicle(**vehicle_model.__dict__)
-
-    async def get_vehicles(self, user: UserInDB) -> List[Vehicle]:
-        query = select(VehicleModel).where(VehicleModel.owner_id == user.id)
-        result = await self.session.execute(query)
-
-        vehicles_in_db = result.scalars().all()
-
-        return [Vehicle(**vehicle_in_db.__dict__) for vehicle_in_db in vehicles_in_db]
-
     async def create_vehicle(
             self,
             user: UserInDB,
@@ -103,20 +56,52 @@ class VehiclesRepository(BaseRepository):
 
         return Vehicle(**new_vehicle.__dict__)
 
+    async def get_vehicle_by_vin(self, vin: str) -> Vehicle:
+        query = select(VehicleModel).where(VehicleModel.vin == vin)
+        result = await self.session.execute(query)
+
+        vehicle_in_db: VehicleModel = result.scalars().first()
+        if not vehicle_in_db:
+            raise EntityDoesNotExist("vehicle with vin {} does not exist".format(vin))
+
+        return Vehicle(**vehicle_in_db.__dict__)
+
+    async def get_vehicle_by_registration_plate(self, registration_plate: str) -> Vehicle:
+        query = select(VehicleModel).where(VehicleModel.registration_plate == registration_plate)
+        result = await self.session.execute(query)
+
+        vehicle_in_db: VehicleModel = result.scalars().first()
+        if not vehicle_in_db:
+            raise EntityDoesNotExist("vehicle with registration plate {} does not exist".format(registration_plate))
+
+        return Vehicle(**vehicle_in_db.__dict__)
+
+    async def get_vehicle_by_id(self, user: UserInDB, vehicle_id: int) -> Vehicle:
+        vehicle_model = await self._get_vehicle_model_by_id(user, vehicle_id)
+        return Vehicle(**vehicle_model.__dict__)
+
+    async def get_vehicles(self, user: UserInDB) -> List[Vehicle]:
+        query = select(VehicleModel).where(VehicleModel.owner_id == user.id)
+        result = await self.session.execute(query)
+
+        vehicles_in_db = result.scalars().all()
+
+        return [Vehicle(**vehicle_in_db.__dict__) for vehicle_in_db in vehicles_in_db]
+
     async def update_vehicle(
             self,
             user: UserInDB,
             vehicle_id: int,
             *,
-            brand: Optional[str],
-            model: Optional[str],
-            year: Optional[int],
-            color: Optional[str],
-            mileage: Optional[int],
-            vin: Optional[str],
-            registration_plate: Optional[str],
+            brand: Optional[str] = None,
+            model: Optional[str] = None,
+            year: Optional[int] = None,
+            color: Optional[str] = None,
+            mileage: Optional[int] = None,
+            vin: Optional[str] = None,
+            registration_plate: Optional[str] = None,
     ) -> Vehicle:
-        vehicle = await self.get_vehicle_model_by_id(user, vehicle_id)
+        vehicle = await self._get_vehicle_model_by_id(user, vehicle_id)
         vehicle.brand = brand or vehicle.brand
         vehicle.model = model or vehicle.model
         vehicle.year = year or vehicle.year
@@ -134,7 +119,22 @@ class VehiclesRepository(BaseRepository):
         return Vehicle(**vehicle.__dict__)
 
     async def delete_vehicle(self, user: UserInDB, vehicle_id: int) -> None:
-        vehicle = await self.get_vehicle_model_by_id(user, vehicle_id)
+        vehicle = await self._get_vehicle_model_by_id(user, vehicle_id)
 
         await self.session.delete(vehicle)
         await self.session.commit()
+
+    async def _get_vehicle_model_by_id(self, user: UserInDB, vehicle_id: int) -> VehicleModel:
+        query = select(VehicleModel).where(
+            and_(
+                VehicleModel.owner_id == user.id,
+                VehicleModel.id == vehicle_id
+            )
+        )
+        result = await self.session.execute(query)
+
+        vehicle_model_in_db: VehicleModel = result.scalars().first()
+        if not vehicle_model_in_db:
+            raise EntityDoesNotExist("vehicle with id {} does not exist".format(vehicle_id))
+
+        return vehicle_model_in_db

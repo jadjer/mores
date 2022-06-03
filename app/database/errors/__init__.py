@@ -14,3 +14,5 @@
 
 from .entity_does_not_exists import EntityDoesNotExist
 from .entity_already_exists import EntityAlreadyExists
+from .users import *
+from .profiles import *
