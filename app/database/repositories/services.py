@@ -16,7 +16,7 @@ from typing import List
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.models import ServiceModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
@@ -39,7 +39,7 @@ class ServicesRepository(BaseRepository):
 
         service_model_in_db: ServiceModel = result.scalars().first()
         if not service_model_in_db:
-            raise EntityDoesNotExist("Service with id {} does not exist".format(service_id))
+            raise EntityDoesNotExists
 
         return service_model_in_db
 
@@ -47,13 +47,13 @@ class ServicesRepository(BaseRepository):
         service_model = await self.get_service_model_by_id(service_id)
 
         vehicle = await self._vehicles_repo.get_vehicle_by_id(user, service_model.vehicle_id)
-        location = await self._locations_repo.get_location(service_model.location_id)
+        location = await self._locations_repo.get_location_by_id(service_model.location_id)
 
         return Service(vehicle=vehicle, location=location, **service_model.__dict__)
 
     async def get_services_for_vehicle(self, user: UserInDB, vehicle_id: int) -> List[Service]:
         if not check_user_is_owner(self._vehicles_repo, user, vehicle_id):
-            raise EntityDoesNotExist("Vehicle")
+            raise EntityDoesNotExists
 
         query = select(ServiceModel).where(ServiceModel.vehicle_id == vehicle_id)
         result = await self.session.execute(query)

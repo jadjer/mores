@@ -28,6 +28,7 @@ class VehicleInResponse(RWSchema):
 
 
 class VehicleInCreate(RWSchema):
+    name: str
     brand: str
     model: str
     year: int
@@ -38,6 +39,7 @@ class VehicleInCreate(RWSchema):
 
 
 class VehicleInUpdate(RWSchema):
+    name: Optional[str]
     brand: Optional[str]
     model: Optional[str]
     year: Optional[int]

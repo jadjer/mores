@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
 from app.models.domain.user import User
@@ -20,8 +20,8 @@ from app.models.domain.user import User
 
 async def check_post_exists(posts_repo: PostsRepository, post_id: int) -> bool:
     try:
-        await posts_repo.get_article_by_id(slug=post_id)
-    except EntityDoesNotExist:
+        await posts_repo.get_post_by_id(post_id)
+    except EntityDoesNotExists:
         return False
 
     return True

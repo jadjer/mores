@@ -12,16 +12,4 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
-
-from pydantic import BaseModel, EmailStr
-
-
-class JWTMeta(BaseModel):
-    exp: datetime
-    sub: str
-
-
-class JWTUser(BaseModel):
-    username: str
-    email: EmailStr
+from .api import router

@@ -18,7 +18,7 @@ from typing import List, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.models import EventModel
 from app.database.repositories import UsersRepository
 from app.database.repositories.base import BaseRepository
@@ -120,7 +120,7 @@ class EventsRepository(BaseRepository):
 
         event_in_db: EventModel = result.scalars().first()
         if not event_in_db:
-            raise EntityDoesNotExist("Event with title {} does not exists".format(title))
+            raise EntityDoesNotExists
 
         return Event(**event_in_db.__dict__)
 
@@ -175,7 +175,7 @@ class EventsRepository(BaseRepository):
     async def delete_event(self, event_id: int) -> None:
         event: EventModel = await self._get_event_model_by_id(event_id)
 
-        await self.session.delete(event)
+        self.session.delete(event)
         await self.session.commit()
 
     async def _get_event_model_by_id(self, event_id: int) -> EventModel:
@@ -188,6 +188,6 @@ class EventsRepository(BaseRepository):
 
         event_model_in_db: EventModel = result.scalars().first()
         if not event_model_in_db:
-            raise EntityDoesNotExist("event with id {} does not exist".format(event_id))
+            raise EntityDoesNotExists
 
         return event_model_in_db

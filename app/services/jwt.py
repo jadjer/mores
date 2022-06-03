@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 import jwt
-from pydantic import ValidationError
+from pydantic import ValidationError, EmailStr
 
 from app.models.domain.user import User
 from app.models.schemas.jwt import JWTMeta, JWTUser
@@ -38,9 +38,10 @@ def create_jwt_token(
     return jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
 
 
-def create_access_token_for_user(user: User, secret_key: str) -> str:
+def create_access_token_for_user(email: EmailStr, username: str, secret_key: str) -> str:
+    jwt_user = JWTUser(email=email, username=username)
     return create_jwt_token(
-        jwt_content=JWTUser(username=user.username).dict(),
+        jwt_content=jwt_user.__dict__,
         secret_key=secret_key,
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
@@ -49,6 +50,15 @@ def create_access_token_for_user(user: User, secret_key: str) -> str:
 def get_username_from_token(token: str, secret_key: str) -> str:
     try:
         return JWTUser(**jwt.decode(token, secret_key, algorithms=[ALGORITHM])).username
+    except jwt.PyJWTError as decode_error:
+        raise ValueError("unable to decode JWT token") from decode_error
+    except ValidationError as validation_error:
+        raise ValueError("malformed payload in token") from validation_error
+
+
+def get_email_from_token(token: str, secret_key: str) -> EmailStr:
+    try:
+        return JWTUser(**jwt.decode(token, secret_key, algorithms=[ALGORITHM])).email
     except jwt.PyJWTError as decode_error:
         raise ValueError("unable to decode JWT token") from decode_error
     except ValidationError as validation_error:

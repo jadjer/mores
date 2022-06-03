@@ -16,7 +16,7 @@ from typing import List, Optional
 
 from sqlalchemy import select
 
-from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
+from app.database.errors import EntityDoesNotExists, EntityAlreadyExists
 from app.database.models import ServiceTypeModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.service_type import ServiceType
@@ -30,7 +30,7 @@ class ServicesTypesRepository(BaseRepository):
 
         service_type_in_db: ServiceTypeModel = result.scalars().first()
         if not service_type_in_db:
-            raise EntityDoesNotExist("vehicle with id {} does not exist".format(service_type_id))
+            raise EntityDoesNotExists
 
         return service_type_in_db
 
@@ -56,12 +56,12 @@ class ServicesTypesRepository(BaseRepository):
         new_service_type.name = name
         new_service_type.description = description
 
-        try:
-            self.session.add(new_service_type)
-            await self.session.commit()
+        self.session.add(new_service_type)
 
+        try:
+            await self.session.commit()
         except Exception:
-            raise EntityAlreadyExists("Service type with name {} already exists".format(name))
+            raise EntityAlreadyExists
 
         return ServiceType(**new_service_type.__dict__)
 
@@ -78,18 +78,17 @@ class ServicesTypesRepository(BaseRepository):
 
         try:
             await self.session.commit()
-
         except Exception:
-            raise EntityAlreadyExists("Service type with name {} already exists".format(name))
+            raise EntityAlreadyExists
 
         return ServiceType(**service_type_model.__dict__)
 
     async def delete_service_type(self, vehicle_id: int) -> None:
         vehicle = await self.get_service_type_model_by_id(vehicle_id)
 
-        try:
-            self.session.delete(vehicle)
-            await self.session.commit()
+        self.session.delete(vehicle)
 
+        try:
+            await self.session.commit()
         except Exception:
-            raise EntityDoesNotExist("Service type doesn't exists")
+            raise EntityDoesNotExists

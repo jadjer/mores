@@ -23,6 +23,18 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -32,7 +44,7 @@ from app.api.dependencies.events import (
     get_event_by_id_from_path,
     get_event_confirmation_from_query,
 )
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events_confirmations import EventConfirmationsRepository
 from app.models.domain.event import Event
 from app.models.domain.event_confirmation import EventConfirmationType, EventConfirmation
@@ -60,7 +72,7 @@ async def confirmation(
         await confirmation_repo.get_confirmation_by_event_id_for_user(event, user)
         confirm = await confirmation_repo.update_confirmation_by_event_id_for_user(event, user, event_confirmation)
 
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         confirm = await confirmation_repo.create_confirmation_by_event_id_for_user(event, user, event_confirmation)
 
     return EventConfirmationInResponse(

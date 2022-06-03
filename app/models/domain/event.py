@@ -17,9 +17,8 @@ from enum import Enum
 import datetime as datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
-from app.models.domain.user import User
+from app.models.domain.profile import Profile
 from app.models.domain.location import Location
-from app.models.domain.rwmodel import RWModel
 
 
 class EventState(Enum):
@@ -29,7 +28,7 @@ class EventState(Enum):
 
 
 class Event(IDModelMixin, DateTimeModelMixin):
-    author: User
+    author: Profile
     title: str
     description: str
     thumbnail: str

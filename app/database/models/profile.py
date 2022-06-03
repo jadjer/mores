@@ -30,5 +30,5 @@ class ProfileModel(Base):
     last_name = Column(String, nullable=True)
     gender = Column(Enum(Gender), default=Gender.UNDEFINED)
     age = Column(Integer, nullable=True)
-    phone = Column(String, unique=True)
+    phone = Column(String, unique=True, nullable=True)
     image = Column(String, nullable=True)

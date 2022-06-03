@@ -11,10 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import contextlib
+
 from typing import Optional
 
-from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
+from app.database.errors import EntityDoesNotExists
 from app.database.models import LocationModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.location import Location
@@ -63,6 +63,6 @@ class LocationsRepository(BaseRepository):
     async def _get_location_model_by_id(self, location_id: int) -> LocationModel:
         location: LocationModel = await self.session.get(LocationModel, location_id)
         if not location:
-            raise EntityDoesNotExist("Location with id {} does not exist".format(location_id))
+            raise EntityDoesNotExists
 
         return location

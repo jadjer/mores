@@ -24,14 +24,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import ProfileDoesNotExists
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.profiles import ProfilesRepository
 
 
 async def check_username_is_taken(repo: ProfilesRepository, username: str) -> bool:
     try:
         await repo.get_profile_by_username(username)
-    except ProfileDoesNotExists:
+    except EntityDoesNotExists:
         return False
 
     return True

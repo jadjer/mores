@@ -16,7 +16,7 @@ from typing import Callable, Optional
 
 from fastapi import Depends, HTTPException, Security, requests, status
 from fastapi.security import APIKeyHeader
-from fastapi.exceptions import HTTPException as StarletteHTTPException
+from fastapi.exceptions import HTTPException as FastapiHTTPException
 
 from app.api.dependencies.database import get_repository
 from app.core.config import get_app_settings
@@ -27,18 +27,15 @@ from app.models.domain.user import User
 from app.resources import strings
 from app.services import jwt
 
-HEADER_KEY = "Authorization"
+HEADER_KEY = "x-api-key"
 
 
-class RWAPIKeyHeader(APIKeyHeader):
+class ApiKeyHeader(APIKeyHeader):
     async def __call__(self, request: requests.Request) -> Optional[str]:
         try:
             return await super().__call__(request)
-        except StarletteHTTPException as original_auth_exc:
-            raise HTTPException(
-                status_code=original_auth_exc.status_code,
-                detail=strings.AUTHENTICATION_REQUIRED,
-            )
+        except FastapiHTTPException as original_auth_exc:
+            raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
 def get_current_user_authorizer() -> Callable:  # type: ignore
@@ -46,7 +43,7 @@ def get_current_user_authorizer() -> Callable:  # type: ignore
 
 
 def _get_authorization_header(
-        api_key: str = Security(RWAPIKeyHeader(name=HEADER_KEY)),
+        api_key: str = Security(ApiKeyHeader(name=HEADER_KEY)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> str:
     try:

@@ -12,16 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Optional
+from typing import List
 
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists, EntityCreateError
+from app.database.models import CommentModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.users import UsersRepository
-from app.models.domain.post import Post
 from app.models.domain.comment import Comment
-from app.models.domain.user import User
+from app.models.domain.user import UserInDB
 
 
 class CommentsRepository(BaseRepository):
@@ -30,89 +31,69 @@ class CommentsRepository(BaseRepository):
         super().__init__(session)
         self._users_repo = UsersRepository(session)
 
-    async def get_comment_by_id(
-        self,
-        comment_id: int,
-        article: Post,
-        user: Optional[User] = None,
-    ) -> Comment:
-        pass
-        # comment_row = await queries.get_comment_by_id_and_slug(
-        #     self.connection,
-        #     comment_id=comment_id,
-        #     article_slug=article.slug,
-        # )
-        # if comment_row:
-        #     return await self._get_comment_from_db_record(
-        #         comment_row=comment_row,
-        #         author_username=comment_row["author_username"],
-        #         requested_user=user,
-        #     )
-        #
-        # raise EntityDoesNotExist(
-        #     "comment with id {0} does not exist".format(comment_id),
-        # )
+    async def create_comment(self, post_id: int, user: UserInDB, body: str) -> Comment:
+        new_comment = CommentModel()
+        new_comment.post_id = post_id
+        new_comment.author_id = user.id
+        new_comment.body = body
 
-    async def get_comments_for_article(
-        self,
-        article: Post,
-        user: Optional[User] = None,
-    ) -> List[Comment]:
-        pass
-        # comments_rows = await queries.get_comments_for_article_by_slug(
-        #     self.connection,
-        #     slug=article.slug,
-        # )
-        # return [
-        #     await self._get_comment_from_db_record(
-        #         comment_row=comment_row,
-        #         author_username=comment_row["author_username"],
-        #         requested_user=user,
-        #     )
-        #     for comment_row in comments_rows
-        # ]
+        self.session.add(new_comment)
 
-    async def create_comment_for_article(
-        self,
-        body: str,
-        article: Post,
-        user: User,
-    ) -> Comment:
-        pass
-        # comment_row = await queries.create_new_comment(
-        #     self.connection,
-        #     body=body,
-        #     article_slug=article.slug,
-        #     author_username=user.username,
-        # )
-        # return await self._get_comment_from_db_record(
-        #     comment_row=comment_row,
-        #     author_username=comment_row["author_username"],
-        #     requested_user=user,
-        # )
+        try:
+            self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
 
-    async def delete_comment(self, *, comment: Comment) -> None:
-        pass
-        # await queries.delete_comment_by_id(
-        #     self.connection,
-        #     comment_id=comment.id_,
-        #     author_username=comment.author.username,
-        # )
+        return Comment(**new_comment.__dict__)
 
-    async def _get_comment_from_db_record(
-        self,
-        comment: Comment,
-        author_username: str,
-        requested_user: Optional[User],
-    ) -> Comment:
-        pass
-        # return Comment(
-        #     id_=comment_row["id"],
-        #     body=comment_row["body"],
-        #     author=await self._profiles_repo.get_profile_by_username(
-        #         username=author_username,
-        #         requested_user=requested_user,
-        #     ),
-        #     created_at=comment_row["created_at"],
-        #     updated_at=comment_row["updated_at"],
-        # )
+    async def get_comment_by_id(self, comment_id: int) -> Comment:
+        comment_in_db = self.session.get(CommentModel, comment_id)
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return Comment(**comment_in_db.__dict__)
+
+    async def get_comments(self, post_id: int) -> List[Comment]:
+        query = select(CommentModel).where(CommentModel.post_id == post_id)
+        result = await self.session.execute(query)
+
+        comments_in_db = result.scalars().all()
+
+        return [Comment(**comment_in_db.__dict__) for comment_in_db in comments_in_db]
+
+    async def update_comment(self, comment_id: int, user: UserInDB, body: str) -> Comment:
+        comment_in_db: CommentModel = await self._get_comment_model_by_id(comment_id, user)
+        comment_in_db.body = body
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityDoesNotExists from exception
+
+        return Comment(**comment_in_db.__dict__)
+
+    async def delete_comment(self, comment_id: int, user: UserInDB) -> None:
+        comment_in_db = await self._get_comment_model_by_id(comment_id, user)
+
+        self.session.delete(comment_in_db)
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityDoesNotExists from exception
+
+    async def _get_comment_model_by_id(self, comment_id: int, user: UserInDB) -> CommentModel:
+        query = select(CommentModel).where(
+            and_(
+                CommentModel.id == comment_id,
+                CommentModel.author_id == user.id
+            )
+        )
+
+        result = await self.session.execute(query)
+
+        comment_in_db: CommentModel = result.scalars().first()
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return comment_in_db

@@ -30,7 +30,7 @@ from fastapi import Query, Path, Depends, HTTPException, status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events import EventsRepository
 from app.models.domain.event import EventState, Event
 from app.models.domain.event_confirmation import EventConfirmationType
@@ -70,7 +70,7 @@ async def get_event_by_id_from_path(
         return await events_repo.get_event_by_id(
             event_id=event_id,
         )
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=strings.EVENT_DOES_NOT_EXIST_ERROR,

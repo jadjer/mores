@@ -17,7 +17,7 @@ from typing import Optional
 from pydantic import EmailStr
 from sqlalchemy import select
 
-from app.database.errors import UserDoesNotExists, UserCreateError, UserUpdateError
+from app.database.errors import EntityDoesNotExists, EntityCreateError, EntityUpdateError
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import UserInDB
 from app.database.models import UserModel
@@ -38,7 +38,7 @@ class UsersRepository(BaseRepository):
             self.session.add(new_user)
             await self.session.commit()
         except Exception as exception:
-            raise UserCreateError from exception
+            raise EntityCreateError from exception
 
         user.id = new_user.id
 
@@ -47,7 +47,7 @@ class UsersRepository(BaseRepository):
     async def get_user_by_id(self, user_id: int) -> UserInDB:
         user_in_db: UserModel = await self._get_user_model_by_id(user_id)
         if not user_in_db:
-            raise UserDoesNotExists
+            raise EntityDoesNotExists
 
         return UserInDB(**user_in_db.__dict__)
 
@@ -57,7 +57,7 @@ class UsersRepository(BaseRepository):
 
         user = result.scalars().first()
         if not user:
-            raise UserDoesNotExists
+            raise EntityDoesNotExists
 
         return UserInDB(**user.__dict__)
 
@@ -78,13 +78,13 @@ class UsersRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
-            raise UserUpdateError from exception
+            raise EntityUpdateError from exception
 
         return UserInDB(**user_in_db.__dict__)
 
     async def _get_user_model_by_id(self, user_id: int) -> UserModel:
         user = await self.session.get(UserModel, user_id)
         if not user:
-            raise UserDoesNotExists
+            raise EntityDoesNotExists
 
         return user

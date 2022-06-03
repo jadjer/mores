@@ -12,16 +12,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
-
-from pydantic import BaseModel, EmailStr
-
-
-class JWTMeta(BaseModel):
-    exp: datetime
-    sub: str
+from starlette.datastructures import Headers
+from starlette.types import ASGIApp, Scope, Receive, Send
 
 
-class JWTUser(BaseModel):
-    username: str
-    email: EmailStr
+class ApiKeyMiddleware:
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        headers = Headers(scope=scope)
+        x_api_key = headers.get("x-api-key")
+
+        if x_api_key is None:
+            await self.app(scope, receive, send)
+            return

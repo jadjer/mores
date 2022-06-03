@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes.vehicles import (
+from . import (
     fuels,
     reminders,
     services,

@@ -30,9 +30,9 @@ from pydantic import HttpUrl
 from sqlalchemy import select
 
 from app.database.errors import (
-    ProfileCreateError,
-    ProfileUpdateError,
-    ProfileDoesNotExists
+    EntityCreateError,
+    EntityUpdateError,
+    EntityDoesNotExists
 )
 from app.database.repositories.base import BaseRepository
 from app.models.domain.profile import Gender, Profile
@@ -71,14 +71,14 @@ class ProfilesRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
-            raise ProfileCreateError from exception
+            raise EntityCreateError from exception
 
         return Profile(**new_profile.__dict__)
 
     async def get_profile_by_id(self, profile_id: int) -> Profile:
         profile_in_db = await self._get_profile_model_by_id(profile_id)
         if not profile_in_db:
-            raise ProfileDoesNotExists
+            raise EntityDoesNotExists
 
         return Profile(**profile_in_db.__dict__)
 
@@ -88,14 +88,24 @@ class ProfilesRepository(BaseRepository):
 
         profile = result.scalars().first()
         if not profile:
-            raise ProfileDoesNotExists
+            raise EntityDoesNotExists
 
         return Profile(**profile.__dict__)
+
+    async def get_user_id_by_username(self, username: str) -> int:
+        query = select(ProfileModel).where(ProfileModel.username == username)
+        result = await self.session.execute(query)
+
+        profile: ProfileModel = result.scalars().first()
+        if not profile:
+            raise EntityDoesNotExists
+
+        return profile.user_id
 
     async def get_profile_by_user_id(self, user_id: int) -> Profile:
         profile_in_db = await self._get_profile_model_by_user_id(user_id)
         if not profile_in_db:
-            raise ProfileDoesNotExists
+            raise EntityDoesNotExists
 
         return Profile(**profile_in_db.__dict__)
 
@@ -128,14 +138,14 @@ class ProfilesRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
-            raise ProfileUpdateError from exception
+            raise EntityUpdateError from exception
 
         return Profile(**user_in_db.__dict__)
 
     async def _get_profile_model_by_id(self, profile_id: int) -> ProfileModel:
         profile: ProfileModel = await self.session.get(ProfileModel, profile_id)
         if not profile:
-            raise ProfileDoesNotExists
+            raise EntityDoesNotExists
 
         return profile
 
@@ -145,6 +155,6 @@ class ProfilesRepository(BaseRepository):
 
         profile = result.scalars().first()
         if not profile:
-            raise ProfileDoesNotExists
+            raise EntityDoesNotExists
 
         return profile

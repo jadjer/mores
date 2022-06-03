@@ -12,16 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
+from fastapi import APIRouter
 
-from pydantic import BaseModel, EmailStr
+from . import (
+    posts,
+    comments,
+)
 
+router = APIRouter()
 
-class JWTMeta(BaseModel):
-    exp: datetime
-    sub: str
-
-
-class JWTUser(BaseModel):
-    username: str
-    email: EmailStr
+router.include_router(posts.router, prefix="/posts")
+router.include_router(comments.router, prefix="/posts/{post_id}/comments")

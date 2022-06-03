@@ -12,14 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.users import UsersRepository
 
 
 async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
     try:
         await repo.get_user_by_email(email=email)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True

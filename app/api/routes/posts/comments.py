@@ -16,17 +16,18 @@ from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, Response, status
 
-from app.api.dependencies.posts import get_post_by_id_from_path
+from app.api.dependencies.posts import get_post_id_from_path, get_post_by_id_from_path
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.comments import (
     check_comment_modification_permissions,
     get_comment_by_id_from_path,
 )
 from app.api.dependencies.database import get_repository
+from app.database.errors import EntityCreateError
 from app.database.repositories.comments import CommentsRepository
 from app.models.domain.post import Post
 from app.models.domain.comment import Comment
-from app.models.domain.user import User
+from app.models.domain.user import User, UserInDB
 from app.models.schemas.comment import (
     CommentInCreate,
     CommentInResponse,
@@ -36,48 +37,61 @@ from app.models.schemas.comment import (
 router = APIRouter()
 
 
-@router.get(
-    "",
-    response_model=ListOfCommentsInResponse,
-    name="comments:get-comments-for-article",
-)
-async def list_comments_for_article(
-    article: Post = Depends(get_post_by_id_from_path),
-    user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
-    comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
-) -> ListOfCommentsInResponse:
-    comments = await comments_repo.get_comments_for_article(article=article, user=user)
-    return ListOfCommentsInResponse(comments=comments)
-
-
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=CommentInResponse,
-    name="comments:create-comment-for-article",
+    name="comments:create-comment-for-post",
 )
-async def create_comment_for_article(
+async def create_comment(
+    post_id: int = Depends(get_post_id_from_path),
     comment_create: CommentInCreate = Body(..., embed=True, alias="comment"),
-    post: Post = Depends(get_post_by_id_from_path),
-    user: User = Depends(get_current_user_authorizer()),
+    user: UserInDB = Depends(get_current_user_authorizer()),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> CommentInResponse:
-    comment = await comments_repo.create_comment_for_article(
-        body=comment_create.body,
-        article=post,
-        user=user,
-    )
+    try:
+        comment = await comments_repo.create_comment(post_id, user, **comment_create.__dict__)
+    except EntityCreateError as exception:
+        raise
+
     return CommentInResponse(comment=comment)
+
+
+@router.get(
+    "",
+    response_model=ListOfCommentsInResponse,
+    name="comments:get-comments-for-post",
+)
+async def get_comments(
+    post_id: int = Depends(get_post_id_from_path),
+    comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
+) -> ListOfCommentsInResponse:
+    comments = await comments_repo.get_comments(post_id)
+    return ListOfCommentsInResponse(comments=comments)
+
+
+@router.put(
+    "/{comment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    name="comments:update-comment-from-post",
+    dependencies=[Depends(check_comment_modification_permissions)],
+    response_class=Response,
+)
+async def update_comment(
+    comment: Comment = Depends(get_comment_by_id_from_path),
+    comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
+) -> None:
+    await comments_repo.delete_comment(comment=comment)
 
 
 @router.delete(
     "/{comment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    name="comments:delete-comment-from-article",
+    name="comments:delete-comment-from-post",
     dependencies=[Depends(check_comment_modification_permissions)],
     response_class=Response,
 )
-async def delete_comment_from_article(
+async def delete_comment(
     comment: Comment = Depends(get_comment_by_id_from_path),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> None:

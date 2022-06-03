@@ -12,16 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
+from fastapi import APIRouter
 
-from pydantic import BaseModel, EmailStr
+from . import (
+    events,
+    event_confirmations,
+)
 
+router = APIRouter()
 
-class JWTMeta(BaseModel):
-    exp: datetime
-    sub: str
-
-
-class JWTUser(BaseModel):
-    username: str
-    email: EmailStr
+router.include_router(events.router, tags=["events"], prefix="/events")
+router.include_router(event_confirmations.router, tags=["events"], prefix="/events/{event_id}")

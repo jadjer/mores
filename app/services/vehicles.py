@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.vehicles import VehiclesRepository
 from app.models.domain.user import UserInDB
 
@@ -20,7 +20,7 @@ from app.models.domain.user import UserInDB
 async def check_vehicle_is_exist(repo: VehiclesRepository, user: UserInDB, vehicle_id: int) -> bool:
     try:
         await repo.get_vehicle_by_id(user, vehicle_id)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True
@@ -29,7 +29,7 @@ async def check_vehicle_is_exist(repo: VehiclesRepository, user: UserInDB, vehic
 async def check_vim_is_taken(repo: VehiclesRepository, vin: str) -> bool:
     try:
         await repo.get_vehicle_by_vin(vin)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True
@@ -38,7 +38,7 @@ async def check_vim_is_taken(repo: VehiclesRepository, vin: str) -> bool:
 async def check_registration_plate_is_taken(repo: VehiclesRepository, registration_plate: str) -> bool:
     try:
         await repo.get_vehicle_by_registration_plate(registration_plate)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True

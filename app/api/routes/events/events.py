@@ -11,30 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
+
 import contextlib
 
 from fastapi import APIRouter, status, Depends, Body, HTTPException
@@ -46,7 +23,7 @@ from app.api.dependencies.events import (
     get_event_id_from_path,
     check_event_permissions,
 )
-from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
+from app.database.errors import EntityDoesNotExists, EntityAlreadyExists, EntityCreateError
 from app.database.repositories.events import EventsRepository
 from app.models.domain.user import UserInDB
 from app.models.schemas.events import (
@@ -76,8 +53,8 @@ async def create_event(
 
     try:
         event = await events_repo.create_event(author=user, **event_create.__dict__)
-    except EntityAlreadyExists as existence_error:
-        raise create_error from existence_error
+    except EntityCreateError as exception:
+        raise create_error from exception
 
     return EventInResponse(event=event)
 
@@ -91,6 +68,8 @@ async def get_events(
         events_filter: EventsFilter = Depends(get_events_filters),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> ListOfEventsInResponse:
+    event_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+
     try:
         events = await events_repo.get_events_with_filter(
             author=events_filter.author,
@@ -98,8 +77,8 @@ async def get_events(
             limit=events_filter.limit,
             offset=events_filter.offset
         )
-    except EntityDoesNotExist  as existence_error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_DOES_NOT_EXIST_ERROR)
+    except EntityDoesNotExists as exception:
+        raise event_not_found from exception
 
     return ListOfEventsInResponse(events=events, events_count=len(events))
 
@@ -113,13 +92,14 @@ async def get_event(
         event_id: int = Depends(get_event_id_from_path),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
+    event_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+
     try:
         event = await events_repo.get_event_by_id(event_id)
-        return EventInResponse(event=event)
+    except EntityDoesNotExists as exception:
+        raise event_not_found from exception
 
-    except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
-
+    return EventInResponse(event=event)
 
 @router.put(
     "/{event_id}",
@@ -135,12 +115,14 @@ async def update_event(
         event_update: EventInUpdate = Body(..., embed=True, alias="event"),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
+    event_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+
     try:
         event = await events_repo.update_event(**event_update.__dict__, event_id=event_id)
-        return EventInResponse(event=event)
+    except EntityDoesNotExists as exception:
+        raise event_not_found from exception
 
-    except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+    return EventInResponse(event=event)
 
 
 @router.delete(
@@ -156,8 +138,9 @@ async def delete_event(
         event_id: int = Depends(get_event_id_from_path),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> None:
+    event_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+
     try:
         await events_repo.delete_event(event_id)
-
-    except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.EVENT_DOES_NOT_EXIST_ERROR)
+    except EntityDoesNotExists as exception:
+        raise event_not_found from exception

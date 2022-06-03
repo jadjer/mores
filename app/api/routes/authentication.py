@@ -50,7 +50,10 @@ async def login(
     if not user.check_password(user_login.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
 
-    token = jwt.create_access_token_for_user(user, str(settings.secret_key.get_secret_value()))
+    token = jwt.create_access_token_for_user(
+        email=user.email,
+        secret_key=settings.secret_key.get_secret_value()
+    )
 
     return UserInResponse(user=UserWithToken(**user.dict(), token=token))
 
@@ -76,6 +79,10 @@ async def register(
     user = await users_repo.create_user(**user_create.__dict__)
     profile = await profile_repo.create_profile(user, **user_create.__dict__)
 
-    token = jwt.create_access_token_for_user(user, str(settings.secret_key.get_secret_value()))
+    token = jwt.create_access_token_for_user(
+        email=user.email,
+        username=profile.username,
+        secret_key=settings.secret_key.get_secret_value()
+    )
 
     return UserInResponse(user=UserWithToken(**user.__dict__, token=token))

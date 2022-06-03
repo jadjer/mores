@@ -14,7 +14,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import (
+from . import (
     authentication,
     users,
     profiles,
@@ -22,9 +22,7 @@ from app.api.routes import (
     services_types,
     locations,
     posts,
-    comments,
-    events,
-    event_confirmations,
+    events
 )
 
 router = APIRouter()
@@ -35,7 +33,5 @@ router.include_router(profiles.router, tags=["profiles"], prefix="/profiles")
 router.include_router(vehicles.router, tags=["vehicles"])
 router.include_router(services_types.router, tags=["services_types"], prefix="/services/types")
 router.include_router(locations.router, tags=["locations"], prefix="/locations")
-router.include_router(posts.router, tags=["posts"], prefix="/posts")
-router.include_router(comments.router, tags=["posts"], prefix="/posts/{post_id}/comments")
-router.include_router(events.router, tags=["events"], prefix="/events")
-router.include_router(event_confirmations.router, tags=["events"], prefix="/events/{event_id}")
+router.include_router(posts.router, tags=["posts"])
+router.include_router(events.router, tags=["events"])

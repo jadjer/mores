@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events import EventsRepository
 from app.models.domain.event import Event
 from app.models.domain.user import User
@@ -21,7 +21,7 @@ from app.models.domain.user import User
 async def check_event_exist_by_id(events_repo: EventsRepository, event_id: int) -> bool:
     try:
         await events_repo.get_event_by_id(event_id)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True
@@ -34,7 +34,7 @@ def check_user_can_modify_event(event: Event, user: User) -> bool:
 async def check_event_confirmation_exists(events_repo: EventsRepository, event_id: int, user_id: int) -> bool:
     try:
         await events_repo.get_confirmation_by_event_id_for_user(event_id, user_id)
-    except EntityDoesNotExist:
+    except EntityDoesNotExists:
         return False
 
     return True

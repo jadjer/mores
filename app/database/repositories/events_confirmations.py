@@ -14,7 +14,7 @@
 
 from sqlalchemy import select, update, insert
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.models import EventConfirmationModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.event_confirmation import EventConfirmation, EventConfirmationType
@@ -37,7 +37,7 @@ class EventConfirmationsRepository(BaseRepository):
         event_confirmation_in_db: EventConfirmationModel = result.scalars().first()
 
         if not event_confirmation_in_db:
-            raise EntityDoesNotExist("event confirmation with event id {0} does not exist".format(event.id))
+            raise EntityDoesNotExists
 
         return EventConfirmation(
             event=event,

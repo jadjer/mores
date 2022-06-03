@@ -12,7 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .entity_does_not_exists import EntityDoesNotExist
+from .entity_does_not_exists import EntityDoesNotExists
 from .entity_already_exists import EntityAlreadyExists
-from .users import *
-from .profiles import *
+from .entity_create_error import EntityCreateError
+from .entity_update_error import EntityUpdateError
+from .entity_delete_error import EntityDeleteError

@@ -19,7 +19,7 @@ from fastapi import status
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
 from app.models.domain.user import User
@@ -33,9 +33,9 @@ from app.services.posts import check_user_can_modify_post
 
 
 def get_posts_filters(
-    author: Optional[str] = None,
-    limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
-    offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
+        author: Optional[str] = None,
+        limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
+        offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
 ) -> PostsFilters:
     return PostsFilters(
         author=author,
@@ -44,14 +44,17 @@ def get_posts_filters(
     )
 
 
+def get_post_id_from_path(post_id: int = Path(..., ge=1)) -> int:
+    return post_id
+
+
 async def get_post_by_id_from_path(
-    post_id: str = Path(..., min_length=1),
-    user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
-    posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
+        post_id: int = Path(..., min_length=1),
+        posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> Post:
     try:
-        return await posts_repo.get_article_by_slug(post_id=post_id, requested_user=user)
-    except EntityDoesNotExist:
+        return await posts_repo.get_post_by_id(post_id)
+    except EntityDoesNotExists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=strings.ARTICLE_DOES_NOT_EXIST_ERROR,
@@ -59,8 +62,8 @@ async def get_post_by_id_from_path(
 
 
 def check_article_modification_permissions(
-    current_post: Post = Depends(get_post_by_id_from_path),
-    user: User = Depends(get_current_user_authorizer()),
+        current_post: Post = Depends(get_post_by_id_from_path),
+        user: User = Depends(get_current_user_authorizer()),
 ) -> None:
     if not check_user_can_modify_post(current_post, user):
         raise HTTPException(

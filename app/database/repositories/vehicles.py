@@ -16,7 +16,7 @@ from typing import List, Optional
 
 from sqlalchemy import select, and_
 
-from app.database.errors import EntityDoesNotExist, EntityAlreadyExists
+from app.database.errors import EntityDoesNotExists, EntityAlreadyExists
 from app.database.models import VehicleModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import UserInDB
@@ -62,7 +62,7 @@ class VehiclesRepository(BaseRepository):
 
         vehicle_in_db: VehicleModel = result.scalars().first()
         if not vehicle_in_db:
-            raise EntityDoesNotExist("vehicle with vin {} does not exist".format(vin))
+            raise EntityDoesNotExists
 
         return Vehicle(**vehicle_in_db.__dict__)
 
@@ -72,7 +72,7 @@ class VehiclesRepository(BaseRepository):
 
         vehicle_in_db: VehicleModel = result.scalars().first()
         if not vehicle_in_db:
-            raise EntityDoesNotExist("vehicle with registration plate {} does not exist".format(registration_plate))
+            raise EntityDoesNotExists
 
         return Vehicle(**vehicle_in_db.__dict__)
 
@@ -121,7 +121,7 @@ class VehiclesRepository(BaseRepository):
     async def delete_vehicle(self, user: UserInDB, vehicle_id: int) -> None:
         vehicle = await self._get_vehicle_model_by_id(user, vehicle_id)
 
-        await self.session.delete(vehicle)
+        self.session.delete(vehicle)
         await self.session.commit()
 
     async def _get_vehicle_model_by_id(self, user: UserInDB, vehicle_id: int) -> VehicleModel:
@@ -135,6 +135,6 @@ class VehiclesRepository(BaseRepository):
 
         vehicle_model_in_db: VehicleModel = result.scalars().first()
         if not vehicle_model_in_db:
-            raise EntityDoesNotExist("vehicle with id {} does not exist".format(vehicle_id))
+            raise EntityDoesNotExists
 
         return vehicle_model_in_db

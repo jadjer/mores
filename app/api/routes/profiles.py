@@ -28,7 +28,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status, Query, Path
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.database.errors import ProfileDoesNotExists
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.user import User, UserInDB
 from app.models.schemas.profile import ProfileInUpdate, ProfileInResponse, ListOfProfileInResponse
@@ -68,7 +68,7 @@ async def get_my_profile(
 
     try:
         profile = await profiles_repo.get_profile_by_user_id(user.id)
-    except ProfileDoesNotExists as existence_error:
+    except EntityDoesNotExists as existence_error:
         raise request_error from existence_error
 
     return ProfileInResponse(profile=profile)
@@ -90,7 +90,7 @@ async def get_profile(
 
     try:
         profile = await profiles_repo.get_profile_by_id(profile_id)
-    except ProfileDoesNotExists as existence_error:
+    except EntityDoesNotExists as existence_error:
         raise request_error from existence_error
 
     return ProfileInResponse(profile=profile)
