@@ -31,4 +31,4 @@ class PostModel(Base):
     updated_at = Column(DateTime)
 
     author = relationship("UserModel")
-    comments = relationship("CommentModel", back_populates="post")
+    comments = relationship("CommentModel")

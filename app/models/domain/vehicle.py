@@ -13,11 +13,9 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.profile import Profile
 
 
 class Vehicle(IDModelMixin):
-    owner: Profile
     name: str
     brand: str
     model: str

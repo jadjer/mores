@@ -12,16 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status, Query, Path
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
 
-from app.api.dependencies.authentication import get_current_profile_authorizer
+from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.database.errors import EntityDoesNotExists
+from app.api.dependencies.get_id_from_path import get_user_id_from_path
+from app.database.errors import EntityDoesNotExists, EntityUpdateError
 from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.profile import Profile
 from app.models.schemas.profile import ProfileInUpdate, ProfileInResponse, ListOfProfileInResponse
 from app.resources import strings
-from app.services.profiles import check_username_is_taken
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ router = APIRouter()
     response_model=ListOfProfileInResponse,
     name="profiles:get-all-profiles",
     dependencies=[
-        Depends(get_current_profile_authorizer())
+        Depends(get_current_user_authorizer())
     ]
 )
 async def get_profiles(
@@ -49,27 +49,35 @@ async def get_profiles(
     name="profiles:get-my-profile"
 )
 async def get_my_profile(
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
+        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
 ) -> ProfileInResponse:
+    profile_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.PROFILE_DOES_NOT_EXISTS)
+
+    try:
+        profile = await profiles_repo.get_profile_by_user_id(user_id)
+    except EntityDoesNotExists as exception:
+        raise profile_not_found from exception
+
     return ProfileInResponse(profile=profile)
 
 
 @router.get(
-    "/{profile_id}",
+    "/{user_id}",
     response_model=ProfileInResponse,
     name="profiles:get-profile",
     dependencies=[
-        Depends(get_current_profile_authorizer())
+        Depends(get_current_user_authorizer())
     ]
 )
 async def get_profile_by_id(
-        profile_id: int = Path(..., ge=1),
+        user_id: int = Depends(get_user_id_from_path),
         profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
 ) -> ProfileInResponse:
     request_error = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.PROFILE_DOES_NOT_EXISTS)
 
     try:
-        profile = await profiles_repo.get_profile_by_id(profile_id)
+        profile = await profiles_repo.get_profile_by_user_id(user_id)
     except EntityDoesNotExists as existence_error:
         raise request_error from existence_error
 
@@ -83,16 +91,14 @@ async def get_profile_by_id(
 )
 async def update_my_profile(
         profile_update: ProfileInUpdate = Body(..., embed=True, alias="user"),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
         profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
 ) -> ProfileInResponse:
-    if profile_update.username:
-        if await check_username_is_taken(profiles_repo, profile_update.username):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=strings.USERNAME_TAKEN,
-            )
+    update_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
 
-    profile = await profiles_repo.update_profile(profile.id, **profile_update.__dict__)
+    try:
+        profile = await profiles_repo.update_profile(user_id, **profile_update.__dict__)
+    except EntityUpdateError as exception:
+        raise update_error from exception
 
     return ProfileInResponse(profile=profile)

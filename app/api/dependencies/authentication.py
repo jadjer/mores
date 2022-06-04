@@ -38,8 +38,8 @@ class RWAPIKeyHeader(APIKeyHeader):
             raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
-def get_current_profile_authorizer() -> Callable:  # type: ignore
-    return _get_current_user
+def get_current_user_authorizer() -> Callable:  # type: ignore
+    return _get_current_user_id
 
 
 def _get_authorization_header(
@@ -59,19 +59,29 @@ def _get_authorization_header(
     return token
 
 
-async def _get_current_user(
-        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
+async def _get_current_user_id(
         token: str = Depends(_get_authorization_header),
         settings: AppSettings = Depends(get_app_settings),
+) -> int:
+    malformed_payload = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.MALFORMED_PAYLOAD)
+
+    try:
+        user_id = jwt.get_user_id_from_token(token, settings.secret_key.get_secret_value())
+    except ValueError as exception:
+        raise malformed_payload from exception
+
+    return user_id
+
+
+async def _get_current_user(
+        user_id: int = Depends(_get_current_user_id),
+        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
 ) -> Profile:
     malformed_payload = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.MALFORMED_PAYLOAD)
 
     try:
-        username = jwt.get_username_from_token(token, settings.secret_key.get_secret_value())
-    except ValueError as exception:
-        raise malformed_payload from exception
-
-    try:
-        return await profiles_repo.get_profile_by_username(username)
+        profile = await profiles_repo.get_profile_by_user_id(user_id)
     except EntityDoesNotExists as exception:
         raise malformed_payload from exception
+
+    return profile

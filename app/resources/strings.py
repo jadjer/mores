@@ -17,7 +17,9 @@ VEHICLE_ALREADY_EXISTS = "Vehicle already exists"
 VEHICLE_CONFLICT_VIN_ERROR = "Vehicle with current VIN already exist"
 VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR = "Vehicle with current REGISTRATION PLATE already exist"
 VEHICLE_DOES_NOT_EXIST_ERROR = "Vehicle does not exist"
+VEHICLE_CONFLICT_VIN_OR_EG_PLATE = "Vehicle with current VIN or REGISTRATION PLATE already exists"
 
+SERVICE_CREATE_ERROR = "Service create error"
 SERVICE_TYPE_DOES_NOT_EXIST_ERROR = "Service type doesn't exist"
 
 LOCATION_DOES_NOT_EXIST_ERROR = "Location doesn't exist"

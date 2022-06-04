@@ -13,13 +13,10 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.vehicle import Vehicle
-from app.models.domain.rwmodel import RWModel
 from app.models.domain.service_type import ServiceType
 
 
-class Reminder(IDModelMixin, RWModel):
-    vehicle: Vehicle
-    service_type: ServiceType
+class Reminder(IDModelMixin):
+    service_name: ServiceType
     next_mileage: int
     next_data: str

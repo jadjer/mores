@@ -32,4 +32,4 @@ class VehicleModel(Base):
     vin = Column(String, unique=True, nullable=True)
     registration_plate = Column(String, unique=True, nullable=True)
 
-    owner = relationship("UserModel", foreign_keys=[owner_id])
+    owner = relationship("UserModel")

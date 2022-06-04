@@ -11,12 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 from typing import List
 
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.errors import EntityDoesNotExists
+from app.database.errors import EntityDoesNotExists, EntityCreateError
 from app.database.models import ServiceModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.locations import LocationsRepository
@@ -32,6 +33,22 @@ class ServicesRepository(BaseRepository):
         super().__init__(session)
         self._vehicles_repo = VehiclesRepository(session)
         self._locations_repo = LocationsRepository(session)
+
+    async def create_service(
+            self,
+            vehicle_id: int,
+    ) -> Service:
+        new_service = ServiceModel()
+        new_service.vehicle_id = vehicle_id
+
+        self.session.add(new_service)
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
+
+        return Service(**new_service.__dict__)
 
     async def get_service_model_by_id(self, service_id: int) -> ServiceModel:
         query = select(ServiceModel).where(ServiceModel.id == service_id)
@@ -61,17 +78,4 @@ class ServicesRepository(BaseRepository):
         services_in_db = result.scalars().all()
 
         return [Service(**service_in_db.__dict__) for service_in_db in services_in_db]
-
-    async def get_services_for_all_vehicles(self, user: UserInDB) -> List[Service]:
-        vehicles = await self._vehicles_repo.get_vehicles(user)
-
-        services = []
-
-        for vehicle in vehicles:
-            services_for_vehicle = await self.get_services_for_vehicle(user, vehicle_id=vehicle.id)
-
-            for service_for_vehicle in services_for_vehicle:
-                services.append(Service(**service_for_vehicle.__dict__))
-
-        return services
 

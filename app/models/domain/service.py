@@ -14,14 +14,12 @@
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.location import Location
-from app.models.domain.vehicle import Vehicle
 from app.models.domain.service_type import ServiceType
 
 
 class Service(IDModelMixin, DateTimeModelMixin):
-    vehicle: Vehicle
     location: Location
-    type: ServiceType
+    service_type: ServiceType
     mileage: int
     date: str
     price: float

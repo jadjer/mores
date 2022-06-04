@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 from typing import Optional
-
 from pydantic import EmailStr
 from sqlalchemy import select
 
@@ -29,18 +28,17 @@ class UsersRepository(BaseRepository):
         user: UserInDB = UserInDB(email=email)
         user.change_password(password)
 
-        new_user = UserModel()
-        new_user.email = user.email
+        new_user: UserModel = UserModel()
+        new_user.email = email
         new_user.salt = user.salt
         new_user.password = user.password
 
+        self.session.add(new_user)
+
         try:
-            self.session.add(new_user)
             await self.session.commit()
         except Exception as exception:
             raise EntityCreateError from exception
-
-        user.id = new_user.id
 
         return user
 

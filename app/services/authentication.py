@@ -12,13 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from pydantic import EmailStr
+
 from app.database.errors import EntityDoesNotExists
+from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
 
 
-async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
+async def check_email_is_taken(repo: UsersRepository, email: EmailStr) -> bool:
     try:
         await repo.get_user_by_email(email=email)
+    except EntityDoesNotExists:
+        return False
+
+    return True
+
+
+async def check_username_is_taken(repo: ProfilesRepository, username: str) -> bool:
+    try:
+        await repo.get_profile_by_username(username)
     except EntityDoesNotExists:
         return False
 

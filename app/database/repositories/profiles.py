@@ -15,8 +15,7 @@
 from typing import Optional, List
 
 from pydantic import HttpUrl
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.future import select
 
 from app.database.errors import (
     EntityCreateError,
@@ -25,15 +24,14 @@ from app.database.errors import (
 )
 from app.database.repositories.base import BaseRepository
 from app.models.domain.profile import Gender, Profile
-from app.database.models import ProfileModel, UserModel
-from app.models.domain.user import UserInDB
+from app.database.models import ProfileModel
 
 
 class ProfilesRepository(BaseRepository):
 
     async def create_profile(
             self,
-            user: UserInDB,
+            user_id: int,
             username: str,
             first_name: Optional[str] = None,
             second_name: Optional[str] = None,
@@ -44,7 +42,7 @@ class ProfilesRepository(BaseRepository):
             image: Optional[HttpUrl] = None,
     ) -> Profile:
         new_profile = ProfileModel()
-        new_profile.user_id = user.id
+        new_profile.user_id = user_id
         new_profile.username = username
         new_profile.first_name = first_name
         new_profile.second_name = second_name
@@ -63,38 +61,18 @@ class ProfilesRepository(BaseRepository):
 
         return Profile(**new_profile.__dict__)
 
-    async def get_profile_by_id(self, profile_id: int) -> Profile:
-        profile_in_db = await self._get_profile_model_by_id(profile_id)
+    async def get_profile_by_user_id(self, user_id: int) -> Profile:
+        profile_in_db = await self._get_profile_model_by_user_id(user_id)
         if not profile_in_db:
             raise EntityDoesNotExists
 
         return Profile(**profile_in_db.__dict__)
 
     async def get_profile_by_username(self, username: str) -> Profile:
-        query = select(ProfileModel).where(ProfileModel.username == username).options(selectinload(ProfileModel.user))
-        result = await self.session.execute(query)
-
-        profile_in_db: ProfileModel = result.scalars().first()
-        if not profile_in_db:
-            raise EntityDoesNotExists
-
-        print(profile_in_db.username)
-        print(profile_in_db.user.email)
-
-        return Profile(**profile_in_db.__dict__)
-
-    async def get_user_id_by_username(self, username: str) -> int:
         query = select(ProfileModel).where(ProfileModel.username == username)
         result = await self.session.execute(query)
 
-        profile: ProfileModel = result.scalars().first()
-        if not profile:
-            raise EntityDoesNotExists
-
-        return profile.user_id
-
-    async def get_profile_by_user_id(self, user_id: int) -> Profile:
-        profile_in_db = await self._get_profile_model_by_user_id(user_id)
+        profile_in_db: ProfileModel = result.scalars().first()
         if not profile_in_db:
             raise EntityDoesNotExists
 
@@ -110,7 +88,7 @@ class ProfilesRepository(BaseRepository):
 
     async def update_profile(
             self,
-            profile_id: int,
+            user_id: int,
             username: Optional[str] = None,
             first_name: Optional[str] = None,
             second_name: Optional[str] = None,
@@ -120,7 +98,7 @@ class ProfilesRepository(BaseRepository):
             phone: Optional[str] = None,
             image: Optional[HttpUrl] = None,
     ) -> Profile:
-        profile_in_db = await self._get_profile_model_by_id(profile_id)
+        profile_in_db = await self._get_profile_model_by_user_id(user_id)
         profile_in_db.username = username or profile_in_db.username
         profile_in_db.first_name = first_name or profile_in_db.first_name
         profile_in_db.second_name = second_name or profile_in_db.second_name
@@ -136,13 +114,6 @@ class ProfilesRepository(BaseRepository):
             raise EntityUpdateError from exception
 
         return Profile(**profile_in_db.__dict__)
-
-    async def _get_profile_model_by_id(self, profile_id: int) -> ProfileModel:
-        profile: ProfileModel = await self.session.get(ProfileModel, profile_id)
-        if not profile:
-            raise EntityDoesNotExists
-
-        return profile
 
     async def _get_profile_model_by_user_id(self, user_id: int) -> ProfileModel:
         query = select(ProfileModel).where(ProfileModel.user_id == user_id)

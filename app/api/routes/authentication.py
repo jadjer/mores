@@ -20,17 +20,19 @@ from app.core.settings.app import AppSettings
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
+from app.models.domain.profile import Profile
 from app.models.schemas.user import (
     UserInCreate,
     UserInLogin,
     UserWithToken,
-    UserInResponse,
     UserInResponseWithToken
 )
 from app.resources import strings
 from app.services import jwt
-from app.services.authentication import check_email_is_taken
-from app.services.profiles import check_username_is_taken
+from app.services.authentication import (
+    check_email_is_taken,
+    check_username_is_taken,
+)
 
 router = APIRouter()
 
@@ -46,10 +48,10 @@ async def login(
         profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    incorrect_credentials = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.INCORRECT_LOGIN_INPUT)
+    incorrect_credentials = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
 
     try:
-        profile = await profiles_repo.get_profile_by_username(user_login.username)
+        profile: Profile = await profiles_repo.get_profile_by_username(user_login.username)
     except EntityDoesNotExists as exception:
         raise incorrect_credentials from exception
 
@@ -58,6 +60,7 @@ async def login(
         raise incorrect_credentials
 
     token = jwt.create_access_token_for_user(
+        user_id=user.id,
         username=profile.username,
         secret_key=settings.secret_key.get_secret_value()
     )
@@ -77,8 +80,8 @@ async def register(
         profile_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    email_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.EMAIL_TAKEN)
-    username_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail=strings.USERNAME_TAKEN)
+    email_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
+    username_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
 
     if await check_email_is_taken(users_repo, user_create.email):
         raise email_taken_error
@@ -87,9 +90,10 @@ async def register(
         raise username_taken_error
 
     user = await users_repo.create_user(email=user_create.email, password=user_create.password)
-    profile = await profile_repo.create_profile(user, username=user_create.username)
+    profile = await profile_repo.create_profile(user.id, username=user_create.username)
 
     token = jwt.create_access_token_for_user(
+        user_id=user.id,
         username=profile.username,
         secret_key=settings.secret_key.get_secret_value()
     )

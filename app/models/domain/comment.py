@@ -13,11 +13,8 @@
 #  limitations under the License.
 
 from app.models.common import DateTimeModelMixin, IDModelMixin
-from app.models.domain.post import Post
-from app.models.domain.profile import Profile
 
 
 class Comment(IDModelMixin, DateTimeModelMixin):
-    post: Post
-    author: Profile
+    author: str
     body: str

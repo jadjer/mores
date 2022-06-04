@@ -24,10 +24,10 @@ class UserModel(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     email = Column(String, unique=True)
-    password = Column(String)
     salt = Column(String)
+    password = Column(String)
 
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
 
-    profile = relationship("ProfileModel", back_populates="user", uselist=False)
+    profile = relationship("ProfileModel", uselist=False)

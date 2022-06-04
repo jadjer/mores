@@ -23,4 +23,5 @@ class JWTMeta(BaseModel):
 
 
 class JWTUser(BaseModel):
+    user_id: int
     username: str

@@ -11,18 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
 
 from fastapi import (
     APIRouter,
@@ -32,11 +20,16 @@ from fastapi import (
     HTTPException,
 )
 
-from app.api.dependencies.authentication import get_current_profile_authorizer
+from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.get_id_from_path import get_vehicle_id_from_path
+from app.database.errors import (
+    EntityDeleteError,
+    EntityCreateError,
+    EntityDoesNotExists,
+    EntityUpdateError,
+)
 from app.database.repositories.vehicles import VehiclesRepository
-from app.models.domain.profile import Profile
 from app.models.schemas.vehicle import (
     VehicleInResponse,
     ListOfVehiclesInResponse,
@@ -44,26 +37,8 @@ from app.models.schemas.vehicle import (
     VehicleInUpdate,
 )
 from app.resources import strings
-from app.services.vehicles import (
-    check_vehicle_is_exist,
-    check_vim_is_taken,
-    check_registration_plate_is_taken,
-)
 
 router = APIRouter()
-
-
-@router.get(
-    "",
-    response_model=ListOfVehiclesInResponse,
-    name="vehicles:get-my-vehicles"
-)
-async def get_vehicles(
-        profile: Profile = Depends(get_current_profile_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
-) -> ListOfVehiclesInResponse:
-    vehicles = await vehicles_repo.get_vehicles(profile.user_id)
-    return ListOfVehiclesInResponse(vehicles=vehicles, count=len(vehicles))
 
 
 @router.post(
@@ -73,17 +48,33 @@ async def get_vehicles(
 )
 async def create_vehicle(
         vehicle_create: VehicleInCreate = Body(..., embed=True, alias="vehicle"),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
-    if await check_vim_is_taken(vehicles_repo, vehicle_create.vin):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.VEHICLE_CONFLICT_VIN_ERROR)
+    vin_reg_plate_exist = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.VEHICLE_CONFLICT_VIN_OR_EG_PLATE
+    )
 
-    if await check_registration_plate_is_taken(vehicles_repo, vehicle_create.registration_plate):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR)
+    try:
+        vehicle = await vehicles_repo.create_vehicle(user_id, **vehicle_create.__dict__)
+    except EntityCreateError as exception:
+        raise vin_reg_plate_exist from exception
 
-    vehicle = await vehicles_repo.create_vehicle(user_id=profile.user_id, **vehicle_create.__dict__)
     return VehicleInResponse(vehicle=vehicle)
+
+
+@router.get(
+    "",
+    response_model=ListOfVehiclesInResponse,
+    name="vehicles:get-my-vehicles"
+)
+async def get_vehicles(
+        user_id: int = Depends(get_current_user_authorizer()),
+        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+) -> ListOfVehiclesInResponse:
+    vehicles = await vehicles_repo.get_vehicles_by_user_id(user_id)
+    return ListOfVehiclesInResponse(vehicles=vehicles, count=len(vehicles))
 
 
 @router.get(
@@ -91,15 +82,21 @@ async def create_vehicle(
     response_model=VehicleInResponse,
     name="vehicles:get-vehicle"
 )
-async def get_vehicle(
+async def get_vehicle_by_id(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
-    if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR)
+    vehicle_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
+    )
 
-    vehicle = await vehicles_repo.get_vehicle_by_id(user=user, vehicle_id=vehicle_id)
+    try:
+        vehicle = await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
+    except EntityDoesNotExists as exception:
+        raise vehicle_not_found from exception
+
     return VehicleInResponse(vehicle=vehicle)
 
 
@@ -108,35 +105,49 @@ async def get_vehicle(
     response_model=VehicleInResponse,
     name="vehicles:update-vehicle"
 )
-async def update_vehicle(
+async def update_vehicle_by_id(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
         vehicle_update: VehicleInUpdate = Body(..., embed=True, alias="vehicle"),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
-    if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR)
+    vehicle_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
+    )
+    vin_reg_plate_exist = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.VEHICLE_CONFLICT_VIN_OR_EG_PLATE
+    )
 
-    if await check_vim_is_taken(vehicles_repo, vehicle_update.vin):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.VEHICLE_CONFLICT_VIN_ERROR)
+    try:
+        vehicle = await vehicles_repo.update_vehicle_by_id_and_user_id(vehicle_id, user_id, **vehicle_update.__dict__)
+    except EntityDoesNotExists as exception:
+        raise vehicle_not_found from exception
+    except EntityUpdateError as exception:
+        raise vin_reg_plate_exist from exception
 
-    if await check_registration_plate_is_taken(vehicles_repo, vehicle_update.registration_plate):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR)
-
-    vehicle = await vehicles_repo.update_vehicle(user=user, vehicle_id=vehicle_id, **vehicle_update.__dict__)
     return VehicleInResponse(vehicle=vehicle)
 
 
 @router.delete(
     "/{vehicle_id}",
-    name="vehicles:delete-vehicle"
+    name="vehicles:delete-vehicle",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_vehicle(
+async def delete_vehicle_by_id(
         vehicle_id: int = Depends(get_vehicle_id_from_path),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> None:
-    if not await check_vehicle_is_exist(vehicles_repo, user, vehicle_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR)
+    vehicle_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
+    )
 
-    await vehicles_repo.delete_vehicle(user=user, vehicle_id=vehicle_id)
+    try:
+        await vehicles_repo.delete_vehicle_by_id_and_user_id(vehicle_id, user_id)
+    except EntityDoesNotExists as exception:
+        raise vehicle_not_found from exception
+    except EntityDeleteError as exception:
+        raise vehicle_not_found from exception

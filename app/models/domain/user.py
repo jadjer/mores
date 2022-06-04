@@ -21,7 +21,6 @@ from app.services import security
 
 class User(RWModel):
     email: EmailStr
-
     is_admin: bool = False
     is_blocked: bool = False
 

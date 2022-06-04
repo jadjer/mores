@@ -68,8 +68,6 @@ class VehiclesRepository(BaseRepository):
         if not vehicle_in_db:
             raise EntityDoesNotExists
 
-        print(vehicle_in_db.__dict__)
-
         return Vehicle(**vehicle_in_db.__dict__)
 
     async def get_vehicle_by_registration_plate(self, registration_plate: str) -> Vehicle:
@@ -82,11 +80,11 @@ class VehiclesRepository(BaseRepository):
 
         return Vehicle(**vehicle_in_db.__dict__)
 
-    async def get_vehicle_by_id(self, vehicle_id: int, user_id: int) -> Vehicle:
-        vehicle_model = await self._get_vehicle_model_by_id(vehicle_id, user_id)
+    async def get_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> Vehicle:
+        vehicle_model = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
         return Vehicle(**vehicle_model.__dict__)
 
-    async def get_vehicles(self, user_id: int) -> List[Vehicle]:
+    async def get_vehicles_by_user_id(self, user_id: int) -> List[Vehicle]:
         query = select(VehicleModel).where(VehicleModel.owner_id == user_id)
         result = await self.session.execute(query)
 
@@ -94,10 +92,11 @@ class VehiclesRepository(BaseRepository):
 
         return [Vehicle(**vehicle_in_db.__dict__) for vehicle_in_db in vehicles_in_db]
 
-    async def update_vehicle(
+    async def update_vehicle_by_id_and_user_id(
             self,
             vehicle_id: int,
             user_id: int,
+            name: Optional[str] = None,
             brand: Optional[str] = None,
             model: Optional[str] = None,
             year: Optional[int] = None,
@@ -106,7 +105,8 @@ class VehiclesRepository(BaseRepository):
             vin: Optional[str] = None,
             registration_plate: Optional[str] = None,
     ) -> Vehicle:
-        vehicle = await self._get_vehicle_model_by_id(vehicle_id, user_id)
+        vehicle = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
+        vehicle.name = name or vehicle.name
         vehicle.brand = brand or vehicle.brand
         vehicle.model = model or vehicle.model
         vehicle.year = year or vehicle.year
@@ -122,8 +122,8 @@ class VehiclesRepository(BaseRepository):
 
         return Vehicle(**vehicle.__dict__)
 
-    async def delete_vehicle(self, vehicle_id: int, user_id: int) -> None:
-        vehicle = await self._get_vehicle_model_by_id(vehicle_id, user_id)
+    async def delete_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> None:
+        vehicle = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
 
         self.session.delete(vehicle)
 
@@ -132,7 +132,7 @@ class VehiclesRepository(BaseRepository):
         except Exception as exception:
             raise EntityDeleteError from exception
 
-    async def _get_vehicle_model_by_id(self, vehicle_id: int, user_id: int) -> VehicleModel:
+    async def _get_vehicle_model_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> VehicleModel:
         query = select(VehicleModel).where(
             and_(
                 VehicleModel.id == vehicle_id,
