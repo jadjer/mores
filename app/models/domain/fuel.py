@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 from enum import Enum
+from datetime import datetime
 
 from app.models.common import IDModelMixin
 from app.models.domain.location import Location
@@ -29,8 +30,10 @@ class FuelType(Enum):
 
 
 class Fuel(IDModelMixin):
+    fuel_type: FuelType
     quantity: float
     price: float
-    type: FuelType
+    mileage: int
+    is_full: bool
     location: Location
-    datetime: str
+    datetime: datetime

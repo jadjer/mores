@@ -12,8 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List
+from typing import List, Optional
 
+from app.models.domain.location import Location
 from app.models.domain.service import Service
 from app.models.schemas.rwschema import RWSchema
 
@@ -28,4 +29,14 @@ class ServiceInResponse(RWSchema):
 
 
 class ServiceInCreate(RWSchema):
-    body: str
+    location: Location
+    service_type_id: int
+    mileage: int
+    price: float
+
+
+class ServiceInUpdate(RWSchema):
+    location: Optional[Location] = None
+    service_type_id: Optional[int] = None
+    mileage: Optional[int] = None
+    price: Optional[float] = None

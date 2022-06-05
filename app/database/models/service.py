@@ -25,7 +25,8 @@ class ServiceModel(Base):
     vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
     service_type_id = Column(Integer, ForeignKey("service_type.id"), nullable=False)
-    mileage = Column(Float, nullable=False)
+    mileage = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
     datetime = Column(DateTime, nullable=False)
 
     vehicle = relationship("VehicleModel")

@@ -12,10 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin
+from app.models.domain.rwmodel import RWModel
 
 
-class Location(IDModelMixin):
+class Location(RWModel):
     description: str
     latitude: float
     longitude: float

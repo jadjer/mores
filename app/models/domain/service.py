@@ -12,14 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from datetime import datetime
+
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.location import Location
 from app.models.domain.service_type import ServiceType
 
 
 class Service(IDModelMixin, DateTimeModelMixin):
-    location: Location
     service_type: ServiceType
     mileage: int
-    date: str
     price: float
+    location: Location
+    date: datetime

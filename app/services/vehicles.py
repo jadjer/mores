@@ -17,9 +17,9 @@ from app.database.repositories.vehicles import VehiclesRepository
 from app.models.domain.user import UserInDB
 
 
-async def check_vehicle_is_exist(repo: VehiclesRepository, user: UserInDB, vehicle_id: int) -> bool:
+async def check_vehicle_is_exist(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:
     try:
-        await repo.get_vehicle_by_id(user, vehicle_id)
+        await repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
     except EntityDoesNotExists:
         return False
 
@@ -44,5 +44,28 @@ async def check_registration_plate_is_taken(repo: VehiclesRepository, registrati
     return True
 
 
-async def check_user_is_owner(repo: VehiclesRepository, user: UserInDB, vehicle_id: int) -> bool:
-    return await check_vehicle_is_exist(repo, user, vehicle_id)
+async def check_user_is_owner(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:
+    return await check_vehicle_is_exist(repo, vehicle_id, user_id)
+
+
+async def get_current_mileage_by_vehicle_id(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> int:
+    vehicle = await repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
+    return vehicle.mileage
+
+
+async def check_mileage_increases(repo: VehiclesRepository, vehicle_id: int, user_id: int, mileage: int) -> bool:
+    current_mileage = await get_current_mileage_by_vehicle_id(repo, vehicle_id, user_id)
+
+    if mileage <= current_mileage:
+        return False
+
+    return True
+
+
+async def update_vehicle_mileage(repo: VehiclesRepository, vehicle_id: int, user_id: int, mileage: int) -> bool:
+    if not await check_mileage_increases(repo, vehicle_id, user_id, mileage):
+        return False
+
+    await repo.update_vehicle_by_id_and_user_id(vehicle_id, user_id, mileage=mileage)
+
+    return True

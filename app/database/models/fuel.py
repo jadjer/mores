@@ -26,6 +26,7 @@ class FuelModel(Base):
     vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
+    mileage = Column(Integer, nullable=False)
     fuel_type = Column(Enum(FuelType), default=FuelType.PETROL_95)
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
     is_full = Column(Boolean, default=False)

@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, Date
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -24,8 +24,8 @@ class ReminderModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
     service_type_id = Column(Integer, ForeignKey("service_type.id"), nullable=False)
-    next_mileage = Column(Float, nullable=False)
-    next_datetime = Column(DateTime, nullable=False)
+    next_mileage = Column(Integer, nullable=False)
+    next_date = Column(Date, nullable=False)
 
     vehicle = relationship("VehicleModel")
     service_type = relationship("ServiceTypeModel")

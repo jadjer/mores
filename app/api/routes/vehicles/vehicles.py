@@ -37,6 +37,10 @@ from app.models.schemas.vehicle import (
     VehicleInUpdate,
 )
 from app.resources import strings
+from app.services.vehicles import (
+    check_mileage_increases,
+    update_vehicle_mileage,
+)
 
 router = APIRouter()
 
@@ -53,11 +57,11 @@ async def create_vehicle(
 ) -> VehicleInResponse:
     vin_reg_plate_exist = HTTPException(
         status_code=status.HTTP_409_CONFLICT,
-        detail=strings.VEHICLE_CONFLICT_VIN_OR_EG_PLATE
+        detail=strings.VEHICLE_CONFLICT_VIN_OR_REG_PLATE
     )
 
     try:
-        vehicle = await vehicles_repo.create_vehicle(user_id, **vehicle_create.__dict__)
+        vehicle = await vehicles_repo.create_vehicle_by_user_id(user_id, **vehicle_create.__dict__)
     except EntityCreateError as exception:
         raise vin_reg_plate_exist from exception
 
@@ -115,17 +119,29 @@ async def update_vehicle_by_id(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
     )
-    vin_reg_plate_exist = HTTPException(
+    vehicle_vin_reg_plate_exist = HTTPException(
         status_code=status.HTTP_409_CONFLICT,
-        detail=strings.VEHICLE_CONFLICT_VIN_OR_EG_PLATE
+        detail=strings.VEHICLE_CONFLICT_VIN_OR_REG_PLATE
     )
+    vehicle_mileage_reduce = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.VEHICLE_MILEAGE_REDUCE
+    )
+
+    if vehicle_update.mileage and not await check_mileage_increases(
+            vehicles_repo, vehicle_id, user_id, vehicle_update.mileage
+    ):
+        raise vehicle_mileage_reduce
 
     try:
         vehicle = await vehicles_repo.update_vehicle_by_id_and_user_id(vehicle_id, user_id, **vehicle_update.__dict__)
     except EntityDoesNotExists as exception:
         raise vehicle_not_found from exception
     except EntityUpdateError as exception:
-        raise vin_reg_plate_exist from exception
+        raise vehicle_vin_reg_plate_exist from exception
+
+    if vehicle_update.mileage:
+        await update_vehicle_mileage(vehicles_repo, vehicle_id, user_id, vehicle_update.mileage)
 
     return VehicleInResponse(vehicle=vehicle)
 

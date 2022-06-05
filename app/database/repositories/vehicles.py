@@ -14,6 +14,7 @@
 
 from typing import List, Optional
 from sqlalchemy import select, and_
+from sqlalchemy.exc import PendingRollbackError
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -28,7 +29,7 @@ from app.models.domain.vehicle import Vehicle
 
 class VehiclesRepository(BaseRepository):
 
-    async def create_vehicle(
+    async def create_vehicle_by_user_id(
             self,
             user_id: int,
             name: str,
@@ -81,8 +82,8 @@ class VehiclesRepository(BaseRepository):
         return Vehicle(**vehicle_in_db.__dict__)
 
     async def get_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> Vehicle:
-        vehicle_model = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
-        return Vehicle(**vehicle_model.__dict__)
+        vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
+        return Vehicle(**vehicle_in_db.__dict__)
 
     async def get_vehicles_by_user_id(self, user_id: int) -> List[Vehicle]:
         query = select(VehicleModel).where(VehicleModel.owner_id == user_id)
@@ -105,27 +106,27 @@ class VehiclesRepository(BaseRepository):
             vin: Optional[str] = None,
             registration_plate: Optional[str] = None,
     ) -> Vehicle:
-        vehicle = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
-        vehicle.name = name or vehicle.name
-        vehicle.brand = brand or vehicle.brand
-        vehicle.model = model or vehicle.model
-        vehicle.year = year or vehicle.year
-        vehicle.color = color or vehicle.color
-        vehicle.mileage = mileage or vehicle.mileage
-        vehicle.vin = vin or vehicle.vin
-        vehicle.registration_plate = registration_plate or vehicle.registration_plate
+        vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
+        vehicle_in_db.name = name or vehicle_in_db.name
+        vehicle_in_db.brand = brand or vehicle_in_db.brand
+        vehicle_in_db.model = model or vehicle_in_db.model
+        vehicle_in_db.year = year or vehicle_in_db.year
+        vehicle_in_db.color = color or vehicle_in_db.color
+        vehicle_in_db.mileage = mileage or vehicle_in_db.mileage
+        vehicle_in_db.vin = vin or vehicle_in_db.vin
+        vehicle_in_db.registration_plate = registration_plate or vehicle_in_db.registration_plate
 
         try:
             await self.session.commit()
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return Vehicle(**vehicle.__dict__)
+        return Vehicle(**vehicle_in_db.__dict__)
 
     async def delete_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> None:
-        vehicle = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
+        vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
 
-        self.session.delete(vehicle)
+        self.session.delete(vehicle_in_db)
 
         try:
             await self.session.commit()
@@ -139,7 +140,12 @@ class VehiclesRepository(BaseRepository):
                 VehicleModel.owner_id == user_id,
             )
         )
-        result = await self.session.execute(query)
+
+        try:
+            result = await self.session.execute(query)
+        except PendingRollbackError:
+            await self.session.rollback()
+            result = await self.session.execute(query)
 
         vehicle_model_in_db: VehicleModel = result.scalars().first()
         if not vehicle_model_in_db:
