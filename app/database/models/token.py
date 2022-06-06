@@ -23,6 +23,7 @@ class TokenModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
     token = Column(String, nullable=False)
     is_revoked = Column(Boolean, default=False)
 

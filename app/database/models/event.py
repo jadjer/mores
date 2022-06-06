@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -24,9 +24,13 @@ class EventModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
-    started_at = Column(DateTime)
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
+
+    started_at = Column(DateTime(timezone=True))
     event_state = Column(Enum(EventState), default=EventState.PLANNED)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     post = relationship("PostModel")
     location = relationship("LocationModel")

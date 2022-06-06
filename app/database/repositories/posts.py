@@ -116,9 +116,8 @@ class PostsRepository(BaseRepository):
     async def delete_post(self, post_id: int, user_id: int) -> None:
         post = self._get_post_model_by_id(post_id, user_id)
 
-        self.session.delete(post)
-
         try:
+            await self.session.delete(post)
             await self.session.commit()
         except Exception as exception:
             raise EntityDeleteError from exception

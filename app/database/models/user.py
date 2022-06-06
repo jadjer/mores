@@ -29,5 +29,3 @@ class UserModel(Base):
 
     is_admin = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
-
-    profile = relationship("ProfileModel", uselist=False)

@@ -14,7 +14,7 @@
 
 from typing import Optional
 
-from app.database.errors import EntityDoesNotExists
+from app.database.errors import EntityDoesNotExists, EntityDeleteError
 from app.database.models import LocationModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.location import Location
@@ -57,8 +57,11 @@ class LocationsRepository(BaseRepository):
     async def delete_location(self, location_id: int) -> None:
         location = await self._get_location_model_by_id(location_id)
 
-        await self.session.delete(location)
-        await self.session.commit()
+        try:
+            await self.session.delete(location)
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityDeleteError from exception
 
     async def _get_location_model_by_id(self, location_id: int) -> LocationModel:
         location: LocationModel = await self.session.get(LocationModel, location_id)

@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -23,12 +23,14 @@ class PostModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
     title = Column(String, unique=True, nullable=False)
     description = Column(String, nullable=True)
     thumbnail = Column(String, nullable=True)
     body = Column(String, nullable=False)
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     author = relationship("UserModel")
     comments = relationship("CommentModel")

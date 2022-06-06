@@ -13,6 +13,8 @@
 #  limitations under the License.
 
 from enum import Enum
+from typing import Optional
+
 from pydantic import HttpUrl
 
 from app.models.domain.rwmodel import RWModel
@@ -27,10 +29,10 @@ class Gender(Enum):
 class Profile(RWModel):
     user_id: int
     username: str
-    first_name: str = None
-    second_name: str = None
-    last_name: str = None
+    first_name: Optional[str] = None
+    second_name: Optional[str] = None
+    last_name: Optional[str] = None
     gender: Gender = Gender.UNDEFINED
-    age: int = None
-    phone: str = None
-    image: HttpUrl = None
+    age: Optional[int] = None
+    phone: Optional[str] = None
+    image: Optional[HttpUrl] = None

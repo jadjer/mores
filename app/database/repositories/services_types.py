@@ -86,9 +86,8 @@ class ServicesTypesRepository(BaseRepository):
     async def delete_service_type(self, vehicle_id: int) -> None:
         vehicle = await self.get_service_type_model_by_id(vehicle_id)
 
-        self.session.delete(vehicle)
-
         try:
+            await self.session.delete(vehicle)
             await self.session.commit()
         except Exception:
             raise EntityDoesNotExists

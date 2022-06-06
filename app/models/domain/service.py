@@ -16,12 +16,10 @@ from datetime import datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.location import Location
-from app.models.domain.service_type import ServiceType
 
 
 class Service(IDModelMixin, DateTimeModelMixin):
-    service_type: ServiceType
+    service_type_name: str
     mileage: int
     price: float
     location: Location
-    date: datetime

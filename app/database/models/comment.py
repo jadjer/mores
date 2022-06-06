@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -25,7 +25,9 @@ class CommentModel(Base):
     post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     body = Column(String, nullable=False)
-    datetime = Column(DateTime)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     post = relationship("PostModel", back_populates="comments", uselist=False)
     author = relationship("UserModel")

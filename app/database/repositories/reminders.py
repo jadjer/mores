@@ -66,10 +66,19 @@ class RemindersRepository(BaseRepository):
         return Reminder(**new_reminder.__dict__)
 
     async def get_reminders_by_vehicle_id(self, vehicle_id: int) -> List[Reminder]:
-        query = select(ReminderModel).where(ReminderModel.vehicle_id == vehicle_id)
+        query = select(ReminderModel).where(
+            ReminderModel.vehicle_id == vehicle_id
+        ).options(
+            selectinload(ReminderModel.vehicle),
+            selectinload(ReminderModel.service_type)
+        )
         result = await self.session.execute(query)
 
         reminders_in_db = result.scalars().all()
+
+        for reminder_in_db in reminders_in_db:
+            print("=========================================")
+            print(reminder_in_db.__dict__)
 
         return [Reminder(**reminder_in_db.__dict__) for reminder_in_db in reminders_in_db]
 
@@ -101,9 +110,8 @@ class RemindersRepository(BaseRepository):
     async def delete_reminder_by_id_and_vehicle_id(self, reminder_id: int, vehicle_id: int) -> None:
         reminder_in_db = await self._get_reminder_model_by_id_and_vehicle_id(reminder_id, vehicle_id)
 
-        self.session.delete(reminder_in_db)
-
         try:
+            await self.session.delete(reminder_in_db)
             await self.session.commit()
         except Exception as exception:
             raise EntityDeleteError from exception
@@ -114,7 +122,10 @@ class RemindersRepository(BaseRepository):
                 ReminderModel.id == reminder_id,
                 ReminderModel.vehicle_id == vehicle_id
             )
-        ).options(selectinload(ReminderModel.location))
+        ).options(
+            selectinload(ReminderModel.vehicle),
+            selectinload(ReminderModel.service_type)
+        )
         result = await self.session.execute(query)
 
         reminder_model_in_db = result.scalars().first()

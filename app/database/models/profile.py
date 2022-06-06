@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 from app.models.domain.profile import Gender
@@ -32,3 +33,5 @@ class ProfileModel(Base):
     age = Column(Integer, nullable=True)
     phone = Column(String, unique=True, nullable=True)
     image = Column(String, nullable=True)
+
+    user = relationship("UserModel", uselist=False)

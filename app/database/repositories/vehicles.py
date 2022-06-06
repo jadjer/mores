@@ -126,9 +126,8 @@ class VehiclesRepository(BaseRepository):
     async def delete_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> None:
         vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
 
-        self.session.delete(vehicle_in_db)
-
         try:
+            await self.session.delete(vehicle_in_db)
             await self.session.commit()
         except Exception as exception:
             raise EntityDeleteError from exception

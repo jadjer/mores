@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime
+from sqlalchemy import Boolean, Column, Integer, Enum, ForeignKey, Float, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -24,13 +24,17 @@ class FuelModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
+
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
     mileage = Column(Integer, nullable=False)
     fuel_type = Column(Enum(FuelType), default=FuelType.PETROL_95)
-    location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
+
     is_full = Column(Boolean, default=False)
-    datetime = Column(DateTime)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     vehicle = relationship("VehicleModel")
     location = relationship("LocationModel")

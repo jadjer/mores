@@ -28,22 +28,24 @@ class VehicleInResponse(RWSchema):
 
 
 class VehicleInCreate(RWSchema):
-    name: str
     brand: str
     model: str
+    gen: int
     year: int
     color: str
     mileage: int
     vin: str
     registration_plate: str
+    name: str
 
 
 class VehicleInUpdate(RWSchema):
-    name: Optional[str]
-    brand: Optional[str]
-    model: Optional[str]
-    year: Optional[int]
-    color: Optional[str]
-    mileage: Optional[int]
-    vin: Optional[str]
-    registration_plate: Optional[str]
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    gen: Optional[int] = None
+    year: Optional[int] = None
+    color: Optional[str] = None
+    mileage: Optional[int] = None
+    vin: Optional[str] = None
+    registration_plate: Optional[str] = None
+    name: Optional[str] = None

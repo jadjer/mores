@@ -19,6 +19,6 @@ from app.models.domain.service_type import ServiceType
 
 
 class Reminder(IDModelMixin):
-    service_name: ServiceType
+    service_type: ServiceType
     next_mileage: int
     next_date: date

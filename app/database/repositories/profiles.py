@@ -14,7 +14,7 @@
 
 from typing import Optional, List
 
-from pydantic import HttpUrl
+from pydantic import HttpUrl, EmailStr
 from sqlalchemy.future import select
 
 from app.database.errors import (
@@ -24,7 +24,8 @@ from app.database.errors import (
 )
 from app.database.repositories.base import BaseRepository
 from app.models.domain.profile import Gender, Profile
-from app.database.models import ProfileModel
+from app.database.models import ProfileModel, UserModel
+from app.models.domain.user import UserInDB, User
 
 
 class ProfilesRepository(BaseRepository):
@@ -51,6 +52,48 @@ class ProfilesRepository(BaseRepository):
         new_profile.age = age
         new_profile.phone = phone
         new_profile.image = image
+
+        self.session.add(new_profile)
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
+
+        return Profile(**new_profile.__dict__)
+
+    async def create_profile_and_user(
+            self,
+            username: str,
+            email: EmailStr,
+            password: str,
+            first_name: Optional[str] = None,
+            second_name: Optional[str] = None,
+            last_name: Optional[str] = None,
+            gender: Optional[Gender] = None,
+            age: Optional[int] = None,
+            phone: Optional[str] = None,
+            image: Optional[HttpUrl] = None,
+    ) -> Profile:
+        user: UserInDB = UserInDB(email=email)
+        user.change_password(password)
+
+        new_profile = ProfileModel()
+        new_profile.username = username
+        new_profile.first_name = first_name
+        new_profile.second_name = second_name
+        new_profile.last_name = last_name
+        new_profile.gender = gender
+        new_profile.age = age
+        new_profile.phone = phone
+        new_profile.image = image
+
+        new_user = UserModel()
+        new_user.email = email
+        new_user.salt = user.salt
+        new_user.password = user.password
+
+        new_profile.user = new_user
 
         self.session.add(new_profile)
 

@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, ForeignKey, Float, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, Float, DateTime, func
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -25,9 +25,12 @@ class ServiceModel(Base):
     vehicle_id = Column(Integer, ForeignKey("vehicle.id"), nullable=False)
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
     service_type_id = Column(Integer, ForeignKey("service_type.id"), nullable=False)
+
     mileage = Column(Integer, nullable=False)
     price = Column(Float, nullable=False)
-    datetime = Column(DateTime, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     vehicle = relationship("VehicleModel")
     location = relationship("LocationModel")

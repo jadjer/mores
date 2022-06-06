@@ -89,11 +89,11 @@ async def register(
     if await check_username_is_taken(profile_repo, user_create.username):
         raise username_taken_error
 
-    user = await users_repo.create_user(email=user_create.email, password=user_create.password)
-    profile = await profile_repo.create_profile(user.id, username=user_create.username)
+    profile = await profile_repo.create_profile_and_user(**user_create.__dict__)
+    user = await users_repo.get_user_by_id(profile.user_id)
 
     token = jwt.create_access_token_for_user(
-        user_id=user.id,
+        user_id=profile.user_id,
         username=profile.username,
         secret_key=settings.secret_key.get_secret_value()
     )

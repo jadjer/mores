@@ -39,11 +39,10 @@ REMINDER_TYPE_DOES_NOT_EXIST_ERROR = "Reminder type doesn't exist"
 REMINDER_DOES_NOT_EXIST_ERROR = "Reminder does not exist"
 
 FUEL_CREATE_ERROR = "Fuel create error"
-FUEL_GET_ERROR = "Reminder get error"
-FUEL_UPDATE_ERROR = "Reminder update error"
-FUEL_DELETE_ERROR = "Reminder delete error"
-FUEL_TYPE_DOES_NOT_EXIST_ERROR = "Reminder type doesn't exist"
-FUEL_DOES_NOT_EXIST_ERROR = "Reminder does not exist"
+FUEL_GET_ERROR = "Fuel get error"
+FUEL_UPDATE_ERROR = "Fuel update error"
+FUEL_DELETE_ERROR = "Fuel delete error"
+FUEL_DOES_NOT_EXIST_ERROR = "Fuel does not exist"
 
 LOCATION_DOES_NOT_EXIST_ERROR = "Location doesn't exist"
 

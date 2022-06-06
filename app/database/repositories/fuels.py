@@ -72,7 +72,7 @@ class FuelsRepository(BaseRepository):
         return Fuel(**new_fuel.__dict__)
 
     async def get_fuels_by_vehicle_id(self, vehicle_id: int) -> List[Fuel]:
-        query = select(FuelModel).where(FuelModel.vehicle_id == vehicle_id)
+        query = select(FuelModel).where(FuelModel.vehicle_id == vehicle_id).options(selectinload(FuelModel.location))
         result = await self.session.execute(query)
 
         fuels_in_db = result.scalars().all()
@@ -100,8 +100,10 @@ class FuelsRepository(BaseRepository):
         fuel_in_db.price = price or fuel_in_db.price
         fuel_in_db.mileage = mileage or fuel_in_db.mileage
         fuel_in_db.fuel_type = fuel_type or fuel_in_db.fuel_type
-        fuel_in_db.location = LocationModel(**location.__dict__) or fuel_in_db.location
         fuel_in_db.is_full = is_full or fuel_in_db.is_full
+
+        if location:
+            fuel_in_db.location = LocationModel(**location.__dict__) or fuel_in_db.location
 
         try:
             await self.session.commit()
@@ -113,9 +115,8 @@ class FuelsRepository(BaseRepository):
     async def delete_fuel_by_id_and_vehicle_id(self, fuel_id: int, vehicle_id: int) -> None:
         fuel_in_db = await self._get_fuel_model_by_id_and_vehicle_id(fuel_id, vehicle_id)
 
-        self.session.delete(fuel_in_db)
-
         try:
+            await self.session.delete(fuel_in_db)
             await self.session.commit()
         except Exception as exception:
             raise EntityDeleteError from exception
