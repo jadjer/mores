@@ -36,26 +36,21 @@ DEFAULT_PROFILES_OFFSET = 0
 
 
 class ProfileInCreate(RWSchema):
-    username: str
     email: EmailStr
-    password: str
     first_name: str
     second_name: str
     last_name: str
     gender: Gender = Gender.UNDEFINED
     age: int
-    phone: str
     image: HttpUrl
 
 
 class ProfileInUpdate(RWSchema):
-    username: Optional[str] = None
     first_name: Optional[str] = None
     second_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[Gender] = Gender.UNDEFINED
     age: Optional[int] = None
-    phone: Optional[str] = None
     image: Optional[HttpUrl] = None
 
 

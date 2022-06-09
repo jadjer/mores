@@ -47,8 +47,8 @@ class RWAPIKeyHeader(APIKeyHeader):
             raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
-def get_current_user_authorizer() -> Callable:  # type: ignore
-    return _get_current_user_id
+def get_current_user_authorizer() -> Callable:
+    return _get_current_user
 
 
 def _get_authorization_header(

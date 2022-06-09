@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 from app.models.domain.user import User
 from app.models.schemas.rwschema import RWSchema
@@ -30,7 +30,6 @@ class UserInCreate(UserInLogin):
 
 class UserInUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: Optional[str] = None
 

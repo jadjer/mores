@@ -23,40 +23,52 @@ from fastapi import (
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.repositories.users import UsersRepository
+from app.models.domain.user import UserInDB
 from app.models.schemas.user import (
     UserInResponse,
     UserInUpdate,
 )
 from app.resources import strings
-from app.services.authentication import check_email_is_taken
+from app.services.authentication import check_email_is_taken, check_phone_is_valid, check_phone_is_taken, \
+    check_username_is_taken
 
 router = APIRouter()
 
 
 @router.get("", response_model=UserInResponse, name="users:get-current-user")
 async def get_current_user(
-        user_id: int = Depends(get_current_user_authorizer()),
-        users_repo: UsersRepository = Depends(get_repository(UsersRepository))
+        user: UserInDB = Depends(get_current_user_authorizer()),
 ) -> UserInResponse:
-    user = await users_repo.get_user_by_id(user_id)
-
+    print(user.__dict__)
     return UserInResponse(user=user)
 
 
 @router.put("", response_model=UserInResponse, name="users:update-current-user")
 async def update_current_user(
         user_update: UserInUpdate = Body(..., embed=True, alias="user"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: UserInDB = Depends(get_current_user_authorizer()),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
 ) -> UserInResponse:
+    phone_invalid = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_NUMBER_INVALID_ERROR)
+    phone_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_TAKEN)
+    username_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
     email_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
 
-    user = await users_repo.get_user_by_id(user_id)
+    if user_update.phone and user_update.phone != user.phone:
+        if not check_phone_is_valid(user_update.phone):
+            raise phone_invalid
+
+        if await check_phone_is_taken(users_repo, user_update.phone):
+            raise phone_taken
+
+    if user_update.username and user_update.username != user.username:
+        if await check_username_is_taken(users_repo, user_update.username):
+            raise username_taken
 
     if user_update.email and user_update.email != user.email:
         if await check_email_is_taken(users_repo, user_update.email):
             raise email_taken
 
-    user_in_db = await users_repo.update_user_by_id(user_id, email=user_update.email, password=user_update.password)
+    user_in_db = await users_repo.update_user_by_id(user.id, email=user_update.email, password=user_update.password)
 
     return UserInResponse(user=user_in_db)

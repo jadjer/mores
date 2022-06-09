@@ -94,31 +94,19 @@ async def register(
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    phone_number_invalid = HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=strings.PHONE_NUMBER_INVALID_ERROR
-    )
-    phone_taken_error = HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=strings.PHONE_TAKEN
-    )
-    username_taken_error = HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=strings.USERNAME_TAKEN
-    )
-    user_create_error = HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=strings.USER_CREATE_ERROR
-    )
+    phone_invalid = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_NUMBER_INVALID_ERROR)
+    phone_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_TAKEN)
+    username_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
+    user_create_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_CREATE_ERROR)
 
     if not check_phone_is_valid(user_create.phone):
-        raise phone_number_invalid
+        raise phone_invalid
 
     if await check_phone_is_taken(users_repo, user_create.phone):
-        raise phone_taken_error
+        raise phone_taken
 
     if await check_username_is_taken(users_repo, user_create.username):
-        raise username_taken_error
+        raise username_taken
 
     try:
         user = await users_repo.create_user(**user_create.__dict__)
