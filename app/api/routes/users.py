@@ -12,13 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    status,
+)
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.repositories.users import UsersRepository
-from app.models.domain.profile import Profile
-from app.models.schemas.user import UserInResponse, UserInUpdate
+from app.models.schemas.user import (
+    UserInResponse,
+    UserInUpdate,
+)
 from app.resources import strings
 from app.services.authentication import check_email_is_taken
 
@@ -49,6 +57,6 @@ async def update_current_user(
         if await check_email_is_taken(users_repo, user_update.email):
             raise email_taken
 
-    user_in_db = await users_repo.update_user(user=user, email=user_update.email, password=user_update.password)
+    user_in_db = await users_repo.update_user_by_id(user_id, email=user_update.email, password=user_update.password)
 
     return UserInResponse(user=user_in_db)

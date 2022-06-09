@@ -25,13 +25,11 @@ class ProfileModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
-    username = Column(String, unique=True)
     first_name = Column(String, nullable=True)
     second_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     gender = Column(Enum(Gender), default=Gender.UNDEFINED)
     age = Column(Integer, nullable=True)
-    phone = Column(String, unique=True, nullable=True)
     image = Column(String, nullable=True)
 
     user = relationship("UserModel", uselist=False)

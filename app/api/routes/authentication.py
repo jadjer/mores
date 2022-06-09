@@ -12,15 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    status,
+)
 
 from app.api.dependencies.database import get_repository
 from app.core.config import get_app_settings
 from app.core.settings.app import AppSettings
-from app.database.errors import EntityDoesNotExists
+from app.database.errors import EntityDoesNotExists, EntityCreateError
 from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
-from app.models.domain.profile import Profile
+from app.models.domain.user import UserInDB
 from app.models.schemas.user import (
     UserInCreate,
     UserInLogin,
@@ -31,7 +37,7 @@ from app.resources import strings
 from app.services import jwt
 from app.services.authentication import (
     check_email_is_taken,
-    check_username_is_taken,
+    check_username_is_taken, check_phone_is_valid, check_phone_is_taken,
 )
 
 router = APIRouter()
@@ -45,23 +51,32 @@ router = APIRouter()
 async def login(
         user_login: UserInLogin = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
-        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    incorrect_credentials = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INCORRECT_LOGIN_INPUT)
+    phone_number_invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PHONE_NUMBER_INVALID_ERROR
+    )
+    incorrect_credentials = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.INCORRECT_LOGIN_INPUT
+    )
+
+    if not check_phone_is_valid(user_login.phone):
+        raise phone_number_invalid
 
     try:
-        profile: Profile = await profiles_repo.get_profile_by_username(user_login.username)
+        user: UserInDB = await users_repo.get_user_by_phone(user_login.phone)
     except EntityDoesNotExists as exception:
         raise incorrect_credentials from exception
 
-    user = await users_repo.get_user_by_id(profile.user_id)
     if not user.check_password(user_login.password):
         raise incorrect_credentials
 
     token = jwt.create_access_token_for_user(
         user_id=user.id,
-        username=profile.username,
+        username=user.username,
+        phone=user.phone,
         secret_key=settings.secret_key.get_secret_value()
     )
 
@@ -77,24 +92,43 @@ async def login(
 async def register(
         user_create: UserInCreate = Body(..., embed=True, alias="user"),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
-        profile_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    email_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
-    username_taken_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
+    phone_number_invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PHONE_NUMBER_INVALID_ERROR
+    )
+    phone_taken_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PHONE_TAKEN
+    )
+    username_taken_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.USERNAME_TAKEN
+    )
+    user_create_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.USER_CREATE_ERROR
+    )
 
-    if await check_email_is_taken(users_repo, user_create.email):
-        raise email_taken_error
+    if not check_phone_is_valid(user_create.phone):
+        raise phone_number_invalid
 
-    if await check_username_is_taken(profile_repo, user_create.username):
+    if await check_phone_is_taken(users_repo, user_create.phone):
+        raise phone_taken_error
+
+    if await check_username_is_taken(users_repo, user_create.username):
         raise username_taken_error
 
-    profile = await profile_repo.create_profile_and_user(**user_create.__dict__)
-    user = await users_repo.get_user_by_id(profile.user_id)
+    try:
+        user = await users_repo.create_user(**user_create.__dict__)
+    except EntityCreateError as exception:
+        raise user_create_error from exception
 
     token = jwt.create_access_token_for_user(
-        user_id=profile.user_id,
-        username=profile.username,
+        user_id=user.id,
+        username=user.username,
+        phone=user.phone,
         secret_key=settings.secret_key.get_secret_value()
     )
 

@@ -15,8 +15,14 @@
 from typing import List, Optional
 from datetime import datetime
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import (
+    select,
+    and_,
+)
+from sqlalchemy.orm import (
+    Session,
+    selectinload,
+)
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -29,18 +35,14 @@ from app.database.models import (
     FuelModel
 )
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.locations import LocationsRepository
-from app.database.repositories.vehicles import VehiclesRepository
 from app.models.domain.location import Location
-from app.models.domain.fuel import Fuel, FuelType
+from app.models.domain.fuel import (
+    Fuel,
+    FuelType,
+)
 
 
 class FuelsRepository(BaseRepository):
-
-    def __init__(self, session: Session):
-        super().__init__(session)
-        self._vehicles_repo = VehiclesRepository(session)
-        self._locations_repo = LocationsRepository(session)
 
     async def create_fuel_by_vehicle_id(
             self,
@@ -72,7 +74,11 @@ class FuelsRepository(BaseRepository):
         return Fuel(**new_fuel.__dict__)
 
     async def get_fuels_by_vehicle_id(self, vehicle_id: int) -> List[Fuel]:
-        query = select(FuelModel).where(FuelModel.vehicle_id == vehicle_id).options(selectinload(FuelModel.location))
+        query = select(FuelModel).where(
+            FuelModel.vehicle_id == vehicle_id
+        ).options(
+            selectinload(FuelModel.location)
+        )
         result = await self.session.execute(query)
 
         fuels_in_db = result.scalars().all()

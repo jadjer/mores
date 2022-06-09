@@ -25,12 +25,12 @@ from app.database.errors import (
 from app.database.repositories.base import BaseRepository
 from app.models.domain.profile import Gender, Profile
 from app.database.models import ProfileModel, UserModel
-from app.models.domain.user import UserInDB, User
+from app.models.domain.user import UserInDB
 
 
 class ProfilesRepository(BaseRepository):
 
-    async def create_profile(
+    async def create_profile_by_user_id(
             self,
             user_id: int,
             username: str,
@@ -129,7 +129,7 @@ class ProfilesRepository(BaseRepository):
 
         return [Profile(**profile_in_db.__dict__) for profile_in_db in profiles_in_db]
 
-    async def update_profile(
+    async def update_profile_by_user_id(
             self,
             user_id: int,
             username: Optional[str] = None,

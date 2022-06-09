@@ -1,20 +1,33 @@
-import pytest
-from fastapi import FastAPI
-from httpx import AsyncClient
-from starlette.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+#  Copyright 2022 Pavel Suprunov
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 
-from app.models.domain.user import UserInDB
+import pytest
+from fastapi import FastAPI, status
+from httpx import AsyncClient
+
+from app.models.domain.profile import Profile
 
 pytestmark = pytest.mark.asyncio
 
 
 async def test_user_successful_login(
-    app: FastAPI, client: AsyncClient, test_user: UserInDB
+    app: FastAPI, client: AsyncClient, test_profile: Profile
 ) -> None:
     login_json = {"user": {"email": "test@test.com", "password": "password"}}
 
     response = await client.post(app.url_path_for("auth:login"), json=login_json)
-    assert response.status_code == HTTP_200_OK
+    assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.parametrize(
@@ -24,11 +37,11 @@ async def test_user_successful_login(
 async def test_user_login_when_credential_part_does_not_match(
     app: FastAPI,
     client: AsyncClient,
-    test_user: UserInDB,
+    test_profile: Profile,
     credentials_part: str,
     credentials_value: str,
 ) -> None:
-    login_json = {"user": {"email": "test@test.com", "password": "password"}}
+    login_json = {"user": {"username": "test@test.com", "password": "password"}}
     login_json["user"][credentials_part] = credentials_value
     response = await client.post(app.url_path_for("auth:login"), json=login_json)
-    assert response.status_code == HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_400_BAD_REQUEST

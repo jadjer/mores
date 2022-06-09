@@ -1,8 +1,8 @@
 """Create tables
 
-Revision ID: a2ede36ef920
+Revision ID: 0e1b7b3da949
 Revises: 
-Create Date: 2022-06-03 19:27:02.371597
+Create Date: 2022-06-08 15:59:24.792912
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a2ede36ef920'
+revision = '0e1b7b3da949'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -31,6 +31,8 @@ def upgrade():
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('latitude', sa.Float(), nullable=False),
     sa.Column('longitude', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_location_id'), 'location', ['id'], unique=False)
@@ -44,13 +46,17 @@ def upgrade():
     op.create_index(op.f('ix_service_type_id'), 'service_type', ['id'], unique=False)
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(), nullable=True),
     sa.Column('email', sa.String(), nullable=True),
-    sa.Column('password', sa.String(), nullable=True),
+    sa.Column('phone', sa.String(), nullable=True),
     sa.Column('salt', sa.String(), nullable=True),
+    sa.Column('password', sa.String(), nullable=True),
     sa.Column('is_admin', sa.Boolean(), nullable=True),
     sa.Column('is_blocked', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('email')
+    sa.UniqueConstraint('email'),
+    sa.UniqueConstraint('phone'),
+    sa.UniqueConstraint('username')
     )
     op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=False)
     op.create_table('post',
@@ -60,8 +66,8 @@ def upgrade():
     sa.Column('description', sa.String(), nullable=True),
     sa.Column('thumbnail', sa.String(), nullable=True),
     sa.Column('body', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('title')
@@ -70,18 +76,14 @@ def upgrade():
     op.create_table('profile',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('username', sa.String(), nullable=True),
     sa.Column('first_name', sa.String(), nullable=True),
     sa.Column('second_name', sa.String(), nullable=True),
     sa.Column('last_name', sa.String(), nullable=True),
     sa.Column('gender', sa.Enum('UNDEFINED', 'MALE', 'FEMALE', name='gender'), nullable=True),
     sa.Column('age', sa.Integer(), nullable=True),
-    sa.Column('phone', sa.String(), nullable=True),
     sa.Column('image', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('phone'),
-    sa.UniqueConstraint('username')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_profile_id'), 'profile', ['id'], unique=False)
     op.create_table('token',
@@ -96,14 +98,15 @@ def upgrade():
     op.create_table('vehicle',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('owner_id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
     sa.Column('brand', sa.String(), nullable=False),
     sa.Column('model', sa.String(), nullable=False),
+    sa.Column('gen', sa.Integer(), nullable=True),
     sa.Column('year', sa.Integer(), nullable=False),
     sa.Column('color', sa.String(), nullable=False),
     sa.Column('mileage', sa.Integer(), nullable=False),
     sa.Column('vin', sa.String(), nullable=True),
     sa.Column('registration_plate', sa.String(), nullable=True),
+    sa.Column('name', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['owner_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('registration_plate'),
@@ -115,7 +118,8 @@ def upgrade():
     sa.Column('post_id', sa.Integer(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=False),
     sa.Column('body', sa.String(), nullable=False),
-    sa.Column('datetime', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['author_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['post_id'], ['post.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -124,9 +128,11 @@ def upgrade():
     op.create_table('event',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('post_id', sa.Integer(), nullable=False),
-    sa.Column('started_at', sa.DateTime(), nullable=True),
     sa.Column('location_id', sa.Integer(), nullable=False),
+    sa.Column('started_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('event_state', sa.Enum('PLANNED', 'DONE', 'CANCELED', name='eventstate'), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['location_id'], ['location.id'], ),
     sa.ForeignKeyConstraint(['post_id'], ['post.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -135,12 +141,14 @@ def upgrade():
     op.create_table('fuel',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('vehicle_id', sa.Integer(), nullable=False),
+    sa.Column('location_id', sa.Integer(), nullable=False),
     sa.Column('quantity', sa.Float(), nullable=False),
     sa.Column('price', sa.Float(), nullable=False),
+    sa.Column('mileage', sa.Integer(), nullable=False),
     sa.Column('fuel_type', sa.Enum('PETROL_92', 'PETROL_95', 'PETROL_98', 'PETROL_100', 'DIESEL', 'GAS', 'ELECTRICITY', name='fueltype'), nullable=True),
-    sa.Column('location_id', sa.Integer(), nullable=False),
     sa.Column('is_full', sa.Boolean(), nullable=True),
-    sa.Column('datetime', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['location_id'], ['location.id'], ),
     sa.ForeignKeyConstraint(['vehicle_id'], ['vehicle.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -150,8 +158,10 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('vehicle_id', sa.Integer(), nullable=False),
     sa.Column('service_type_id', sa.Integer(), nullable=False),
-    sa.Column('next_mileage', sa.Float(), nullable=False),
-    sa.Column('next_datetime', sa.DateTime(), nullable=False),
+    sa.Column('next_mileage', sa.Integer(), nullable=False),
+    sa.Column('next_date', sa.Date(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['service_type_id'], ['service_type.id'], ),
     sa.ForeignKeyConstraint(['vehicle_id'], ['vehicle.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -162,8 +172,10 @@ def upgrade():
     sa.Column('vehicle_id', sa.Integer(), nullable=False),
     sa.Column('location_id', sa.Integer(), nullable=False),
     sa.Column('service_type_id', sa.Integer(), nullable=False),
-    sa.Column('mileage', sa.Float(), nullable=False),
-    sa.Column('datetime', sa.DateTime(), nullable=False),
+    sa.Column('mileage', sa.Integer(), nullable=False),
+    sa.Column('price', sa.Float(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['location_id'], ['location.id'], ),
     sa.ForeignKeyConstraint(['service_type_id'], ['service_type.id'], ),
     sa.ForeignKeyConstraint(['vehicle_id'], ['vehicle.id'], ),
@@ -175,6 +187,8 @@ def upgrade():
     sa.Column('event_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('confirmation_type', sa.Enum('YES', 'MAY_BE_YES', 'MAY_BY', 'MAY_BE_NO', 'NO', name='eventconfirmationtype'), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['event_id'], ['event.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')

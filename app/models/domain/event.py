@@ -18,6 +18,7 @@ import datetime as datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.location import Location
+from app.models.domain.profile import Profile
 
 
 class EventState(Enum):
@@ -27,7 +28,7 @@ class EventState(Enum):
 
 
 class Event(IDModelMixin, DateTimeModelMixin):
-    author: str
+    author: Profile
     title: str
     description: str
     thumbnail: str

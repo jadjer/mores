@@ -21,7 +21,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.settings.app import AppSettings
 
 
-async def connect_to_db(app: FastAPI, settings: AppSettings) -> None:
+async def connect_to_db(app: FastAPI, settings: AppSettings) -> AsyncSession:
     logger.info("Connecting to Postgres")
 
     engine = create_async_engine(
@@ -35,9 +35,13 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> None:
         expire_on_commit=False,
         class_=AsyncSession
     )
-    app.state.database_session = async_session()
 
+    session = async_session()
+
+    app.state.database_session = session
     logger.info("Connection established")
+
+    return session
 
 
 async def close_db_connection(app: FastAPI) -> None:

@@ -12,28 +12,33 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Optional
+from fastapi import Depends, HTTPException, Path, status, Query
 
-from fastapi import Depends, HTTPException, Path, status
-
-from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityDoesNotExists
-from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User
+from app.database.repositories.profiles import ProfilesRepository
+from app.models.domain.profile import Profile
+from app.models.schemas.post import PostsFilter
+from app.models.schemas.profile import (
+    DEFAULT_PROFILES_LIMIT,
+    DEFAULT_PROFILES_OFFSET,
+)
 from app.resources import strings
 
 
-async def get_user_by_username_from_path(
-    username: str = Path(..., min_length=1),
-    user: Optional[User] = Depends(get_current_user_authorizer(required=False)),
-    users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
-) -> User:
+def get_profiles_filter(
+        limit: int = Query(DEFAULT_PROFILES_LIMIT, ge=1),
+        offset: int = Query(DEFAULT_PROFILES_OFFSET, ge=0),
+) -> PostsFilter:
+    return PostsFilter(limit=limit, offset=offset)
+
+
+async def get_profile_by_username_from_path(
+        username: str = Path(..., min_length=1),
+        profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
+) -> Profile:
     try:
-        return await users_repo.get_user_by_username(
-            username=username,
-            requested_user=user,
-        )
+        return await profiles_repo.get_profile_by_username(username=username)
     except EntityDoesNotExists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

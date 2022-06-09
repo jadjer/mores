@@ -16,7 +16,12 @@ from typing import List, Optional
 
 from sqlalchemy import select
 
-from app.database.errors import EntityDoesNotExists, EntityAlreadyExists
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityUpdateError,
+    EntityDeleteError,
+    EntityCreateError,
+)
 from app.database.models import ServiceTypeModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.service_type import ServiceType
@@ -24,18 +29,23 @@ from app.models.domain.service_type import ServiceType
 
 class ServicesTypesRepository(BaseRepository):
 
-    async def get_service_type_model_by_id(self, service_type_id: int) -> ServiceTypeModel:
-        query = select(ServiceTypeModel).where(ServiceTypeModel.id == service_type_id)
-        result = await self.session.execute(query)
+    async def create_service_type(self, name: str, description: str) -> ServiceType:
+        new_service_type = ServiceTypeModel()
+        new_service_type.name = name
+        new_service_type.description = description
 
-        service_type_in_db: ServiceTypeModel = result.scalars().first()
-        if not service_type_in_db:
-            raise EntityDoesNotExists
+        self.session.add(new_service_type)
 
-        return service_type_in_db
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
+
+        return ServiceType(**new_service_type.__dict__)
 
     async def get_service_type_by_id(self, service_type_id: int) -> ServiceType:
-        service_type_model = await self.get_service_type_model_by_id(service_type_id)
+        service_type_model = await self._get_service_type_model_by_id(service_type_id)
+
         return ServiceType(**service_type_model.__dict__)
 
     async def get_services_types(self) -> List[ServiceType]:
@@ -46,48 +56,38 @@ class ServicesTypesRepository(BaseRepository):
 
         return [ServiceType(**service_type_in_db.__dict__) for service_type_in_db in services_types_in_db]
 
-    async def create_service_type(
-            self,
-            *,
-            name: str,
-            description: str,
-    ) -> ServiceType:
-        new_service_type = ServiceTypeModel()
-        new_service_type.name = name
-        new_service_type.description = description
-
-        self.session.add(new_service_type)
-
-        try:
-            await self.session.commit()
-        except Exception:
-            raise EntityAlreadyExists
-
-        return ServiceType(**new_service_type.__dict__)
-
-    async def update_service_type(
+    async def update_service_type_by_id(
             self,
             service_type_id: int,
-            *,
             name: Optional[str],
             description: Optional[str],
     ) -> ServiceType:
-        service_type_model = await self.get_service_type_model_by_id(service_type_id)
-        service_type_model.name = name or service_type_model.name
-        service_type_model.description = description or service_type_model.description
+        service_type_in_db = await self._get_service_type_model_by_id(service_type_id)
+        service_type_in_db.name = name or service_type_in_db.name
+        service_type_in_db.description = description or service_type_in_db.description
 
         try:
             await self.session.commit()
-        except Exception:
-            raise EntityAlreadyExists
+        except Exception as exception:
+            raise EntityUpdateError from exception
 
-        return ServiceType(**service_type_model.__dict__)
+        return ServiceType(**service_type_in_db.__dict__)
 
-    async def delete_service_type(self, vehicle_id: int) -> None:
-        vehicle = await self.get_service_type_model_by_id(vehicle_id)
+    async def delete_service_type_by_id(self, service_type_id: int) -> None:
+        service_type_in_db = await self._get_service_type_model_by_id(service_type_id)
 
         try:
-            await self.session.delete(vehicle)
+            await self.session.delete(service_type_in_db)
             await self.session.commit()
-        except Exception:
+        except Exception as exception:
+            raise EntityDeleteError from exception
+
+    async def _get_service_type_model_by_id(self, service_type_id: int) -> ServiceTypeModel:
+        query = select(ServiceTypeModel).where(ServiceTypeModel.id == service_type_id)
+        result = await self.session.execute(query)
+
+        service_type_in_db: ServiceTypeModel = result.scalars().first()
+        if not service_type_in_db:
             raise EntityDoesNotExists
+
+        return service_type_in_db

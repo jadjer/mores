@@ -15,7 +15,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -35,12 +35,19 @@ class PostsRepository(BaseRepository):
         super().__init__(session)
         self._profiles_repo = ProfilesRepository(session)
 
-    async def create_post(self, user_id: int, title: str, description: str, thumbnail: str, body: str) -> Post:
+    async def create_post_by_user_id(
+            self,
+            user_id: int,
+            title: str,
+            body: str,
+            description: Optional[str] = None,
+            thumbnail: Optional[str] = None,
+    ) -> Post:
         new_post = PostModel()
-        new_post.author_id = user_id,
-        new_post.title = title,
-        new_post.description = description,
-        new_post.thumbnail = thumbnail,
+        new_post.author_id = user_id
+        new_post.title = title
+        new_post.description = description
+        new_post.thumbnail = thumbnail
         new_post.body = body
 
         self.session.add(new_post)
@@ -73,25 +80,22 @@ class PostsRepository(BaseRepository):
         query = select(PostModel)
 
         if author:
-            user_id = await self._profiles_repo.get_user_id_by_username(author)
-            query = query.where(PostModel.author_id == user_id)
+            profile_in_db = await self._profiles_repo.get_profile_by_username(author)
+            query = query.where(PostModel.author_id == profile_in_db.user_id)
 
         query = query.limit(limit)
         query = query.offset(offset)
+        query = query.options(
+            joinedload(PostModel.author),
+            joinedload(PostModel.comments)
+        )
 
         result = await self.session.execute(query)
         posts_in_db: List[PostModel] = result.scalars().all()
 
-        posts: List[Post] = []
+        return [Post(**post_in_db.__dict__) for post_in_db in posts_in_db]
 
-        for post_in_db in posts_in_db:
-            author = await self._profiles_repo.get_profile_by_id(post_in_db.author_id)
-
-            posts.append(Post(author=author, **post_in_db.__dict__))
-
-        return posts
-
-    async def update_post(
+    async def update_post_by_id_and_user_id(
             self,
             post_id: int,
             user_id: int,
@@ -114,10 +118,10 @@ class PostsRepository(BaseRepository):
         return Post(**post_in_db.__dict__)
 
     async def delete_post(self, post_id: int, user_id: int) -> None:
-        post = self._get_post_model_by_id(post_id, user_id)
+        post_in_db = self._get_post_model_by_id(post_id, user_id)
 
         try:
-            await self.session.delete(post)
+            await self.session.delete(post_in_db)
             await self.session.commit()
         except Exception as exception:
             raise EntityDeleteError from exception

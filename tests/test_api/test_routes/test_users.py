@@ -1,9 +1,26 @@
+#  Copyright 2022 Pavel Suprunov
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import pytest
 
 from fastapi import FastAPI, status
 from httpx import AsyncClient
+from sqlalchemy.orm import Session
 
+from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
+from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 from app.models.schemas.user import UserInResponse
 
@@ -22,7 +39,7 @@ def wrong_authorization_header(request) -> str:
 async def test_user_can_not_access_own_profile_if_not_logged_in(
     app: FastAPI,
     client: AsyncClient,
-    test_user: UserInDB,
+    test_profile: Profile,
     api_method: str,
     route_name: str,
 ) -> None:
@@ -37,7 +54,7 @@ async def test_user_can_not_access_own_profile_if_not_logged_in(
 async def test_user_can_not_retrieve_own_profile_if_wrong_token(
     app: FastAPI,
     client: AsyncClient,
-    test_user: UserInDB,
+    test_profile: Profile,
     api_method: str,
     route_name: str,
     wrong_authorization_header: str,
@@ -51,13 +68,13 @@ async def test_user_can_not_retrieve_own_profile_if_wrong_token(
 
 
 async def test_user_can_retrieve_own_profile(
-    app: FastAPI, authorized_client: AsyncClient, test_user: UserInDB, token: str
+    app: FastAPI, authorized_client: AsyncClient, test_profile: Profile, token: str
 ) -> None:
     response = await authorized_client.get(app.url_path_for("users:get-current-user"))
     assert response.status_code == status.HTTP_200_OK
 
     user_profile = UserInResponse(**response.json())
-    assert user_profile.user.email == test_user.email
+    assert user_profile.user.email == test_profile.u.email
 
 
 @pytest.mark.parametrize(
@@ -90,9 +107,9 @@ async def test_user_can_update_own_profile(
 async def test_user_can_change_password(
     app: FastAPI,
     authorized_client: AsyncClient,
-    test_user: UserInDB,
+    test_profile: Profile,
     token: str,
-    pool: Pool,
+    session: Session,
 ) -> None:
     response = await authorized_client.put(
         app.url_path_for("users:update-current-user"),
@@ -101,11 +118,10 @@ async def test_user_can_change_password(
     assert response.status_code == status.HTTP_200_OK
     user_profile = UserInResponse(**response.json())
 
-    async with pool.acquire() as connection:
-        users_repo = UsersRepository(connection)
-        user = await users_repo.get_user_by_username(
-            username=user_profile.user.username
-        )
+    profiles_repo = ProfilesRepository(session)
+    profile = await profiles_repo.get_profile_by_username(
+        username=user_profile.user.username
+    )
 
     assert user.check_password("new_password")
 
@@ -117,7 +133,7 @@ async def test_user_can_change_password(
 async def test_user_can_not_take_already_used_credentials(
     app: FastAPI,
     authorized_client: AsyncClient,
-    pool: Pool,
+    session: Session,
     token: str,
     credentials_part: str,
     credentials_value: str,
@@ -128,9 +144,8 @@ async def test_user_can_not_take_already_used_credentials(
         "email": "free_email@email.com",
     }
     user_dict.update({credentials_part: credentials_value})
-    async with pool.acquire() as conn:
-        users_repo = UsersRepository(conn)
-        await users_repo.create_user(**user_dict)
+    users_repo = UsersRepository(session)
+    await users_repo.create_user(**user_dict)
 
     response = await authorized_client.put(
         app.url_path_for("users:update-current-user"),

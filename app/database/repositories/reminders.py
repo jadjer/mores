@@ -15,8 +15,11 @@
 from typing import List, Optional
 from datetime import date
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import (
+    select,
+    and_,
+)
+from sqlalchemy.orm import selectinload
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -25,23 +28,13 @@ from app.database.errors import (
     EntityDeleteError
 )
 from app.database.models import (
-    LocationModel,
     ReminderModel
 )
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.locations import LocationsRepository
-from app.database.repositories.vehicles import VehiclesRepository
-from app.models.domain.location import Location
 from app.models.domain.reminder import Reminder
-from app.models.domain.service_type import ServiceType
 
 
 class RemindersRepository(BaseRepository):
-
-    def __init__(self, session: Session):
-        super().__init__(session)
-        self._vehicles_repo = VehiclesRepository(session)
-        self._locations_repo = LocationsRepository(session)
 
     async def create_reminder_by_vehicle_id(
             self,

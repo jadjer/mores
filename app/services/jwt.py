@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 import jwt
-from pydantic import ValidationError
+from pydantic import ValidationError, EmailStr
 
 from app.models.schemas.jwt import JWTMeta, JWTUser
 
@@ -32,8 +32,8 @@ def create_jwt_token(jwt_content: Dict[str, str], secret_key: str, expires_delta
     return jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
 
 
-def create_access_token_for_user(user_id: int, username: str, secret_key: str) -> str:
-    jwt_user = JWTUser(user_id=user_id, username=username)
+def create_access_token_for_user(user_id: int, username: str, phone: str, secret_key: str) -> str:
+    jwt_user = JWTUser(user_id=user_id, username=username, phone=phone)
     return create_jwt_token(
         jwt_content=jwt_user.__dict__,
         secret_key=secret_key,

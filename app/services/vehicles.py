@@ -14,7 +14,6 @@
 
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.vehicles import VehiclesRepository
-from app.models.domain.user import UserInDB
 
 
 async def check_vehicle_is_exist(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:

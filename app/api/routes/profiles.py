@@ -12,15 +12,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status, Query
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+)
 
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.get_id_from_path import get_user_id_from_path
+from app.api.dependencies.profiles import get_profiles_filter
 from app.database.errors import EntityDoesNotExists, EntityUpdateError
 from app.database.repositories.profiles import ProfilesRepository
-from app.models.domain.profile import Profile
-from app.models.schemas.profile import ProfileInUpdate, ProfileInResponse, ListOfProfileInResponse
+from app.models.schemas.profile import (
+    ProfileInUpdate,
+    ProfileInResponse,
+    ListOfProfileInResponse, ProfilesFilter,
+)
 from app.resources import strings
 
 router = APIRouter()
@@ -35,11 +46,11 @@ router = APIRouter()
     ]
 )
 async def get_profiles(
-        limit: int = Query(20, ge=1),
-        offset: int = Query(0, ge=0),
+        profiles_filter: ProfilesFilter = Depends(get_profiles_filter),
         profiles_repo: ProfilesRepository = Depends(get_repository(ProfilesRepository)),
 ) -> ListOfProfileInResponse:
-    profiles = await profiles_repo.get_profiles_with_filter(limit, offset)
+    profiles = await profiles_repo.get_profiles_with_filter(profiles_filter.limit, profiles_filter.offset)
+
     return ListOfProfileInResponse(profiles=profiles, count=len(profiles))
 
 

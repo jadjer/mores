@@ -12,37 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import select, update, insert, and_
-from sqlalchemy.orm import Session
+from typing import Optional
 
-from app.database.errors import EntityDoesNotExists, EntityCreateError
+from sqlalchemy import select, and_
+from sqlalchemy.orm import joinedload
+
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityCreateError,
+    EntityUpdateError,
+)
 from app.database.models import EventConfirmationModel
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.events import EventsRepository
-from app.database.repositories.profiles import ProfilesRepository
-from app.models.domain.event_confirmation import EventConfirmation, EventConfirmationType
-from app.models.domain.event import Event
-from app.models.domain.user import UserInDB
+from app.models.domain.event_confirmation import (
+    EventConfirmation,
+    EventConfirmationType,
+)
 
 
 class EventConfirmationsRepository(BaseRepository):
-
-    def __init__(self, session: Session):
-        super().__init__(session)
-        self._events_repo = EventsRepository(session)
-        self._profiles_repo = ProfilesRepository(session)
-
-    async def get_confirmation_by_event_id_for_user(self, event_id: int, user_id: int) -> EventConfirmation:
-        event_confirmation_in_db = await self._get_event_confirmation_mode_by_event_id(event_id, user_id)
-
-        event_in_db = await self._events_repo.get_event_by_id(event_id)
-        profile_in_db = await self._profiles_repo.get_profile_by_user_id(user_id)
-
-        return EventConfirmation(
-            event=event_in_db,
-            user=profile_in_db,
-            type=event_confirmation_in_db.confirmation_type
-        )
 
     async def create_confirmation_by_event_id_for_user(
             self,
@@ -62,43 +50,42 @@ class EventConfirmationsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return EventConfirmation(
-            event=event,
-            user=user,
-            type=event_confirmation
-        )
+        return EventConfirmation(**new_event_confirmation.__dict__)
 
-    async def update_confirmation_by_event_id_for_user(
+    async def get_confirmation_by_event_id_and_user_id(self, event_id: int, user_id: int) -> EventConfirmation:
+        event_confirmation_in_db = await self._get_confirmation_model_by_event_id_and_user_id(event_id, user_id)
+
+        return EventConfirmation(**event_confirmation_in_db.__dict__)
+
+    async def update_confirmation_by_event_id_and_user_id(
             self,
-            event: Event,
-            user: UserInDB,
-            event_confirmation: EventConfirmationType
+            event_id: int,
+            user_id: int,
+            event_confirmation: Optional[EventConfirmationType] = None
     ) -> EventConfirmation:
-        query = update(
-            EventConfirmationModel
-        ).where(
-            EventConfirmationModel.event_id == event.id
-        ).where(
-            EventConfirmationModel.user_id == user.id
-        ).values(
-            confirmation_type=event_confirmation
-        )
+        event_confirmation_in_db = await self._get_confirmation_model_by_event_id_and_user_id(event_id, user_id)
+        event_confirmation_in_db.event_confirmation = event_confirmation or event_confirmation_in_db.event_confirmation
 
-        await self.session.execute(query)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityUpdateError from exception
 
-        return EventConfirmation(
-            event=event,
-            user=user,
-            type=event_confirmation
-        )
+        return EventConfirmation(**event_confirmation_in_db.__dict__)
 
-    async def _get_event_confirmation_mode_by_event_id(self, event_id: int, user_id: int) -> EventConfirmationModel:
+    async def _get_confirmation_model_by_event_id_and_user_id(
+            self,
+            event_id: int,
+            user_id: int
+    ) -> EventConfirmationModel:
         query = select(EventConfirmationModel).where(
             and_(
                 EventConfirmationModel.event_id == event_id,
                 EventConfirmationModel.user_id == user_id,
             )
+        ).options(
+            joinedload(EventConfirmationModel.event),
+            joinedload(EventConfirmationModel.user)
         )
         result = await self.session.execute(query)
 

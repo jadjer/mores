@@ -1,19 +1,29 @@
+#  Copyright 2022 Pavel Suprunov
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from os import environ
 
 import pytest
-from asgi_lifespan import LifespanManager
-from asyncpg.pool import Pool
 from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.repositories.posts import ArticlesRepository
-from app.database.repositories.users import UsersRepository
+from app.database.repositories.posts import PostsRepository
+from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
-from app.models.domain.user import UserInDB
+from app.models.domain.profile import Profile
 from app.services import jwt
-from tests.fake_asyncpg_pool import FakeAsyncPGPool
-
-environ["APP_ENV"] = "test"
 
 
 @pytest.fixture
@@ -24,23 +34,22 @@ def app() -> FastAPI:
 
 
 @pytest.fixture
-async def initialized_app(app: FastAPI) -> FastAPI:
-    async with LifespanManager(app):
-        app.state.pool = await FakeAsyncPGPool.create_pool(app.state.pool)
-        yield app
+async def session(app: FastAPI) -> AsyncSession:
+    from app.database.events import connect_to_db
+    from app.core.config import get_app_settings
+
+    settings = get_app_settings()
+    session = await connect_to_db(app, settings)
+
+    return session
 
 
 @pytest.fixture
-def pool(initialized_app: FastAPI) -> Pool:
-    return initialized_app.state.pool
-
-
-@pytest.fixture
-async def client(initialized_app: FastAPI) -> AsyncClient:
+async def client(app: FastAPI) -> AsyncClient:
     async with AsyncClient(
-        app=initialized_app,
-        base_url="http://testserver",
-        headers={"Content-Type": "application/json"},
+            app=app,
+            base_url="http://localhost:10000",
+            headers={"Content-Type": "application/json"},
     ) as client:
         yield client
 
@@ -56,36 +65,38 @@ def authorization_prefix() -> str:
 
 
 @pytest.fixture
-async def test_user(pool: Pool) -> UserInDB:
-    async with pool.acquire() as conn:
-        return await UsersRepository(conn).create_user(
-            email="test@test.com", password="password", username="username"
-        )
+async def test_profile(session: AsyncSession) -> Profile:
+    return await ProfilesRepository(session).create_profile_and_user(
+        username="username",
+        email="test@test.com",
+        password="password",
+    )
 
 
 @pytest.fixture
-async def test_article(test_user: UserInDB, pool: Pool) -> Post:
-    async with pool.acquire() as connection:
-        articles_repo = ArticlesRepository(connection)
-        return await articles_repo.create_article(
-            slug="test-slug",
-            title="Test Slug",
-            description="Slug for tests",
-            body="Test " * 100,
-            author=test_user,
-            tags=["tests", "testing", "pytest"],
-        )
+async def test_post(test_profile: Profile, session: AsyncSession) -> Post:
+    posts_repo = PostsRepository(session)
+
+    return await posts_repo.create_post_by_user_id(
+        user_id=test_profile.user_id,
+        title="Test Slug",
+        description="Slug for tests",
+        thumbnail="",
+        body="Test " * 100,
+    )
 
 
 @pytest.fixture
-def token(test_user: UserInDB) -> str:
-    return jwt.create_access_token_for_user(test_user, environ["SECRET_KEY"])
+def token(test_profile: Profile) -> str:
+    return jwt.create_access_token_for_user(
+        user_id=test_profile.user_id,
+        username=test_profile.username,
+        secret_key=environ["SECRET_KEY"]
+    )
 
 
 @pytest.fixture
-def authorized_client(
-    client: AsyncClient, token: str, authorization_prefix: str
-) -> AsyncClient:
+def authorized_client(client: AsyncClient, token: str, authorization_prefix: str) -> AsyncClient:
     client.headers = {
         "Authorization": f"{authorization_prefix} {token}",
         **client.headers,

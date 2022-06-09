@@ -16,7 +16,11 @@ from typing import Optional
 from pydantic import EmailStr
 from sqlalchemy import select
 
-from app.database.errors import EntityDoesNotExists, EntityCreateError, EntityUpdateError
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityCreateError,
+    EntityUpdateError,
+)
 from app.database.repositories.base import BaseRepository
 from app.models.domain.user import UserInDB
 from app.database.models import UserModel
@@ -24,14 +28,16 @@ from app.database.models import UserModel
 
 class UsersRepository(BaseRepository):
 
-    async def create_user(self, email: EmailStr, password: str) -> UserInDB:
-        user: UserInDB = UserInDB(email=email)
+    async def create_user(
+            self,
+            username: str,
+            phone: str,
+            password: str,
+    ) -> UserInDB:
+        user: UserInDB = UserInDB(username=username, phone=phone)
         user.change_password(password)
 
-        new_user: UserModel = UserModel()
-        new_user.email = email
-        new_user.salt = user.salt
-        new_user.password = user.password
+        new_user: UserModel = UserModel(**user.__dict__)
 
         self.session.add(new_user)
 
@@ -59,18 +65,42 @@ class UsersRepository(BaseRepository):
 
         return UserInDB(**user.__dict__)
 
-    async def update_user(
-            self,
-            user: UserInDB,
-            email: Optional[str] = None,
-            password: Optional[str] = None,
-    ) -> UserInDB:
-        if password:
-            user.change_password(password)
+    async def get_user_by_username(self, username: str) -> UserInDB:
+        query = select(UserModel).where(UserModel.username == username)
+        result = await self.session.execute(query)
 
-        user_in_db: UserModel = await self._get_user_model_by_id(user.id)
+        user = result.scalars().first()
+        if not user:
+            raise EntityDoesNotExists
+
+        return UserInDB(**user.__dict__)
+
+    async def get_user_by_phone(self, phone: str) -> UserInDB:
+        query = select(UserModel).where(UserModel.phone == phone)
+        result = await self.session.execute(query)
+
+        user = result.scalars().first()
+        if not user:
+            raise EntityDoesNotExists
+
+        return UserInDB(**user.__dict__)
+
+    async def update_user_by_id(
+            self,
+            user_id: int,
+            username: Optional[str] = None,
+            email: Optional[EmailStr] = None,
+            phone: Optional[str] = None,
+            password: Optional[str] = None,
+
+    ) -> UserInDB:
+        user_in_db = await self.get_user_by_id(user_id)
+        user_in_db.username = username or user_in_db.username
         user_in_db.email = email or user_in_db.email
-        user_in_db.password = password or user_in_db.password
+        user_in_db.phone = phone or user_in_db.phone
+
+        if password:
+            user_in_db.change_password(password)
 
         try:
             await self.session.commit()

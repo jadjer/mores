@@ -12,13 +12,21 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+)
 
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.get_id_from_path import get_service_type_id_from_path
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.services_types import ServicesTypesRepository
-from app.models.schemas.service_type import ServiceTypeInResponse, ListOfServicesTypesInResponse
+from app.models.schemas.service_type import (
+    ServiceTypeInResponse,
+    ListOfServicesTypesInResponse,
+)
 from app.resources import strings
 
 router = APIRouter()

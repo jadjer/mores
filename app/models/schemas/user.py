@@ -20,16 +20,18 @@ from app.models.schemas.rwschema import RWSchema
 
 
 class UserInLogin(RWSchema):
-    username: str
+    phone: str
     password: str
 
 
 class UserInCreate(UserInLogin):
-    email: EmailStr
+    username: str
 
 
 class UserInUpdate(BaseModel):
+    username: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     password: Optional[str] = None
 
 

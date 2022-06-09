@@ -12,14 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.services import ServicesRepository
 
 
-async def check_service_is_exist(repo: ServicesRepository, service_id: int) -> bool:
+async def check_service_is_exist(repo: ServicesRepository, service_id: int, vehicle_id: int) -> bool:
     try:
-        await repo.get_service_by_id(service_id)
-    except EntityDoesNotExist:
+        await repo.get_service_by_id_and_vehicle_id(service_id, vehicle_id)
+    except EntityDoesNotExists:
         return False
 
     return True

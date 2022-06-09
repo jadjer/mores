@@ -14,8 +14,7 @@
 
 from enum import Enum
 from typing import Optional
-
-from pydantic import HttpUrl
+from pydantic import HttpUrl, EmailStr
 
 from app.models.domain.rwmodel import RWModel
 
@@ -27,12 +26,11 @@ class Gender(Enum):
 
 
 class Profile(RWModel):
-    user_id: int
-    username: str
+    email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     second_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Gender = Gender.UNDEFINED
     age: Optional[int] = None
-    phone: Optional[str] = None
+
     image: Optional[HttpUrl] = None

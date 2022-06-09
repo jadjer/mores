@@ -12,15 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from pydantic import EmailStr
-
 from app.models.common import IDModelMixin
 from app.models.domain.rwmodel import RWModel
 from app.services import security
 
 
 class User(RWModel):
-    email: EmailStr
+    username: str
+    phone: str
     is_admin: bool = False
     is_blocked: bool = False
 

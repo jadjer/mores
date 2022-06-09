@@ -14,12 +14,11 @@
 
 from fastapi import Depends, HTTPException, Path, status
 
-from app.api.dependencies.authentication import get_current_profile_authorizer
+from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.comments import CommentsRepository
 from app.models.domain.comment import Comment
-from app.models.domain.profile import Profile
 from app.resources import strings
 from app.services.comments import check_user_can_modify_comment
 
@@ -38,9 +37,9 @@ async def get_comment_by_id_from_path(
 
 def check_comment_modification_permissions(
         comment: Comment = Depends(get_comment_by_id_from_path),
-        profile: Profile = Depends(get_current_profile_authorizer()),
+        user_id: int = Depends(get_current_user_authorizer()),
 ) -> None:
-    if not check_user_can_modify_comment(comment, profile):
+    if not check_user_can_modify_comment(user_id, comment):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_ARTICLE,

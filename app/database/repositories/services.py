@@ -12,10 +12,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Optional
+from typing import (
+    List,
+    Optional,
+)
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy import (
+    select,
+    and_,
+)
+from sqlalchemy.orm import (
+    selectinload,
+    joinedload,
+)
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -66,10 +75,6 @@ class ServicesRepository(BaseRepository):
         result = await self.session.execute(query)
 
         services_in_db = result.scalars().all()
-
-        for service_in_db in services_in_db:
-            print("===============================")
-            print(service_in_db.__dict__)
 
         return [self._get_service_from_service_model(service_in_db) for service_in_db in services_in_db]
 

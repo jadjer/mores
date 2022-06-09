@@ -26,10 +26,13 @@
 
 from typing import Optional, List
 
-from pydantic import EmailStr, HttpUrl
+from pydantic import EmailStr, HttpUrl, BaseModel, Field
 
 from app.models.domain.profile import Gender, Profile
 from app.models.schemas.rwschema import RWSchema
+
+DEFAULT_PROFILES_LIMIT = 100
+DEFAULT_PROFILES_OFFSET = 0
 
 
 class ProfileInCreate(RWSchema):
@@ -63,3 +66,8 @@ class ProfileInResponse(RWSchema):
 class ListOfProfileInResponse(RWSchema):
     profiles: List[Profile]
     count: int
+
+
+class ProfilesFilter(BaseModel):
+    limit: int = Field(DEFAULT_PROFILES_LIMIT, ge=1)
+    offset: int = Field(DEFAULT_PROFILES_OFFSET, ge=0)

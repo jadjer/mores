@@ -13,8 +13,7 @@
 #  limitations under the License.
 
 from app.models.domain.comment import Comment
-from app.models.domain.profile import Profile
 
 
-def check_user_can_modify_comment(comment: Comment, profile: Profile) -> bool:
-    return comment.author.username == profile.username
+def check_user_can_modify_comment(user_id: int, comment: Comment) -> bool:
+    return comment.author.user_id == user_id

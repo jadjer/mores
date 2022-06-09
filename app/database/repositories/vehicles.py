@@ -140,11 +140,7 @@ class VehiclesRepository(BaseRepository):
             )
         )
 
-        try:
-            result = await self.session.execute(query)
-        except PendingRollbackError:
-            await self.session.rollback()
-            result = await self.session.execute(query)
+        result = await self.session.execute(query)
 
         vehicle_model_in_db: VehicleModel = result.scalars().first()
         if not vehicle_model_in_db:

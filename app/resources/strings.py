@@ -1,4 +1,20 @@
+#  Copyright 2022 Pavel Suprunov
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 # API messages
+
+USER_CREATE_ERROR = "User create error"
 
 USER_DOES_NOT_EXIST_ERROR = "user does not exist"
 ARTICLE_DOES_NOT_EXIST_ERROR = "article does not exist"
@@ -47,20 +63,15 @@ FUEL_DOES_NOT_EXIST_ERROR = "Fuel does not exist"
 LOCATION_DOES_NOT_EXIST_ERROR = "Location doesn't exist"
 
 INCORRECT_LOGIN_INPUT = "incorrect username or password"
+PHONE_TAKEN = "User with this phone already exists"
 USERNAME_TAKEN = "user with this username already exists"
 EMAIL_TAKEN = "user with this email already exists"
+PHONE_NUMBER_INVALID_ERROR = "Invalid phone number"
 
-UNABLE_TO_FOLLOW_YOURSELF = "user can not follow him self"
-UNABLE_TO_UNSUBSCRIBE_FROM_YOURSELF = "user can not unsubscribe from him self"
-USER_IS_NOT_FOLLOWED = "you don't follow this user"
-USER_IS_ALREADY_FOLLOWED = "you follow this user already"
+WRONG_TOKEN_PREFIX = "Unsupported authorization type"  # noqa: S105
+MALFORMED_PAYLOAD = "Could not validate credentials"
 
-WRONG_TOKEN_PREFIX = "unsupported authorization type"  # noqa: S105
-MALFORMED_PAYLOAD = "could not validate credentials"
+COMMENT_DOES_NOT_EXIST = "Comment does not exist"
+COMMENT_CREATE_ERROR = "Comment create error"
 
-ARTICLE_IS_ALREADY_FAVORITED = "you are already marked this articles as favorite"
-ARTICLE_IS_NOT_FAVORITED = "article is not favorited"
-
-COMMENT_DOES_NOT_EXIST = "comment does not exist"
-
-AUTHENTICATION_REQUIRED = "authentication required"
+AUTHENTICATION_REQUIRED = "Authentication required"

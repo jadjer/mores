@@ -26,7 +26,12 @@ from app.api.dependencies.get_id_from_path import (
     get_vehicle_id_from_path,
     get_reminder_id_from_path,
 )
-from app.database.errors import EntityCreateError, EntityDoesNotExists, EntityUpdateError, EntityDeleteError
+from app.database.errors import (
+    EntityCreateError,
+    EntityDoesNotExists,
+    EntityUpdateError,
+    EntityDeleteError,
+)
 from app.database.repositories.reminders import RemindersRepository
 from app.database.repositories.vehicles import VehiclesRepository
 from app.models.schemas.reminder import (

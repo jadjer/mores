@@ -14,7 +14,10 @@
 
 from typing import Optional
 
-from app.database.errors import EntityDoesNotExists, EntityDeleteError
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityDeleteError, EntityCreateError, EntityUpdateError,
+)
 from app.database.models import LocationModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.location import Location
@@ -29,18 +32,22 @@ class LocationsRepository(BaseRepository):
         new_location.longitude = longitude
 
         self.session.add(new_location)
-        await self.session.commit()
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityCreateError from exception
 
         return Location(**new_location.__dict__)
 
     async def get_location_by_id(self, location_id: int) -> Location:
         location = await self._get_location_model_by_id(location_id)
+
         return Location(**location.__dict__)
 
-    async def update_location(
+    async def update_location_by_id(
             self,
             location_id: int,
-            *,
             description: Optional[str] = None,
             latitude: Optional[float] = None,
             longitude: Optional[float] = None,
@@ -50,11 +57,14 @@ class LocationsRepository(BaseRepository):
         location.latitude = latitude or location.latitude
         location.longitude = longitude or location.longitude
 
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            raise EntityUpdateError from exception
 
         return Location(**location.__dict__)
 
-    async def delete_location(self, location_id: int) -> None:
+    async def delete_location_by_id(self, location_id: int) -> None:
         location = await self._get_location_model_by_id(location_id)
 
         try:

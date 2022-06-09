@@ -26,7 +26,12 @@ from app.api.dependencies.get_id_from_path import (
     get_vehicle_id_from_path,
     get_fuel_id_from_path,
 )
-from app.database.errors import EntityCreateError, EntityDoesNotExists, EntityUpdateError, EntityDeleteError
+from app.database.errors import (
+    EntityCreateError,
+    EntityDoesNotExists,
+    EntityUpdateError,
+    EntityDeleteError,
+)
 from app.database.repositories.fuels import FuelsRepository
 from app.database.repositories.vehicles import VehiclesRepository
 from app.models.schemas.fuel import (
@@ -36,7 +41,10 @@ from app.models.schemas.fuel import (
     FuelInUpdate,
 )
 from app.resources import strings
-from app.services.vehicles import update_vehicle_mileage, check_mileage_increases
+from app.services.vehicles import (
+    update_vehicle_mileage,
+    check_mileage_increases,
+)
 
 router = APIRouter()
 
