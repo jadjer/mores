@@ -29,8 +29,12 @@ from app.models.schemas.user import (
     UserInUpdate,
 )
 from app.resources import strings
-from app.services.authentication import check_email_is_taken, check_phone_is_valid, check_phone_is_taken, \
-    check_username_is_taken
+from app.services.authentication import (
+    check_email_is_taken,
+    check_phone_is_valid,
+    check_phone_is_taken,
+    check_username_is_taken,
+)
 
 router = APIRouter()
 
@@ -52,7 +56,6 @@ async def update_current_user(
     phone_invalid = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_NUMBER_INVALID_ERROR)
     phone_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_TAKEN)
     username_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
-    email_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.EMAIL_TAKEN)
 
     if user_update.phone and user_update.phone != user.phone:
         if not check_phone_is_valid(user_update.phone):
@@ -65,10 +68,11 @@ async def update_current_user(
         if await check_username_is_taken(users_repo, user_update.username):
             raise username_taken
 
-    if user_update.email and user_update.email != user.email:
-        if await check_email_is_taken(users_repo, user_update.email):
-            raise email_taken
-
-    user_in_db = await users_repo.update_user_by_id(user.id, email=user_update.email, password=user_update.password)
+    user_in_db = await users_repo.update_user_by_id(
+        user.id,
+        username=user_update.username,
+        phone=user_update.phone,
+        password=user_update.password
+    )
 
     return UserInResponse(user=user_in_db)

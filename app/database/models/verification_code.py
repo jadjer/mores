@@ -12,18 +12,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from .user import UserModel
-from .token import TokenModel
-from .vehicle import VehicleModel
-from .post import PostModel
-from .comment import CommentModel
-from .service import ServiceModel
-from .service_type import ServiceTypeModel
-from .reminder import ReminderModel
-from .fuel import FuelModel, FuelType
-from .location import LocationModel
-from .event import EventModel, EventState
-from .event_confirmation import EventConfirmationModel, EventConfirmationType
-from .profile import ProfileModel
-from .api_key import ApiKeyModel
-from .verification_code import VerificationCodeModel
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, func
+
+from app.database.base import Base
+
+
+class VerificationCodeModel(Base):
+    __tablename__ = "verification_code"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    phone = Column(String, nullable=False)
+    verification_code = Column(Integer, nullable=False)
+
+    is_verified = Column(Boolean, default=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

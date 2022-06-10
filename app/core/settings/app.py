@@ -17,7 +17,7 @@ import sys
 from typing import Any, Dict, List, Tuple
 
 from loguru import logger
-from pydantic import SecretStr
+from pydantic import SecretStr, HttpUrl
 
 from app.core.logging import InterceptHandler
 from app.core.settings.base import BaseAppSettings
@@ -39,6 +39,11 @@ class AppSettings(BaseAppSettings):
 
     max_connection_count: int = 10
     min_connection_count: int = 10
+
+    sms_api_host: HttpUrl
+    sms_api_user: str
+    sms_api_pass: str
+    sms_max_chars: int = 160
 
     secret_key: SecretStr
 

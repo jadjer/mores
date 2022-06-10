@@ -13,14 +13,13 @@
 #  limitations under the License.
 
 import pytest
-from asyncpg.pool import Pool
+
 from fastapi import FastAPI, status
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
 
 from app.database.repositories.comments import CommentsRepository
 from app.database.repositories.profiles import ProfilesRepository
-from app.database.repositories.users import UsersRepository
 from app.models.domain.post import Post
 from app.models.schemas.comment import CommentInResponse, ListOfCommentsInResponse
 

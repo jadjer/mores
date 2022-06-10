@@ -1,8 +1,8 @@
 """Create tables
 
-Revision ID: 0e1b7b3da949
+Revision ID: 99a5b8d2d419
 Revises: 
-Create Date: 2022-06-08 15:59:24.792912
+Create Date: 2022-06-10 13:16:36.601179
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0e1b7b3da949'
+revision = '99a5b8d2d419'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -59,6 +59,15 @@ def upgrade():
     sa.UniqueConstraint('username')
     )
     op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=False)
+    op.create_table('verification_code',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('phone', sa.String(), nullable=False),
+    sa.Column('verification_code', sa.Integer(), nullable=False),
+    sa.Column('is_verified', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_verification_code_id'), 'verification_code', ['id'], unique=False)
     op.create_table('post',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=False),
@@ -219,6 +228,8 @@ def downgrade():
     op.drop_table('profile')
     op.drop_index(op.f('ix_post_id'), table_name='post')
     op.drop_table('post')
+    op.drop_index(op.f('ix_verification_code_id'), table_name='verification_code')
+    op.drop_table('verification_code')
     op.drop_index(op.f('ix_user_id'), table_name='user')
     op.drop_table('user')
     op.drop_index(op.f('ix_service_type_id'), table_name='service_type')

@@ -19,13 +19,18 @@ from app.models.domain.user import User
 from app.models.schemas.rwschema import RWSchema
 
 
-class UserInLogin(RWSchema):
+class PhoneInVerification(RWSchema):
     phone: str
+
+
+class UserInLogin(RWSchema):
+    username: str
     password: str
 
 
 class UserInCreate(UserInLogin):
-    username: str
+    phone: str
+    verification_code: int
 
 
 class UserInUpdate(BaseModel):

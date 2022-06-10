@@ -68,6 +68,12 @@ USERNAME_TAKEN = "user with this username already exists"
 EMAIL_TAKEN = "user with this email already exists"
 PHONE_NUMBER_INVALID_ERROR = "Invalid phone number"
 
+VERIFICATION_SERVICE_TEMPORARY_UNAVAILABLE = "Phone validation service temporary unavailable"
+VERIFICATION_SERVICE_SEND_SMS_ERROR = "Error sending sms to phone"
+VERIFICATION_CODE_CREATE_ERROR = "Can't create new verification code to phone number"
+VERIFICATION_CODE_DOES_NOT_EXISTS = "Verification code doesn't exists"
+VERIFICATION_CODE_IS_WRONG = "Verification code is wrong"
+
 WRONG_TOKEN_PREFIX = "Unsupported authorization type"  # noqa: S105
 MALFORMED_PAYLOAD = "Could not validate credentials"
 

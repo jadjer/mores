@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 from typing import Optional
-from pydantic import EmailStr
 from sqlalchemy import select
 
 from app.database.errors import (
@@ -88,15 +87,14 @@ class UsersRepository(BaseRepository):
     async def update_user_by_id(
             self,
             user_id: int,
+            *,
             username: Optional[str] = None,
-            email: Optional[EmailStr] = None,
             phone: Optional[str] = None,
             password: Optional[str] = None,
 
     ) -> UserInDB:
         user_in_db = await self.get_user_by_id(user_id)
         user_in_db.username = username or user_in_db.username
-        user_in_db.email = email or user_in_db.email
         user_in_db.phone = phone or user_in_db.phone
 
         if password:
