@@ -18,9 +18,8 @@ from httpx import AsyncClient
 
 from app.models.domain.profile import Profile
 
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 async def test_user_successful_login(
     app: FastAPI, client: AsyncClient, test_profile: Profile
 ) -> None:
@@ -30,6 +29,7 @@ async def test_user_successful_login(
     assert response.status_code == status.HTTP_200_OK
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "credentials_part, credentials_value",
     (("email", "wrong@test.com"), ("password", "wrong")),

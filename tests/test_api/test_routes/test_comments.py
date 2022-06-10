@@ -14,28 +14,37 @@
 
 import pytest
 
-from fastapi import FastAPI, status
+from fastapi import (
+    FastAPI,
+    status,
+)
 from httpx import AsyncClient
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.repositories import UsersRepository
 from app.database.repositories.comments import CommentsRepository
-from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
-from app.models.schemas.comment import CommentInResponse, ListOfCommentsInResponse
+from app.models.schemas.comment import (
+    CommentInResponse,
+    ListOfCommentsInResponse,
+)
 
-pytestmark = pytest.mark.asyncio
 
-
-async def test_user_can_add_comment_for_post(app: FastAPI, authorized_client: AsyncClient, test_post: Post) -> None:
+@pytest.mark.asyncio
+async def test_user_can_add_comment_for_post(
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post
+) -> None:
     created_comment_response = await authorized_client.post(
-        app.url_path_for("comments:create-comment-for-post", post_id=str(test_post.id)),
+        initialized_app.url_path_for("comments:create-comment-for-post", post_id=str(test_post.id)),
         json={"comment": {"body": "comment"}},
     )
+
+    print(created_comment_response.json())
 
     created_comment = CommentInResponse(**created_comment_response.json())
 
     comments_for_post_response = await authorized_client.get(
-        app.url_path_for("comments:get-comments-for-post", post_id=str(test_post.id))
+        initialized_app.url_path_for("comments:get-comments-for-post", post_id=str(test_post.id))
     )
 
     comments = ListOfCommentsInResponse(**comments_for_post_response.json())
@@ -43,23 +52,26 @@ async def test_user_can_add_comment_for_post(app: FastAPI, authorized_client: As
     assert created_comment.comment == comments.comments[0]
 
 
-async def test_user_can_delete_own_comment(app: FastAPI, authorized_client: AsyncClient, test_post: Post) -> None:
+@pytest.mark.asyncio
+async def test_user_can_delete_own_comment(
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post
+) -> None:
     created_comment_response = await authorized_client.post(
-        app.url_path_for("comments:create-comment-for-post", post_id=str(test_post.id)),
+        initialized_app.url_path_for("comments:create-comment-for-post", post_id=str(test_post.id)),
         json={"comment": {"body": "comment"}},
     )
 
     created_comment = CommentInResponse(**created_comment_response.json())
 
     await authorized_client.delete(
-        app.url_path_for(
+        initialized_app.url_path_for(
             "comments:delete-comment-from-post",
             post_id=str(test_post.id),
             comment_id=str(created_comment.comment.id))
     )
 
     comments_for_post_response = await authorized_client.get(
-        app.url_path_for(
+        initialized_app.url_path_for(
             "comments:get-comments-for-post",
             post_id=str(test_post.id)
         )
@@ -70,20 +82,22 @@ async def test_user_can_delete_own_comment(app: FastAPI, authorized_client: Asyn
     assert len(comments.comments) == 0
 
 
+@pytest.mark.asyncio
 async def test_user_can_not_delete_not_authored_comment(
-        app: FastAPI, authorized_client: AsyncClient, test_post: Post, session: Session
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post, session: AsyncSession
 ) -> None:
-    profiles_repo = ProfilesRepository(session)
-    profile = await profiles_repo.create_profile_and_user(
+    users_repo = UsersRepository(session)
+    user = await users_repo.create_user(
         username="test_author",
-        email="author@email.com",
+        phone="+375123456789",
         password="password",
     )
+
     comments_repo = CommentsRepository(session)
-    comment = await comments_repo.create_comment_by_post_id_and_user_id(test_post.id, profile.user_id, "tmp")
+    comment = await comments_repo.create_comment_by_post_id_and_user(test_post.id, user, body="tmp")
 
     forbidden_response = await authorized_client.delete(
-        app.url_path_for(
+        initialized_app.url_path_for(
             "comments:delete-comment-from-post",
             post_id=str(test_post.id),
             comment_id=str(comment.id),
@@ -93,11 +107,12 @@ async def test_user_can_not_delete_not_authored_comment(
     assert forbidden_response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.asyncio
 async def test_user_will_receive_error_for_not_existing_comment(
-        app: FastAPI, authorized_client: AsyncClient, test_post: Post
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post
 ) -> None:
     not_found_response = await authorized_client.delete(
-        app.url_path_for(
+        initialized_app.url_path_for(
             "comments:delete-comment-from-post",
             post_id=str(test_post.id),
             comment_id="1",

@@ -28,7 +28,7 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> AsyncSession:
         settings.get_database_url,
         echo=True
     )
-    app.state.database_engine = engine
+    app.state.engine = engine
 
     async_session = sessionmaker(
         bind=engine,
@@ -38,7 +38,7 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> AsyncSession:
 
     session = async_session()
 
-    app.state.database_session = session
+    app.state.session = session
     logger.info("Connection established")
 
     return session
@@ -47,6 +47,6 @@ async def connect_to_db(app: FastAPI, settings: AppSettings) -> AsyncSession:
 async def close_db_connection(app: FastAPI) -> None:
     logger.info("Closing connection to database")
 
-    await app.state.database_engine.dispose()
+    await app.state.engine.dispose()
 
     logger.info("Connection closed")

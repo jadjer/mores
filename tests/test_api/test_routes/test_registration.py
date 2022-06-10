@@ -22,9 +22,8 @@ from app.database.repositories.users import UsersRepository
 from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 async def test_user_success_registration(
     app: FastAPI, client: AsyncClient, session: Session
 ) -> None:
@@ -45,6 +44,7 @@ async def test_user_success_registration(
         assert user.check_password(password)
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "credentials_part, credentials_value",
     (("username", "free_username"), ("email", "free-email@tset.com")),

@@ -8,7 +8,7 @@ passlib
 PyJWT
 alembic
 asyncpg
-pytest
+pytest-asyncio
 httpx
 phonenumbers
 

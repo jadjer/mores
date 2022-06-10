@@ -47,6 +47,5 @@ class ListOfPostsInResponse(RWSchema):
 
 
 class PostsFilter(BaseModel):
-    author: Optional[str] = None
     limit: int = Field(DEFAULT_ARTICLES_LIMIT, ge=1)
     offset: int = Field(DEFAULT_ARTICLES_OFFSET, ge=0)

@@ -12,7 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Enum,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -25,11 +31,12 @@ class ProfileModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
-    first_name = Column(String, nullable=True)
-    second_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
+    email = Column(String)
+    first_name = Column(String)
+    second_name = Column(String)
+    last_name = Column(String)
     gender = Column(Enum(Gender), default=Gender.UNDEFINED)
-    age = Column(Integer, nullable=True)
-    image = Column(String, nullable=True)
+    age = Column(Integer)
+    image = Column(String)
 
     user = relationship("UserModel", uselist=False)

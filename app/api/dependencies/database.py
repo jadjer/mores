@@ -22,7 +22,7 @@ from app.database.repositories.base import BaseRepository
 
 
 def _get_db_session(request: Request) -> AsyncSession:
-    return request.app.state.database_session
+    return request.app.state.session
 
 
 def get_repository(repo_type: Type[BaseRepository]) -> Callable[[AsyncSession], BaseRepository]:

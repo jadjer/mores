@@ -22,7 +22,9 @@ from app.services.jwt import (
     ALGORITHM,
     create_access_token_for_user,
     create_jwt_token,
+    get_user_id_from_token,
     get_username_from_token,
+    get_phone_from_token,
 )
 
 
@@ -38,16 +40,33 @@ def test_creating_jwt_token() -> None:
 
 
 def test_creating_token_for_user(test_user: UserInDB) -> None:
-    token = create_access_token_for_user(user=test_user, secret_key="secret")
+    token = create_access_token_for_user(
+        user_id=test_user.id,
+        username=test_user.username,
+        phone=test_user.phone,
+        secret_key="secret"
+    )
     parsed_payload = jwt.decode(token, "secret", algorithms=[ALGORITHM])
 
     assert parsed_payload["username"] == test_user.username
 
 
 def test_retrieving_token_from_user(test_user: UserInDB) -> None:
-    token = create_access_token_for_user(user=test_user, secret_key="secret")
+    token = create_access_token_for_user(
+        user_id=test_user.id,
+        username=test_user.username,
+        phone=test_user.phone,
+        secret_key="secret"
+    )
+
+    user_id = get_user_id_from_token(token, "secret")
+    assert user_id == test_user.id
+
     username = get_username_from_token(token, "secret")
     assert username == test_user.username
+
+    phone = get_phone_from_token(token, "secret")
+    assert phone == test_user.phone
 
 
 def test_error_when_wrong_token() -> None:

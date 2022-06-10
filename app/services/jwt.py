@@ -57,3 +57,12 @@ def get_username_from_token(token: str, secret_key: str) -> str:
         raise ValueError("unable to decode JWT token") from decode_error
     except ValidationError as validation_error:
         raise ValueError("malformed payload in token") from validation_error
+
+
+def get_phone_from_token(token: str, secret_key: str) -> str:
+    try:
+        return JWTUser(**jwt.decode(token, secret_key, algorithms=[ALGORITHM])).phone
+    except jwt.PyJWTError as decode_error:
+        raise ValueError("unable to decode JWT token") from decode_error
+    except ValidationError as validation_error:
+        raise ValueError("malformed payload in token") from validation_error

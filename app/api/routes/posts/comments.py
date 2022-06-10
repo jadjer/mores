@@ -23,6 +23,7 @@ from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import EntityCreateError
 from app.database.repositories.comments import CommentsRepository
+from app.models.domain.user import User
 from app.models.schemas.comment import (
     CommentInCreate,
     CommentInResponse,
@@ -43,13 +44,13 @@ router = APIRouter()
 async def create_comment(
         post_id: int = Depends(get_post_id_from_path),
         comment_create: CommentInCreate = Body(..., embed=True, alias="comment"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> CommentInResponse:
     comment_create_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.COMMENT_CREATE_ERROR)
 
     try:
-        comment = await comments_repo.create_comment_by_post_id_and_user_id(post_id, user_id, **comment_create.__dict__)
+        comment = await comments_repo.create_comment_by_post_id_and_user(post_id, user, **comment_create.__dict__)
     except EntityCreateError as exception:
         raise comment_create_error from exception
 
@@ -81,10 +82,10 @@ async def get_comments(
 async def update_comment(
         comment_id: int = Depends(get_comment_id_from_path),
         comment_update: CommentInUpdate = Body(..., embed=True, alias="comment"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> None:
-    await comments_repo.update_comment_by_id_and_user_id(comment_id, user_id, **comment_update.__dict__)
+    await comments_repo.update_comment_by_id_and_user(comment_id, user, **comment_update.__dict__)
 
 
 @router.delete(
@@ -98,7 +99,7 @@ async def update_comment(
 )
 async def delete_comment(
         comment_id: int = Depends(get_comment_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> None:
-    await comments_repo.delete_comment_by_id_and_user_id(comment_id, user_id)
+    await comments_repo.delete_comment_by_id_and_user(comment_id, user)

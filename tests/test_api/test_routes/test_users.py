@@ -24,14 +24,14 @@ from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 from app.models.schemas.user import UserInResponse
 
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 @pytest.fixture(params=("", "value", "Token value", "JWT value", "Bearer value"))
 def wrong_authorization_header(request) -> str:
     return request.param
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
     (("GET", "users:get-current-user"), ("PUT", "users:update-current-user")),
@@ -47,6 +47,7 @@ async def test_user_can_not_access_own_profile_if_not_logged_in(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
     (("GET", "users:get-current-user"), ("PUT", "users:update-current-user")),
@@ -67,6 +68,7 @@ async def test_user_can_not_retrieve_own_profile_if_wrong_token(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.asyncio
 async def test_user_can_retrieve_own_profile(
     app: FastAPI, authorized_client: AsyncClient, test_profile: Profile, token: str
 ) -> None:
@@ -77,6 +79,7 @@ async def test_user_can_retrieve_own_profile(
     assert user_profile.user.email == test_profile.u.email
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "update_field, update_value",
     (
@@ -104,6 +107,7 @@ async def test_user_can_update_own_profile(
     assert user_profile["user"][update_field] == update_value
 
 
+@pytest.mark.asyncio
 async def test_user_can_change_password(
     app: FastAPI,
     authorized_client: AsyncClient,
@@ -126,6 +130,7 @@ async def test_user_can_change_password(
     assert user.check_password("new_password")
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "credentials_part, credentials_value",
     (("username", "taken_username"), ("email", "taken@email.com")),

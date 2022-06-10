@@ -11,21 +11,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this file except in compliance with the License.
-#  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
 
 import pytest
-from asyncpg.pool import Pool
 from fastapi import FastAPI, status
 from httpx import AsyncClient
 from sqlalchemy.orm import Session
@@ -39,9 +26,8 @@ from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 from app.models.schemas.post import PostInResponse, ListOfPostsInResponse
 
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 async def test_user_can_not_create_post_with_duplicated_title(
         app: FastAPI, authorized_client: AsyncClient, test_post: Post
 ) -> None:
@@ -56,6 +42,7 @@ async def test_user_can_not_create_post_with_duplicated_title(
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+@pytest.mark.asyncio
 async def test_user_can_create_post(
         app: FastAPI, authorized_client: AsyncClient, test_profile: Profile
 ) -> None:
@@ -72,6 +59,7 @@ async def test_user_can_create_post(
     assert post.post.author.username == test_profile.username
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
     (("GET", "posts:get-post"), ("PUT", "posts:update-post")),
@@ -89,6 +77,7 @@ async def test_user_can_not_retrieve_not_existing_post(
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
+@pytest.mark.asyncio
 async def test_user_can_retrieve_post_if_exists(
         app: FastAPI, authorized_client: AsyncClient, test_post: Post,
 ) -> None:
@@ -99,6 +88,7 @@ async def test_user_can_retrieve_post_if_exists(
     assert post.post == test_post
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "update_field, update_value, extra_updates",
     (
@@ -135,6 +125,7 @@ async def test_user_can_update_post(
     )
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
     (("PUT", "posts:update-post"), ("DELETE", "posts:delete-post")),
@@ -166,6 +157,7 @@ async def test_user_can_not_modify_post_that_is_not_authored_by_him(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.asyncio
 async def test_user_can_delete_his_post(
         app: FastAPI,
         authorized_client: AsyncClient,
@@ -181,6 +173,7 @@ async def test_user_can_delete_his_post(
         await posts_repo.get_post_by_id(test_post.id)
 
 
+@pytest.mark.asyncio
 async def test_user_receiving_feed_with_limit_and_offset(
         app: FastAPI,
         authorized_client: AsyncClient,
@@ -218,6 +211,7 @@ async def test_user_receiving_feed_with_limit_and_offset(
     assert full_posts.posts[3:] == posts_from_response.posts
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "author, result", (("", 8), ("author1", 1), ("author2", 2), ("wrong", 0))
 )
@@ -264,6 +258,7 @@ async def test_filtering_by_authors(
     assert articles.count == result
 
 
+@pytest.mark.asyncio
 async def test_filtering_with_limit_and_offset(
         app: FastAPI, authorized_client: AsyncClient, test_profile: Profile, session: Session,
 ) -> None:

@@ -22,8 +22,6 @@ from app.models.domain.profile import Profile
 from app.models.domain.user import UserInDB
 from app.models.schemas.user import UserInResponse
 
-pytestmark = pytest.mark.asyncio
-
 
 # async def test_unregistered_user_will_receive_profile(
 #     app: FastAPI, client: AsyncClient, test_profile: Profile

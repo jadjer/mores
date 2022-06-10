@@ -13,18 +13,17 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.rwmodel import RWModel
 from app.services import security
 
 
-class User(RWModel):
+class User(IDModelMixin):
     username: str
     phone: str
     is_admin: bool = False
     is_blocked: bool = False
 
 
-class UserInDB(IDModelMixin, User):
+class UserInDB(User):
     salt: str = ""
     password: str = ""
 

@@ -34,12 +34,10 @@ from app.services.posts import check_user_can_modify_post
 
 
 def get_posts_filter(
-        author: Optional[str] = None,
         limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
         offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
 ) -> PostsFilter:
     return PostsFilter(
-        author=author,
         limit=limit,
         offset=offset,
     )

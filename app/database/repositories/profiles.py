@@ -33,67 +33,24 @@ class ProfilesRepository(BaseRepository):
     async def create_profile_by_user_id(
             self,
             user_id: int,
-            username: str,
+            *,
+            email: Optional[EmailStr] = None,
             first_name: Optional[str] = None,
             second_name: Optional[str] = None,
             last_name: Optional[str] = None,
             gender: Optional[Gender] = None,
             age: Optional[int] = None,
-            phone: Optional[str] = None,
             image: Optional[HttpUrl] = None,
     ) -> Profile:
         new_profile = ProfileModel()
         new_profile.user_id = user_id
-        new_profile.username = username
+        new_profile.email = email
         new_profile.first_name = first_name
         new_profile.second_name = second_name
         new_profile.last_name = last_name
         new_profile.gender = gender
         new_profile.age = age
-        new_profile.phone = phone
         new_profile.image = image
-
-        self.session.add(new_profile)
-
-        try:
-            await self.session.commit()
-        except Exception as exception:
-            raise EntityCreateError from exception
-
-        return Profile(**new_profile.__dict__)
-
-    async def create_profile_and_user(
-            self,
-            username: str,
-            email: EmailStr,
-            password: str,
-            first_name: Optional[str] = None,
-            second_name: Optional[str] = None,
-            last_name: Optional[str] = None,
-            gender: Optional[Gender] = None,
-            age: Optional[int] = None,
-            phone: Optional[str] = None,
-            image: Optional[HttpUrl] = None,
-    ) -> Profile:
-        user: UserInDB = UserInDB(email=email)
-        user.change_password(password)
-
-        new_profile = ProfileModel()
-        new_profile.username = username
-        new_profile.first_name = first_name
-        new_profile.second_name = second_name
-        new_profile.last_name = last_name
-        new_profile.gender = gender
-        new_profile.age = age
-        new_profile.phone = phone
-        new_profile.image = image
-
-        new_user = UserModel()
-        new_user.email = email
-        new_user.salt = user.salt
-        new_user.password = user.password
-
-        new_profile.user = new_user
 
         self.session.add(new_profile)
 
@@ -132,23 +89,22 @@ class ProfilesRepository(BaseRepository):
     async def update_profile_by_user_id(
             self,
             user_id: int,
-            username: Optional[str] = None,
+            *,
+            email: Optional[EmailStr] = None,
             first_name: Optional[str] = None,
             second_name: Optional[str] = None,
             last_name: Optional[str] = None,
             gender: Optional[Gender] = None,
             age: Optional[int] = None,
-            phone: Optional[str] = None,
             image: Optional[HttpUrl] = None,
     ) -> Profile:
         profile_in_db = await self._get_profile_model_by_user_id(user_id)
-        profile_in_db.username = username or profile_in_db.username
+        profile_in_db.email = email or profile_in_db.email
         profile_in_db.first_name = first_name or profile_in_db.first_name
         profile_in_db.second_name = second_name or profile_in_db.second_name
         profile_in_db.last_name = last_name or profile_in_db.last_name
         profile_in_db.gender = gender or profile_in_db.gender
         profile_in_db.age = age or profile_in_db.age
-        profile_in_db.phone = phone or profile_in_db.phone
         profile_in_db.image = image or profile_in_db.image
 
         try:

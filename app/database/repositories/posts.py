@@ -15,7 +15,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import joinedload
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -23,28 +23,25 @@ from app.database.errors import (
     EntityUpdateError,
     EntityCreateError,
 )
-from app.database.models import *
+from app.database.models import PostModel
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
+from app.models.domain.user import User
 
 
 class PostsRepository(BaseRepository):
 
-    def __init__(self, session: Session):
-        super().__init__(session)
-        self._profiles_repo = ProfilesRepository(session)
-
-    async def create_post_by_user_id(
+    async def create_post_by_user(
             self,
-            user_id: int,
+            author: User,
+            *,
             title: str,
             body: str,
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
     ) -> Post:
         new_post = PostModel()
-        new_post.author_id = user_id
+        new_post.author_id = author.id
         new_post.title = title
         new_post.description = description
         new_post.thumbnail = thumbnail
@@ -57,7 +54,7 @@ class PostsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Post(**new_post.__dict__)
+        return Post(author=author, **new_post.__dict__)
 
     async def get_post_by_id(self, post_id: int) -> Post:
         post_in_db: PostModel = await self.session.get(PostModel, post_id)
@@ -76,13 +73,12 @@ class PostsRepository(BaseRepository):
 
         return Post(**post_in_db.__dict__)
 
-    async def get_posts_with_filter(self, author: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[Post]:
+    async def get_posts_with_filter(
+            self,
+            limit: int = 20,
+            offset: int = 0,
+    ) -> List[Post]:
         query = select(PostModel)
-
-        if author:
-            profile_in_db = await self._profiles_repo.get_profile_by_username(author)
-            query = query.where(PostModel.author_id == profile_in_db.user_id)
-
         query = query.limit(limit)
         query = query.offset(offset)
         query = query.options(
@@ -95,16 +91,17 @@ class PostsRepository(BaseRepository):
 
         return [Post(**post_in_db.__dict__) for post_in_db in posts_in_db]
 
-    async def update_post_by_id_and_user_id(
+    async def update_post_by_id_and_user(
             self,
             post_id: int,
-            user_id: int,
+            user: User,
+            *,
             title: Optional[str] = None,
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
             body: Optional[str] = None
     ) -> Post:
-        post_in_db = await self._get_post_model_by_id(post_id, user_id)
+        post_in_db = await self._get_post_model_by_id_and_user(post_id, user)
         post_in_db.title = title or post_in_db.title
         post_in_db.description = description or post_in_db.description
         post_in_db.thumbnail = thumbnail or post_in_db.thumbnail
@@ -117,8 +114,8 @@ class PostsRepository(BaseRepository):
 
         return Post(**post_in_db.__dict__)
 
-    async def delete_post(self, post_id: int, user_id: int) -> None:
-        post_in_db = self._get_post_model_by_id(post_id, user_id)
+    async def delete_post(self, post_id: int, user: User) -> None:
+        post_in_db = self._get_post_model_by_id_and_user(post_id, user)
 
         try:
             await self.session.delete(post_in_db)
@@ -126,11 +123,11 @@ class PostsRepository(BaseRepository):
         except Exception as exception:
             raise EntityDeleteError from exception
 
-    async def _get_post_model_by_id(self, post_id: int, user_id: int) -> PostModel:
+    async def _get_post_model_by_id_and_user(self, post_id: int, user: User) -> PostModel:
         query = select(PostModel).where(
             and_(
                 PostModel.id == post_id,
-                PostModel.author_id == user_id,
+                PostModel.author_id == user.id,
             )
         )
 

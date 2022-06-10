@@ -23,6 +23,7 @@ USER_IS_NOT_AUTHOR_OF_ARTICLE = "you are not an author of this article"
 USER_IS_NOT_AUTHOR_OF_EVENT = "you are not an author of this event"
 
 POST_DOES_NOT_EXISTS = "Post does not exists"
+POST_ALREADY_EXISTS = "Post already exists"
 
 EVENT_DOES_NOT_EXIST_ERROR = "Event does not exist"
 EVENT_ALREADY_EXISTS = "Event already exists"

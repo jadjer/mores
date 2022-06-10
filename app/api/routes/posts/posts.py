@@ -26,6 +26,7 @@ from app.database.errors import (
     EntityDoesNotExists,
 )
 from app.database.repositories.posts import PostsRepository
+from app.models.domain.user import User
 from app.models.schemas.post import (
     PostInCreate,
     PostInResponse,
@@ -46,15 +47,15 @@ router = APIRouter()
 )
 async def create_post(
         post_create: PostInCreate = Body(..., embed=True, alias="post"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
-    post_already_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.ARTICLE_ALREADY_EXISTS)
+    post_already_exists = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.POST_ALREADY_EXISTS)
 
     try:
-        post = await posts_repo.create_post_by_user_id(user_id, **post_create.__dict__)
+        post = await posts_repo.create_post_by_user(user, **post_create.__dict__)
     except EntityCreateError as exception:
-        raise post_already_error from exception
+        raise post_already_exists from exception
 
     return PostInResponse(post=post)
 
@@ -69,7 +70,6 @@ async def get_posts_with_filter(
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> ListOfPostsInResponse:
     posts = await posts_repo.get_posts_with_filter(
-        author=posts_filter.author,
         limit=posts_filter.limit,
         offset=posts_filter.offset,
     )

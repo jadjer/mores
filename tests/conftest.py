@@ -12,18 +12,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from os import environ
-
 import pytest
+
 from fastapi import FastAPI
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    AsyncEngine
+)
+from sqlalchemy.orm import sessionmaker
 
+from app.core.settings.app import AppSettings
+from app.database.repositories import UsersRepository
 from app.database.repositories.posts import PostsRepository
 from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
 from app.models.domain.profile import Profile
+from app.models.domain.user import User
 from app.services import jwt
+
+
+@pytest.fixture
+def settings() -> AppSettings:
+    from app.core.config import get_app_settings
+
+    return get_app_settings()
 
 
 @pytest.fixture
@@ -34,14 +48,34 @@ def app() -> FastAPI:
 
 
 @pytest.fixture
-async def session(app: FastAPI) -> AsyncSession:
-    from app.database.events import connect_to_db
-    from app.core.config import get_app_settings
+async def engine(settings: AppSettings) -> AsyncEngine:
+    engine = create_async_engine(settings.get_database_url, echo=True)
 
-    settings = get_app_settings()
-    session = await connect_to_db(app, settings)
+    return engine
 
-    return session
+
+@pytest.fixture
+async def session(engine: AsyncEngine) -> AsyncSession:
+    connection = await engine.connect()
+    transaction = await connection.begin()
+
+    async_session = sessionmaker(connection, expire_on_commit=False, class_=AsyncSession)
+    session = async_session()
+
+    try:
+        yield session
+
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()
+
+
+@pytest.fixture
+async def initialized_app(app: FastAPI, session: AsyncSession) -> FastAPI:
+    app.state.session = session
+
+    return app
 
 
 @pytest.fixture
@@ -55,50 +89,59 @@ async def client(app: FastAPI) -> AsyncClient:
 
 
 @pytest.fixture
-def authorization_prefix() -> str:
-    from app.core.config import get_app_settings
+async def test_user(session: AsyncSession) -> User:
+    users_repo = UsersRepository(session)
 
-    settings = get_app_settings()
+    return await users_repo.create_user(
+        username="username",
+        phone="+375123456789",
+        password="password",
+    )
+
+
+@pytest.fixture
+def authorization_prefix(settings: AppSettings) -> str:
     jwt_token_prefix = settings.jwt_token_prefix
 
     return jwt_token_prefix
 
 
 @pytest.fixture
-async def test_profile(session: AsyncSession) -> Profile:
-    return await ProfilesRepository(session).create_profile_and_user(
-        username="username",
-        email="test@test.com",
-        password="password",
-    )
-
-
-@pytest.fixture
-async def test_post(test_profile: Profile, session: AsyncSession) -> Post:
-    posts_repo = PostsRepository(session)
-
-    return await posts_repo.create_post_by_user_id(
-        user_id=test_profile.user_id,
-        title="Test Slug",
-        description="Slug for tests",
-        thumbnail="",
-        body="Test " * 100,
-    )
-
-
-@pytest.fixture
-def token(test_profile: Profile) -> str:
+def token(test_user: User) -> str:
     return jwt.create_access_token_for_user(
-        user_id=test_profile.user_id,
-        username=test_profile.username,
-        secret_key=environ["SECRET_KEY"]
+        user_id=test_user.id,
+        username=test_user.username,
+        phone=test_user.phone,
+        secret_key="secret_key"
     )
 
 
 @pytest.fixture
-def authorized_client(client: AsyncClient, token: str, authorization_prefix: str) -> AsyncClient:
+def authorized_client(client: AsyncClient, authorization_prefix: str, token: str) -> AsyncClient:
     client.headers = {
         "Authorization": f"{authorization_prefix} {token}",
         **client.headers,
     }
     return client
+
+
+@pytest.fixture
+async def test_profile(test_user: User, session: AsyncSession) -> Profile:
+    profiles_repo = ProfilesRepository(session)
+
+    return await profiles_repo.create_profile_by_user_id(
+        test_user.id,
+    )
+
+
+@pytest.fixture
+async def test_post(test_user: User, session: AsyncSession) -> Post:
+    posts_repo = PostsRepository(session)
+
+    return await posts_repo.create_post_by_user(
+        author=test_user,
+        title="Test Slug",
+        description="Slug for tests",
+        thumbnail="",
+        body="Test " * 100,
+    )

@@ -13,18 +13,16 @@
 #  limitations under the License.
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from httpx import AsyncClient
-from starlette.status import HTTP_404_NOT_FOUND
-
-pytestmark = pytest.mark.asyncio
 
 
+@pytest.mark.asyncio
 async def test_frw_validation_error_format(app: FastAPI):
     async with AsyncClient(base_url="http://localhost:10000", app=app) as client:
         response = await client.get("/wrong_path/asd")
 
-    assert response.status_code == HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
     error_data = response.json()
-    assert "errors" in error_data
+    assert "Not Found" in error_data["detail"]

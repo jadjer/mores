@@ -13,12 +13,11 @@
 #  limitations under the License.
 
 from enum import Enum
-
-import datetime as datetime
+from datetime import datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.models.domain.location import Location
-from app.models.domain.profile import Profile
+from app.models.domain.user import User
 
 
 class EventState(Enum):
@@ -28,11 +27,11 @@ class EventState(Enum):
 
 
 class Event(IDModelMixin, DateTimeModelMixin):
-    author: Profile
+    author: User
     title: str
     description: str
     thumbnail: str
     body: str
-    started_at: datetime.datetime
+    started_at: datetime
     location: Location
     event_state: EventState

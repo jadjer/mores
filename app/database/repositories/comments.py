@@ -15,7 +15,8 @@
 from typing import List
 
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -27,18 +28,20 @@ from app.database.models import CommentModel
 from app.database.repositories.base import BaseRepository
 from app.database.repositories.users import UsersRepository
 from app.models.domain.comment import Comment
+from app.models.domain.post import Post
+from app.models.domain.user import User
 
 
 class CommentsRepository(BaseRepository):
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(session)
         self._users_repo = UsersRepository(session)
 
-    async def create_comment_by_post_id_and_user_id(self, post_id: int, user_id: int, body: str) -> Comment:
+    async def create_comment_by_post_id_and_user(self, post_id: int, user: User, *, body: str) -> Comment:
         new_comment = CommentModel()
         new_comment.post_id = post_id
-        new_comment.author_id = user_id
+        new_comment.author_id = user.id
         new_comment.body = body
 
         self.session.add(new_comment)
@@ -48,7 +51,7 @@ class CommentsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Comment(**new_comment.__dict__)
+        return Comment(author=user, **new_comment.__dict__)
 
     async def get_comment_by_id(self, comment_id: int) -> Comment:
         comment_in_db = self.session.get(CommentModel, comment_id)
@@ -58,15 +61,21 @@ class CommentsRepository(BaseRepository):
         return Comment(**comment_in_db.__dict__)
 
     async def get_comments_by_post_id(self, post_id: int) -> List[Comment]:
-        query = select(CommentModel).where(CommentModel.post_id == post_id)
+        query = select(CommentModel).where(CommentModel.post_id == post_id).options(joinedload(CommentModel.author))
         result = await self.session.execute(query)
 
         comments_in_db = result.scalars().all()
+        comment_in_db: CommentModel
 
-        return [Comment(**comment_in_db.__dict__) for comment_in_db in comments_in_db]
+        return [
+            Comment(
+                author=User(**comment_in_db.author.__dict__),
+                body=comment_in_db.body
+            ) for comment_in_db in comments_in_db
+        ]
 
-    async def update_comment_by_id_and_user_id(self, comment_id: int, user_id: int, body: str) -> Comment:
-        comment_in_db: CommentModel = await self._get_comment_model_by_id_and_user_id(comment_id, user_id)
+    async def update_comment_by_id_and_user(self, comment_id: int, user: User, *, body: str) -> Comment:
+        comment_in_db: CommentModel = await self._get_comment_model_by_id_and_user(comment_id, user)
         comment_in_db.body = body
 
         try:
@@ -76,8 +85,8 @@ class CommentsRepository(BaseRepository):
 
         return Comment(**comment_in_db.__dict__)
 
-    async def delete_comment_by_id_and_user_id(self, comment_id: int, user_id: int) -> None:
-        comment_in_db = await self._get_comment_model_by_id_and_user_id(comment_id, user_id)
+    async def delete_comment_by_id_and_user(self, comment_id: int, user: User) -> None:
+        comment_in_db = await self._get_comment_model_by_id_and_user(comment_id, user)
 
         try:
             await self.session.delete(comment_in_db)
@@ -85,14 +94,14 @@ class CommentsRepository(BaseRepository):
         except Exception as exception:
             raise EntityDeleteError from exception
 
-    async def _get_comment_model_by_id_and_user_id(self, comment_id: int, user_id: int) -> CommentModel:
+    async def _get_comment_model_by_id_and_user(self, comment_id: int, user: User) -> CommentModel:
         query = select(CommentModel).where(
             and_(
                 CommentModel.id == comment_id,
-                CommentModel.author_id == user_id
+                CommentModel.author_id == user.id
             )
         ).options(
-            joinedload(CommentModel.post)
+            joinedload(CommentModel.author)
         )
 
         result = await self.session.execute(query)

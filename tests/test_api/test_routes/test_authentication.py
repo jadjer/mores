@@ -13,16 +13,16 @@
 #  limitations under the License.
 
 import pytest
+
 from fastapi import FastAPI, status
 from httpx import AsyncClient
 
 from app.services.jwt import create_access_token_for_user
 
-pytestmark = pytest.mark.asyncio
 
-
+@pytest.mark.asyncio
 async def test_unable_to_login_with_wrong_jwt_prefix(
-    app: FastAPI, client: AsyncClient, token: str
+        app: FastAPI, client: AsyncClient, token: str
 ) -> None:
     response = await client.get(
         app.url_path_for("users:get-current-user"),
@@ -31,10 +31,16 @@ async def test_unable_to_login_with_wrong_jwt_prefix(
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
+@pytest.mark.asyncio
 async def test_unable_to_login_when_user_does_not_exist_any_more(
-    app: FastAPI, client: AsyncClient, authorization_prefix: str
+        app: FastAPI, client: AsyncClient, authorization_prefix: str
 ) -> None:
-    token = create_access_token_for_user(user_id=9999999999999, username="test_user", secret_key="secret")
+    token = create_access_token_for_user(
+        user_id=9999999999999,
+        username="test_user",
+        phone="+375123456789",
+        secret_key="secret"
+    )
     response = await client.get(
         app.url_path_for("users:get-current-user"),
         headers={"Authorization": f"{authorization_prefix} {token}"},
