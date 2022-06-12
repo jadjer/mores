@@ -26,17 +26,11 @@ from app.database.errors import (
 )
 from app.database.models import CommentModel
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.users import UsersRepository
 from app.models.domain.comment import Comment
-from app.models.domain.post import Post
 from app.models.domain.user import User
 
 
 class CommentsRepository(BaseRepository):
-
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__(session)
-        self._users_repo = UsersRepository(session)
 
     async def create_comment_by_post_id_and_user(self, post_id: int, user: User, *, body: str) -> Comment:
         new_comment = CommentModel()
@@ -51,14 +45,21 @@ class CommentsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Comment(author=user, **new_comment.__dict__)
+        return await self.get_comment_by_id(new_comment.id)
 
     async def get_comment_by_id(self, comment_id: int) -> Comment:
-        comment_in_db = self.session.get(CommentModel, comment_id)
+        query = select(CommentModel).where(
+            CommentModel.id == comment_id
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comment_in_db = result.scalars().first()
         if not comment_in_db:
             raise EntityDoesNotExists
 
-        return Comment(**comment_in_db.__dict__)
+        return self._convert_comment_model_to_comment(comment_in_db)
 
     async def get_comments_by_post_id(self, post_id: int) -> List[Comment]:
         query = select(CommentModel).where(CommentModel.post_id == post_id).options(joinedload(CommentModel.author))
@@ -67,12 +68,7 @@ class CommentsRepository(BaseRepository):
         comments_in_db = result.scalars().all()
         comment_in_db: CommentModel
 
-        return [
-            Comment(
-                author=User(**comment_in_db.author.__dict__),
-                body=comment_in_db.body
-            ) for comment_in_db in comments_in_db
-        ]
+        return [self._convert_comment_model_to_comment(comment_in_db) for comment_in_db in comments_in_db]
 
     async def update_comment_by_id_and_user(self, comment_id: int, user: User, *, body: str) -> Comment:
         comment_in_db: CommentModel = await self._get_comment_model_by_id_and_user(comment_id, user)
@@ -83,7 +79,7 @@ class CommentsRepository(BaseRepository):
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return Comment(**comment_in_db.__dict__)
+        return self._convert_comment_model_to_comment(comment_in_db)
 
     async def delete_comment_by_id_and_user(self, comment_id: int, user: User) -> None:
         comment_in_db = await self._get_comment_model_by_id_and_user(comment_id, user)
@@ -111,3 +107,15 @@ class CommentsRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return comment_in_db
+
+    @staticmethod
+    def _convert_comment_model_to_comment(comment_model: CommentModel) -> Comment:
+        author = User(**comment_model.author.__dict__)
+        comment = Comment(
+            id=comment_model.id,
+            author=author,
+            body=comment_model.body,
+            created_at=comment_model.created_at,
+            updated_at=comment_model.updated_at,
+        )
+        return comment

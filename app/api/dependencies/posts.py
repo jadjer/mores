@@ -24,6 +24,7 @@ from app.database.errors import EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
 from app.models.domain.profile import Profile
+from app.models.domain.user import User
 from app.models.schemas.post import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
@@ -52,16 +53,16 @@ async def get_post_by_id_from_path(
     except EntityDoesNotExists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=strings.ARTICLE_DOES_NOT_EXIST_ERROR,
+            detail=strings.POST_DOES_NOT_EXISTS,
         )
 
 
 def check_post_modification_permissions(
         current_post: Post = Depends(get_post_by_id_from_path),
-        profile: Profile = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
 ) -> None:
-    if not check_user_can_modify_post(current_post, profile):
+    if not check_user_can_modify_post(user, current_post):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.USER_IS_NOT_AUTHOR_OF_ARTICLE,
+            detail=strings.USER_IS_NOT_AUTHOR_OF_POST,
         )

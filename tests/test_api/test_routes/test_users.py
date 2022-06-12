@@ -16,12 +16,13 @@ import pytest
 
 from fastapi import FastAPI, status
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.database.repositories.profiles import ProfilesRepository
 from app.database.repositories.users import UsersRepository
 from app.models.domain.profile import Profile
-from app.models.domain.user import UserInDB
+from app.models.domain.user import UserInDB, User
 from app.models.schemas.user import UserInResponse
 
 
@@ -37,13 +38,13 @@ def wrong_authorization_header(request) -> str:
     (("GET", "users:get-current-user"), ("PUT", "users:update-current-user")),
 )
 async def test_user_can_not_access_own_profile_if_not_logged_in(
-    app: FastAPI,
-    client: AsyncClient,
-    test_profile: Profile,
-    api_method: str,
-    route_name: str,
+        initialized_app: FastAPI,
+        client: AsyncClient,
+        test_user: User,
+        api_method: str,
+        route_name: str,
 ) -> None:
-    response = await client.request(api_method, app.url_path_for(route_name))
+    response = await client.request(api_method, initialized_app.url_path_for(route_name))
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -53,16 +54,16 @@ async def test_user_can_not_access_own_profile_if_not_logged_in(
     (("GET", "users:get-current-user"), ("PUT", "users:update-current-user")),
 )
 async def test_user_can_not_retrieve_own_profile_if_wrong_token(
-    app: FastAPI,
-    client: AsyncClient,
-    test_profile: Profile,
-    api_method: str,
-    route_name: str,
-    wrong_authorization_header: str,
+        initialized_app: FastAPI,
+        client: AsyncClient,
+        test_user: User,
+        api_method: str,
+        route_name: str,
+        wrong_authorization_header: str,
 ) -> None:
     response = await client.request(
         api_method,
-        app.url_path_for(route_name),
+        initialized_app.url_path_for(route_name),
         headers={"Authorization": wrong_authorization_header},
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -70,35 +71,33 @@ async def test_user_can_not_retrieve_own_profile_if_wrong_token(
 
 @pytest.mark.asyncio
 async def test_user_can_retrieve_own_profile(
-    app: FastAPI, authorized_client: AsyncClient, test_profile: Profile, token: str
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_user: User, token: str
 ) -> None:
-    response = await authorized_client.get(app.url_path_for("users:get-current-user"))
+    response = await authorized_client.get(initialized_app.url_path_for("users:get-current-user"))
     assert response.status_code == status.HTTP_200_OK
 
     user_profile = UserInResponse(**response.json())
-    assert user_profile.user.email == test_profile.u.email
+    assert user_profile.user.username == test_user.username
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "update_field, update_value",
     (
-        ("username", "new_username"),
-        ("email", "new_email@email.com"),
-        ("bio", "new bio"),
-        ("image", "http://testhost.com/imageurl"),
+            ("username", "new_username"),
+            ("phone", "+375257654321"),
     ),
 )
 async def test_user_can_update_own_profile(
-    app: FastAPI,
-    authorized_client: AsyncClient,
-    test_user: UserInDB,
-    token: str,
-    update_value: str,
-    update_field: str,
+        initialized_app: FastAPI,
+        authorized_client: AsyncClient,
+        test_user: User,
+        token: str,
+        update_value: str,
+        update_field: str,
 ) -> None:
     response = await authorized_client.put(
-        app.url_path_for("users:update-current-user"),
+        initialized_app.url_path_for("users:update-current-user"),
         json={"user": {update_field: update_value}},
     )
     assert response.status_code == status.HTTP_200_OK
@@ -109,25 +108,26 @@ async def test_user_can_update_own_profile(
 
 @pytest.mark.asyncio
 async def test_user_can_change_password(
-    app: FastAPI,
-    authorized_client: AsyncClient,
-    test_profile: Profile,
-    token: str,
-    session: Session,
+        initialized_app: FastAPI,
+        authorized_client: AsyncClient,
+        test_user: User,
+        session: AsyncSession,
 ) -> None:
+    password = "new_password"
+
     response = await authorized_client.put(
-        app.url_path_for("users:update-current-user"),
-        json={"user": {"password": "new_password"}},
+        initialized_app.url_path_for("users:update-current-user"),
+        json={"user": {"password": password}},
     )
     assert response.status_code == status.HTTP_200_OK
     user_profile = UserInResponse(**response.json())
 
-    profiles_repo = ProfilesRepository(session)
-    profile = await profiles_repo.get_profile_by_username(
+    users_repo = UsersRepository(session)
+    user = await users_repo.get_user_by_username(
         username=user_profile.user.username
     )
 
-    assert user.check_password("new_password")
+    assert user.check_password(password)
 
 
 @pytest.mark.asyncio
@@ -136,12 +136,11 @@ async def test_user_can_change_password(
     (("username", "taken_username"), ("email", "taken@email.com")),
 )
 async def test_user_can_not_take_already_used_credentials(
-    app: FastAPI,
-    authorized_client: AsyncClient,
-    session: Session,
-    token: str,
-    credentials_part: str,
-    credentials_value: str,
+        initialized_app: FastAPI,
+        authorized_client: AsyncClient,
+        session: AsyncSession,
+        credentials_part: str,
+        credentials_value: str,
 ) -> None:
     user_dict = {
         "username": "not_taken_username",
@@ -153,7 +152,7 @@ async def test_user_can_not_take_already_used_credentials(
     await users_repo.create_user(**user_dict)
 
     response = await authorized_client.put(
-        app.url_path_for("users:update-current-user"),
+        initialized_app.url_path_for("users:update-current-user"),
         json={"user": {credentials_part: credentials_value}},
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST

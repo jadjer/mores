@@ -39,17 +39,16 @@ async def test_user_can_add_comment_for_post(
         json={"comment": {"body": "comment"}},
     )
 
-    print(created_comment_response.json())
-
     created_comment = CommentInResponse(**created_comment_response.json())
 
     comments_for_post_response = await authorized_client.get(
         initialized_app.url_path_for("comments:get-comments-for-post", post_id=str(test_post.id))
     )
 
-    comments = ListOfCommentsInResponse(**comments_for_post_response.json())
+    comments_list = ListOfCommentsInResponse(**comments_for_post_response.json())
 
-    assert created_comment.comment == comments.comments[0]
+    assert len(comments_list.comments) == 1
+    assert created_comment.comment == comments_list.comments[0]
 
 
 @pytest.mark.asyncio
@@ -89,7 +88,7 @@ async def test_user_can_not_delete_not_authored_comment(
     users_repo = UsersRepository(session)
     user = await users_repo.create_user(
         username="test_author",
-        phone="+375123456789",
+        phone="+375987654321",
         password="password",
     )
 

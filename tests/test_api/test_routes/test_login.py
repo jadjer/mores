@@ -13,19 +13,21 @@
 #  limitations under the License.
 
 import pytest
+
 from fastapi import FastAPI, status
 from httpx import AsyncClient
 
-from app.models.domain.profile import Profile
+from app.models.domain.user import User
 
 
 @pytest.mark.asyncio
 async def test_user_successful_login(
-    app: FastAPI, client: AsyncClient, test_profile: Profile
+        initialized_app: FastAPI, client: AsyncClient, test_user: User
 ) -> None:
-    login_json = {"user": {"email": "test@test.com", "password": "password"}}
+    login_json = {"user": {"username": "username", "password": "password"}}
 
-    response = await client.post(app.url_path_for("auth:login"), json=login_json)
+    response = await client.post(initialized_app.url_path_for("auth:login"), json=login_json)
+
     assert response.status_code == status.HTTP_200_OK
 
 
@@ -35,13 +37,15 @@ async def test_user_successful_login(
     (("email", "wrong@test.com"), ("password", "wrong")),
 )
 async def test_user_login_when_credential_part_does_not_match(
-    app: FastAPI,
-    client: AsyncClient,
-    test_profile: Profile,
-    credentials_part: str,
-    credentials_value: str,
+        initialized_app: FastAPI,
+        client: AsyncClient,
+        test_user: User,
+        credentials_part: str,
+        credentials_value: str,
 ) -> None:
     login_json = {"user": {"username": "test@test.com", "password": "password"}}
     login_json["user"][credentials_part] = credentials_value
-    response = await client.post(app.url_path_for("auth:login"), json=login_json)
+
+    response = await client.post(initialized_app.url_path_for("auth:login"), json=login_json)
+
     assert response.status_code == status.HTTP_400_BAD_REQUEST

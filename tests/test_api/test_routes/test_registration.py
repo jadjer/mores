@@ -16,56 +16,77 @@ import pytest
 
 from fastapi import FastAPI, status
 from httpx import AsyncClient
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.repositories.users import UsersRepository
-from app.models.domain.profile import Profile
-from app.models.domain.user import UserInDB
+from app.database.repositories.verification_codes import VerificationRepository
+from app.models.domain.user import User
 
 
 @pytest.mark.asyncio
 async def test_user_success_registration(
-    app: FastAPI, client: AsyncClient, session: Session
+        initialized_app: FastAPI, client: AsyncClient, session: AsyncSession
 ) -> None:
-    email, username, password = "test@test.com", "username", "password"
+    phone = "+375257654321"
+    username = "username"
+    password = "password"
+
+    verification_repo = VerificationRepository(session)
+    verification_code = await verification_repo.create_verification_code_by_phone(phone)
+
     registration_json = {
-        "user": {"email": email, "username": username, "password": password}
+        "phone": phone,
+        "username": username,
+        "password": password,
+        "verification_code": verification_code
     }
     response = await client.post(
-        app.url_path_for("auth:register"), json=registration_json
+        initialized_app.url_path_for("auth:register"), json={"user": registration_json}
     )
+    print(response.text)
     assert response.status_code == status.HTTP_201_CREATED
 
-    async with session as conn:
-        repo = UsersRepository(conn)
-        user = await repo.get_user_by_email(email=email)
-        assert user.email == email
-        # assert user.username == username
-        assert user.check_password(password)
+    users_repo = UsersRepository(session)
+    user = await users_repo.get_user_by_username(username=username)
+
+    assert user.username == username
+    assert user.phone == phone
+    assert user.check_password(password)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "credentials_part, credentials_value",
-    (("username", "free_username"), ("email", "free-email@tset.com")),
+    (
+            ("username", "free_username"),
+            ("phone", "+375257654322")
+    ),
 )
 async def test_failed_user_registration_when_some_credentials_are_taken(
-    app: FastAPI,
-    client: AsyncClient,
-    test_profile: Profile,
-    credentials_part: str,
-    credentials_value: str,
+        initialized_app: FastAPI,
+        client: AsyncClient,
+        test_user: User,
+        session: AsyncSession,
+        credentials_part: str,
+        credentials_value: str,
 ) -> None:
+    phone = "+375257654321"
+
+    verification_repo = VerificationRepository(session)
+    verification_code = await verification_repo.create_verification_code_by_phone(phone)
+
     registration_json = {
         "user": {
-            "email": "test@test.com",
+            "phone": phone,
             "username": "username",
             "password": "password",
+            "verification_code": verification_code
         }
     }
     registration_json["user"][credentials_part] = credentials_value
 
     response = await client.post(
-        app.url_path_for("auth:register"), json=registration_json
+        initialized_app.url_path_for("auth:register"), json=registration_json
     )
+
     assert response.status_code == status.HTTP_400_BAD_REQUEST

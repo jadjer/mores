@@ -13,7 +13,8 @@
 #  limitations under the License.
 
 from app.models.domain.comment import Comment
+from app.models.domain.user import User
 
 
-def check_user_can_modify_comment(user_id: int, comment: Comment) -> bool:
-    return comment.author.user_id == user_id
+def check_user_can_modify_comment(user: User, comment: Comment) -> bool:
+    return comment.author.id == user.id

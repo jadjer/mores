@@ -26,9 +26,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.settings.app import AppSettings
 from app.database.repositories import UsersRepository
 from app.database.repositories.posts import PostsRepository
-from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.post import Post
-from app.models.domain.profile import Profile
 from app.models.domain.user import User
 from app.services import jwt
 
@@ -49,7 +47,7 @@ def app() -> FastAPI:
 
 @pytest.fixture
 async def engine(settings: AppSettings) -> AsyncEngine:
-    engine = create_async_engine(settings.get_database_url, echo=True)
+    engine = create_async_engine(settings.get_database_url)
 
     return engine
 
@@ -92,11 +90,13 @@ async def client(app: FastAPI) -> AsyncClient:
 async def test_user(session: AsyncSession) -> User:
     users_repo = UsersRepository(session)
 
-    return await users_repo.create_user(
+    user: User = await users_repo.create_user(
         username="username",
-        phone="+375123456789",
+        phone="+375257654321",
         password="password",
     )
+
+    return user
 
 
 @pytest.fixture
@@ -125,13 +125,13 @@ def authorized_client(client: AsyncClient, authorization_prefix: str, token: str
     return client
 
 
-@pytest.fixture
-async def test_profile(test_user: User, session: AsyncSession) -> Profile:
-    profiles_repo = ProfilesRepository(session)
-
-    return await profiles_repo.create_profile_by_user_id(
-        test_user.id,
-    )
+# @pytest.fixture
+# async def test_profile(test_user: User, session: AsyncSession) -> Profile:
+#     profiles_repo = ProfilesRepository(session)
+#
+#     return await profiles_repo.create_profile_by_user_id(
+#         test_user.id,
+#     )
 
 
 @pytest.fixture
@@ -139,7 +139,7 @@ async def test_post(test_user: User, session: AsyncSession) -> Post:
     posts_repo = PostsRepository(session)
 
     return await posts_repo.create_post_by_user(
-        author=test_user,
+        user=test_user,
         title="Test Slug",
         description="Slug for tests",
         thumbnail="",

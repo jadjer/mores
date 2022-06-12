@@ -23,7 +23,7 @@ from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.database.errors import (
     EntityCreateError,
-    EntityDoesNotExists,
+    EntityDoesNotExists, EntityDeleteError,
 )
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.user import User
@@ -50,12 +50,12 @@ async def create_post(
         user: User = Depends(get_current_user_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
-    post_already_exists = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.POST_ALREADY_EXISTS)
+    post_create_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.POST_CREATE_ERROR)
 
     try:
         post = await posts_repo.create_post_by_user(user, **post_create.__dict__)
     except EntityCreateError as exception:
-        raise post_already_exists from exception
+        raise post_create_error from exception
 
     return PostInResponse(post=post)
 
@@ -80,7 +80,7 @@ async def get_posts_with_filter(
 @router.get(
     "/{post_id}",
     response_model=PostInResponse,
-    name="posts:get-article"
+    name="posts:get-post"
 )
 async def get_post_by_id(
         post_id: int = Depends(get_post_id_from_path),
@@ -99,19 +99,19 @@ async def get_post_by_id(
 @router.put(
     "/{post_id}",
     response_model=PostInResponse,
-    name="posts:update-article",
+    name="posts:update-post",
     dependencies=[Depends(check_post_modification_permissions)],
 )
 async def update_post_by_id(
         post_id: int = Depends(get_post_id_from_path),
         post_update: PostInUpdate = Body(..., embed=True, alias="post"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
     post_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.POST_DOES_NOT_EXISTS)
 
     try:
-        post = await posts_repo.update_post_by_id_and_user_id(post_id, user_id, **post_update.__dict__)
+        post = await posts_repo.update_post_by_id_and_user(post_id, user, **post_update.__dict__)
     except EntityDoesNotExists as exception:
         raise post_not_found from exception
 
@@ -121,17 +121,27 @@ async def update_post_by_id(
 @router.delete(
     "/{post_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    name="posts:delete-article",
+    name="posts:delete-post",
     dependencies=[Depends(check_post_modification_permissions)],
     response_class=Response,
 )
 async def delete_post_by_id(
         post_id: int = Depends(get_post_id_from_path),
+        user: User = Depends(get_current_user_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> None:
-    post_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.POST_DOES_NOT_EXISTS)
+    post_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.POST_DOES_NOT_EXISTS
+    )
+    post_delete_error = HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=strings.POST_DELETE_ERROR
+    )
 
     try:
-        await posts_repo.delete_post(post_id=post_id)
+        await posts_repo.delete_post_by_id_and_user(post_id, user)
     except EntityDoesNotExists as exception:
         raise post_not_found from exception
+    except EntityDeleteError as exception:
+        raise post_delete_error from exception

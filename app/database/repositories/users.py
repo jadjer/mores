@@ -21,7 +21,7 @@ from app.database.errors import (
     EntityUpdateError,
 )
 from app.database.repositories.base import BaseRepository
-from app.models.domain.user import UserInDB, User
+from app.models.domain.user import UserInDB
 from app.database.models import UserModel
 
 
@@ -32,11 +32,15 @@ class UsersRepository(BaseRepository):
             username: str,
             phone: str,
             password: str,
-    ) -> User:
+    ) -> UserInDB:
         user: UserInDB = UserInDB(username=username, phone=phone)
         user.change_password(password)
 
-        new_user: UserModel = UserModel(**user.__dict__)
+        new_user: UserModel = UserModel()
+        new_user.username = user.username
+        new_user.phone = user.phone
+        new_user.salt = user.salt
+        new_user.password = user.password
 
         self.session.add(new_user)
 
@@ -45,16 +49,16 @@ class UsersRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return user
+        return UserInDB(**new_user.__dict__)
 
-    async def get_user_by_id(self, user_id: int) -> User:
+    async def get_user_by_id(self, user_id: int) -> UserInDB:
         user_in_db: UserModel = await self._get_user_model_by_id(user_id)
         if not user_in_db:
             raise EntityDoesNotExists
 
-        return User(**user_in_db.__dict__)
+        return UserInDB(**user_in_db.__dict__)
 
-    async def get_user_by_email(self, email: str) -> User:
+    async def get_user_by_email(self, email: str) -> UserInDB:
         query = select(UserModel).where(UserModel.email == email)
         result = await self.session.execute(query)
 
@@ -62,9 +66,9 @@ class UsersRepository(BaseRepository):
         if not user:
             raise EntityDoesNotExists
 
-        return User(**user.__dict__)
+        return UserInDB(**user.__dict__)
 
-    async def get_user_by_username(self, username: str) -> User:
+    async def get_user_by_username(self, username: str) -> UserInDB:
         query = select(UserModel).where(UserModel.username == username)
         result = await self.session.execute(query)
 
@@ -72,9 +76,9 @@ class UsersRepository(BaseRepository):
         if not user:
             raise EntityDoesNotExists
 
-        return User(**user.__dict__)
+        return UserInDB(**user.__dict__)
 
-    async def get_user_by_phone(self, phone: str) -> User:
+    async def get_user_by_phone(self, phone: str) -> UserInDB:
         query = select(UserModel).where(UserModel.phone == phone)
         result = await self.session.execute(query)
 
@@ -82,30 +86,31 @@ class UsersRepository(BaseRepository):
         if not user:
             raise EntityDoesNotExists
 
-        return User(**user.__dict__)
+        return UserInDB(**user.__dict__)
 
     async def update_user_by_user(
             self,
-            user: User,
+            user: UserInDB,
             *,
             username: Optional[str] = None,
             phone: Optional[str] = None,
             password: Optional[str] = None,
 
-    ) -> User:
+    ) -> UserInDB:
         user_in_db = await self._get_user_model_by_id(user.id)
         user_in_db.username = username or user_in_db.username
         user_in_db.phone = phone or user_in_db.phone
 
         if password:
-            user_in_db.change_password(password)
+            user.change_password(password)
+            user_in_db.password = user.password
 
         try:
             await self.session.commit()
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return User(**user_in_db.__dict__)
+        return UserInDB(**user_in_db.__dict__)
 
     async def _get_user_model_by_id(self, user_id: int) -> UserModel:
         user = await self.session.get(UserModel, user_id)
