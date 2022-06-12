@@ -90,19 +90,22 @@ class UsersRepository(BaseRepository):
 
     async def update_user_by_user(
             self,
-            user: UserInDB,
+            user_id: int,
             *,
             username: Optional[str] = None,
             phone: Optional[str] = None,
             password: Optional[str] = None,
 
     ) -> UserInDB:
-        user_in_db = await self._get_user_model_by_id(user.id)
+        user_in_db = await self._get_user_model_by_id(user_id)
         user_in_db.username = username or user_in_db.username
         user_in_db.phone = phone or user_in_db.phone
 
         if password:
+            user = UserInDB(**user_in_db.__dict__)
             user.change_password(password)
+            
+            user_in_db.salt = user.salt
             user_in_db.password = user.password
 
         try:

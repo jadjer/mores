@@ -119,11 +119,12 @@ async def test_user_can_change_password(
         initialized_app.url_path_for("users:update-current-user"),
         json={"user": {"password": password}},
     )
+
     assert response.status_code == status.HTTP_200_OK
     user_profile = UserInResponse(**response.json())
 
     users_repo = UsersRepository(session)
-    user = await users_repo.get_user_by_username(
+    user: UserInDB = await users_repo.get_user_by_username(
         username=user_profile.user.username
     )
 
@@ -133,7 +134,10 @@ async def test_user_can_change_password(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "credentials_part, credentials_value",
-    (("username", "taken_username"), ("email", "taken@email.com")),
+    (
+            ("username", "taken_username"),
+            ("phone", "+375257654323")
+    ),
 )
 async def test_user_can_not_take_already_used_credentials(
         initialized_app: FastAPI,
@@ -145,7 +149,7 @@ async def test_user_can_not_take_already_used_credentials(
     user_dict = {
         "username": "not_taken_username",
         "password": "password",
-        "email": "free_email@email.com",
+        "phone": "+375257654322",
     }
     user_dict.update({credentials_part: credentials_value})
     users_repo = UsersRepository(session)

@@ -37,6 +37,7 @@ class UserInUpdate(BaseModel):
     username: Optional[str] = None
     phone: Optional[str] = None
     password: Optional[str] = None
+    verification_code: Optional[int] = None
 
 
 class UserWithToken(User):

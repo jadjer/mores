@@ -104,18 +104,30 @@ async def get_verification_code(
 )
 async def register(
         user_create: UserInCreate = Body(..., embed=True, alias="user"),
-        verification_repo: VerificationRepository = Depends(get_repository(VerificationRepository)),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
+        verification_repo: VerificationRepository = Depends(get_repository(VerificationRepository)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> UserInResponseWithToken:
-    phone_invalid = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_NUMBER_INVALID_ERROR)
-    phone_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.PHONE_TAKEN)
-    username_taken = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USERNAME_TAKEN)
+    phone_invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PHONE_NUMBER_INVALID_ERROR
+    )
+    phone_taken = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PHONE_TAKEN
+    )
+    username_taken = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.USERNAME_TAKEN
+    )
     verification_code_wrong = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.VERIFICATION_CODE_IS_WRONG
     )
-    user_create_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_CREATE_ERROR)
+    user_create_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.USER_CREATE_ERROR
+    )
 
     if not check_phone_is_valid(user_create.phone):
         raise phone_invalid
