@@ -31,9 +31,9 @@ from app.models.domain.user import User
 
 class PostsRepository(BaseRepository):
 
-    async def create_post_by_user(
+    async def create_post_by_user_id(
             self,
-            user: User,
+            user_id: int,
             *,
             title: str,
             body: str,
@@ -41,7 +41,7 @@ class PostsRepository(BaseRepository):
             thumbnail: Optional[str] = None,
     ) -> Post:
         new_post = PostModel()
-        new_post.author_id = user.id
+        new_post.author_id = user_id
         new_post.title = title
         new_post.description = description
         new_post.thumbnail = thumbnail
@@ -98,17 +98,17 @@ class PostsRepository(BaseRepository):
 
         return [self._convert_post_model_to_post(post_in_db) for post_in_db in posts_in_db]
 
-    async def update_post_by_id_and_user(
+    async def update_post_by_id_and_user_id(
             self,
             post_id: int,
-            user: User,
+            user_id: int,
             *,
             title: Optional[str] = None,
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
             body: Optional[str] = None
     ) -> Post:
-        post_in_db = await self._get_post_model_by_id_and_user(post_id, user)
+        post_in_db = await self._get_post_model_by_id_and_user_id(post_id, user_id)
         post_in_db.title = title or post_in_db.title
         post_in_db.description = description or post_in_db.description
         post_in_db.thumbnail = thumbnail or post_in_db.thumbnail
@@ -121,8 +121,8 @@ class PostsRepository(BaseRepository):
 
         return await self.get_post_by_id(post_in_db.id)
 
-    async def delete_post_by_id_and_user(self, post_id: int, user: User) -> None:
-        post_in_db = await self._get_post_model_by_id_and_user(post_id, user)
+    async def delete_post_by_id_and_user_id(self, post_id: int, user_id: int) -> None:
+        post_in_db = await self._get_post_model_by_id_and_user_id(post_id, user_id)
 
         try:
             await self.session.delete(post_in_db)
@@ -130,11 +130,11 @@ class PostsRepository(BaseRepository):
         except Exception as exception:
             raise EntityDeleteError from exception
 
-    async def _get_post_model_by_id_and_user(self, post_id: int, user: User) -> PostModel:
+    async def _get_post_model_by_id_and_user_id(self, post_id: int, user_id: int) -> PostModel:
         query = select(PostModel).where(
             and_(
                 PostModel.id == post_id,
-                PostModel.author_id == user.id,
+                PostModel.author_id == user_id,
             )
         ).options(
             joinedload(PostModel.author)

@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from datetime import datetime
 
 import pytest
 
@@ -25,7 +26,11 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.settings.app import AppSettings
 from app.database.repositories import UsersRepository
+from app.database.repositories.events import EventsRepository
+from app.database.repositories.locations import LocationsRepository
 from app.database.repositories.posts import PostsRepository
+from app.models.domain.event import Event
+from app.models.domain.location import Location
 from app.models.domain.post import Post
 from app.models.domain.user import User
 from app.services import jwt
@@ -135,13 +140,39 @@ def authorized_client(client: AsyncClient, authorization_prefix: str, token: str
 
 
 @pytest.fixture
+async def test_location(session: AsyncSession) -> Location:
+    locations_repo = LocationsRepository(session)
+
+    return await locations_repo.create_location(
+        description="Test location",
+        latitude=1.234,
+        longitude=5.678,
+    )
+
+
+@pytest.fixture
 async def test_post(test_user: User, session: AsyncSession) -> Post:
     posts_repo = PostsRepository(session)
 
-    return await posts_repo.create_post_by_user(
-        user=test_user,
+    return await posts_repo.create_post_by_user_id(
+        test_user.id,
         title="Test Slug",
         description="Slug for tests",
         thumbnail="",
         body="Test " * 100,
+    )
+
+
+@pytest.fixture
+async def test_event(session: AsyncSession, test_user: User, test_location: Location) -> Event:
+    events_repo = EventsRepository(session)
+
+    return await events_repo.create_event_by_user_id(
+        test_user.id,
+        title="Test event",
+        description="Test event",
+        thumbnail="",
+        body="Test " * 100,
+        started_at=datetime.now(),
+        location=test_location
     )

@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.repositories import UsersRepository
 from app.database.repositories.comments import CommentsRepository
+from app.models.domain.event import Event
 from app.models.domain.post import Post
 from app.models.schemas.comment import (
     CommentInResponse,
@@ -49,6 +50,28 @@ async def test_user_can_add_comment_for_post(
 
     assert len(comments_list.comments) == 1
     assert created_comment.comment == comments_list.comments[0]
+
+
+@pytest.mark.asyncio
+async def test_user_can_add_comment_for_event(
+        initialized_app: FastAPI, authorized_client: AsyncClient, test_event: Event
+) -> None:
+    pass
+    # created_comment_response = await authorized_client.post(
+    #     initialized_app.url_path_for("comments:create-comment-for-post", post_id=str(test_event.id)),
+    #     json={"comment": {"body": "comment"}},
+    # )
+    #
+    # created_comment = CommentInResponse(**created_comment_response.json())
+    #
+    # comments_for_post_response = await authorized_client.get(
+    #     initialized_app.url_path_for("comments:get-comments-for-post", post_id=str(test_event.id))
+    # )
+    #
+    # comments_list = ListOfCommentsInResponse(**comments_for_post_response.json())
+    #
+    # assert len(comments_list.comments) == 1
+    # assert created_comment.comment == comments_list.comments[0]
 
 
 @pytest.mark.asyncio

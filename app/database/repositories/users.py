@@ -49,7 +49,7 @@ class UsersRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return UserInDB(**new_user.__dict__)
+        return await self.get_user_by_id(new_user.id)
 
     async def get_user_by_id(self, user_id: int) -> UserInDB:
         user_in_db: UserModel = await self._get_user_model_by_id(user_id)
@@ -104,7 +104,7 @@ class UsersRepository(BaseRepository):
         if password:
             user = UserInDB(**user_in_db.__dict__)
             user.change_password(password)
-            
+
             user_in_db.salt = user.salt
             user_in_db.password = user.password
 

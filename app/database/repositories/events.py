@@ -19,10 +19,7 @@ from typing import (
 )
 
 from sqlalchemy import select
-from sqlalchemy.orm import (
-    Session,
-    joinedload,
-)
+from sqlalchemy.orm import joinedload
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -36,23 +33,20 @@ from app.database.models import (
     LocationModel,
 )
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.profiles import ProfilesRepository
 from app.models.domain.location import Location
 from app.models.domain.event import (
     Event,
     EventState,
 )
+from app.models.domain.user import User
 
 
 class EventsRepository(BaseRepository):
 
-    def __init__(self, session: Session) -> None:
-        super().__init__(session)
-        self._profiles_repo = ProfilesRepository(session)
-
     async def create_event_by_user_id(
             self,
             user_id: int,
+            *,
             title: str,
             body: str,
             started_at: datetime,
@@ -61,6 +55,7 @@ class EventsRepository(BaseRepository):
             thumbnail: Optional[str] = None,
     ) -> Event:
         new_event = EventModel()
+        new_event.author_id = user_id
         new_event.post = PostModel(
             author_id=user_id,
             title=title,
@@ -68,7 +63,11 @@ class EventsRepository(BaseRepository):
             thumbnail=thumbnail,
             body=body
         )
-        new_event.location = LocationModel(**location.__dict__)
+        new_event.location = LocationModel(
+            description=location.description,
+            latitude=location.latitude,
+            longitude=location.longitude
+        )
         new_event.started_at = started_at
         new_event.event_state = EventState.PLANNED
 
@@ -79,61 +78,38 @@ class EventsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Event(**new_event.__dict__)
+        return await self.get_event_by_id(new_event.id)
 
     async def get_events_with_filter(
             self,
-            author: Optional[str] = None,
             state: Optional[EventState] = EventState.PLANNED,
             limit: int = 20,
             offset: int = 0,
     ) -> List[Event]:
-        query = select(EventModel)
-
-        if author:
-            profile = await self._profiles_repo.get_profile_by_username(author)
-            query = query.where(EventModel.post.author_id == profile.user_id)
-
-        query = query.where(EventModel.event_state == state)
-        query = query.limit(limit)
-        query = query.offset(offset)
-        query = query.options(
+        query = select(EventModel).where(EventModel.event_state == state).limit(limit).offset(offset).options(
             joinedload(EventModel.post),
+            joinedload(EventModel.author),
             joinedload(EventModel.location)
         )
 
         result = await self.session.execute(query)
         events_in_db = result.scalars().all()
 
-        return [Event(**event_in_db.__dict__, ) for event_in_db in events_in_db]
+        return [self._convert_event_model_to_event(event_in_db) for event_in_db in events_in_db]
 
     async def get_event_by_id(self, event_id: int) -> Event:
-        event_in_db = self.session.get(EventModel, event_id)
+        event_in_db = await self._get_event_model_by_id(event_id)
 
         if not event_in_db:
             raise EntityDoesNotExists
 
-        return Event(**event_in_db.__dict__)
-
-    async def get_event_by_title(self, title: str) -> Event:
-        query = select(EventModel).where(
-            EventModel.post.title == title
-        ).options(
-            joinedload(EventModel.post),
-            joinedload(EventModel.location)
-        )
-        result = await self.session.execute(query)
-
-        event_in_db: EventModel = result.scalars().first()
-        if not event_in_db:
-            raise EntityDoesNotExists
-
-        return Event(**event_in_db.__dict__)
+        return self._convert_event_model_to_event(event_in_db)
 
     async def update_event_by_id_and_user_id(
             self,
             event_id: int,
             user_id: int,
+            *,
             title: Optional[str] = None,
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
@@ -158,7 +134,7 @@ class EventsRepository(BaseRepository):
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return Event(**event_in_db.__dict__)
+        return self._convert_event_model_to_event(event_in_db)
 
     async def delete_event_by_id_and_user_id(self, event_id: int, user_id: int) -> None:
         event: EventModel = await self._get_event_model_by_id_and_user_id(event_id, user_id)
@@ -169,12 +145,10 @@ class EventsRepository(BaseRepository):
         except Exception as exception:
             raise EntityDeleteError from exception
 
-    async def _get_event_model_by_id_and_user_id(self, event_id: int, user_id: int) -> EventModel:
-        query = select(EventModel).where(
-            EventModel.id == event_id,
-            EventModel.post.author.id == user_id
-        ).options(
+    async def _get_event_model_by_id(self, event_id: int) -> EventModel:
+        query = select(EventModel).where(EventModel.id == event_id).options(
             joinedload(EventModel.post),
+            joinedload(EventModel.author),
             joinedload(EventModel.location)
         )
         result = await self.session.execute(query)
@@ -184,3 +158,40 @@ class EventsRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return event_model_in_db
+
+    async def _get_event_model_by_id_and_user_id(self, event_id: int, user_id: int) -> EventModel:
+        query = select(EventModel).where(
+            EventModel.id == event_id,
+            EventModel.author_id == user_id
+        ).options(
+            joinedload(EventModel.post),
+            joinedload(EventModel.author),
+            joinedload(EventModel.location)
+        )
+        result = await self.session.execute(query)
+
+        event_model_in_db: EventModel = result.scalars().first()
+        if not event_model_in_db:
+            raise EntityDoesNotExists
+
+        return event_model_in_db
+
+    @staticmethod
+    def _convert_event_model_to_event(event_model: EventModel) -> Event:
+        author = User(**event_model.author.__dict__)
+        location = Location(**event_model.location.__dict__)
+        event = Event(
+            id=event_model.id,
+            author=author,
+            title=event_model.post.title,
+            description=event_model.post.description,
+            thumbnail=event_model.post.thumbnail,
+            body=event_model.post.body,
+            started_at=event_model.started_at,
+            location=location,
+            event_state=event_model.event_state,
+            created_at=event_model.created_at,
+            updated_at=event_model.updated_at,
+        )
+
+        return event

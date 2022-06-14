@@ -29,6 +29,7 @@ POST_DELETE_ERROR = "Post delete error"
 
 EVENT_DOES_NOT_EXIST_ERROR = "Event does not exist"
 EVENT_ALREADY_EXISTS = "Event already exists"
+EVENT_CREATE_ERROR = "Event create error"
 
 PROFILE_DOES_NOT_EXISTS = "Profile does not exists"
 
