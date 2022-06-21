@@ -18,9 +18,18 @@ from app.models.domain.post import Post
 from app.models.domain.user import User
 
 
-async def check_post_exists(posts_repo: PostsRepository, post_id: int) -> bool:
+async def check_post_exists_by_id(posts_repo: PostsRepository, post_id: int) -> bool:
     try:
         await posts_repo.get_post_by_id(post_id)
+    except EntityDoesNotExists:
+        return False
+
+    return True
+
+
+async def check_post_exist_by_title(events_repo: PostsRepository, post_title: str) -> bool:
+    try:
+        await events_repo.get_post_by_title(post_title)
     except EntityDoesNotExists:
         return False
 

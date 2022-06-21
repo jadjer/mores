@@ -32,7 +32,7 @@ from app.models.schemas.comment import (
 
 
 @pytest.mark.asyncio
-async def test_user_can_add_comment_for_post(
+async def test_user_can_add_comment(
         initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post
 ) -> None:
     created_comment_response = await authorized_client.post(
@@ -50,28 +50,6 @@ async def test_user_can_add_comment_for_post(
 
     assert len(comments_list.comments) == 1
     assert created_comment.comment == comments_list.comments[0]
-
-
-@pytest.mark.asyncio
-async def test_user_can_add_comment_for_event(
-        initialized_app: FastAPI, authorized_client: AsyncClient, test_event: Event
-) -> None:
-    pass
-    # created_comment_response = await authorized_client.post(
-    #     initialized_app.url_path_for("comments:create-comment-for-post", post_id=str(test_event.id)),
-    #     json={"comment": {"body": "comment"}},
-    # )
-    #
-    # created_comment = CommentInResponse(**created_comment_response.json())
-    #
-    # comments_for_post_response = await authorized_client.get(
-    #     initialized_app.url_path_for("comments:get-comments-for-post", post_id=str(test_event.id))
-    # )
-    #
-    # comments_list = ListOfCommentsInResponse(**comments_for_post_response.json())
-    #
-    # assert len(comments_list.comments) == 1
-    # assert created_comment.comment == comments_list.comments[0]
 
 
 @pytest.mark.asyncio

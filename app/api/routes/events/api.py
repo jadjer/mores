@@ -16,6 +16,7 @@ from fastapi import APIRouter
 
 from . import (
     events,
+    comments,
     event_confirmations,
 )
 
@@ -23,3 +24,4 @@ router = APIRouter()
 
 router.include_router(events.router, tags=["events"], prefix="/events")
 router.include_router(event_confirmations.router, tags=["events"], prefix="/events/{event_id}")
+router.include_router(comments.router, prefix="/events/{event_id}/comments")

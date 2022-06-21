@@ -31,7 +31,7 @@ async def test_user_can_not_create_post_with_duplicated_title(
         initialized_app: FastAPI, authorized_client: AsyncClient, test_post: Post
 ) -> None:
     post_data = {
-        "title": "Test Slug",
+        "title": "Test post",
         "description": "¯\\_(ツ)_/¯",
         "thumbnail": "",
         "body": "does not matter",
@@ -40,7 +40,7 @@ async def test_user_can_not_create_post_with_duplicated_title(
         initialized_app.url_path_for("posts:create-post"), json={"post": post_data}
     )
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_409_CONFLICT
     assert "errors" in response.json()
 
 
@@ -49,7 +49,7 @@ async def test_user_can_create_post(
         initialized_app: FastAPI, authorized_client: AsyncClient, test_user: User
 ) -> None:
     post_data = {
-        "title": "Test Slug",
+        "title": "Test post",
         "description": "¯\\_(ツ)_/¯",
         "thumbnail": "",
         "body": "does not matter",
@@ -204,12 +204,12 @@ async def test_user_receiving_feed_with_limit_and_offset(
             )
 
     full_response = await authorized_client.get(
-        initialized_app.url_path_for("posts:list-posts")
+        initialized_app.url_path_for("posts:get-posts")
     )
     full_posts = ListOfPostsInResponse(**full_response.json())
 
     response = await authorized_client.get(
-        initialized_app.url_path_for("posts:list-posts"),
+        initialized_app.url_path_for("posts:get-posts"),
         params={"limit": 2, "offset": 3},
     )
     posts_from_response = ListOfPostsInResponse(**response.json())
@@ -233,12 +233,12 @@ async def test_filtering_with_limit_and_offset(
         )
 
     full_response = await authorized_client.get(
-        initialized_app.url_path_for("posts:list-posts")
+        initialized_app.url_path_for("posts:get-posts")
     )
     full_posts = ListOfPostsInResponse(**full_response.json())
 
     response = await authorized_client.get(
-        initialized_app.url_path_for("posts:list-posts"), params={"limit": 2, "offset": 3}
+        initialized_app.url_path_for("posts:get-posts"), params={"limit": 2, "offset": 3}
     )
 
     posts_from_response = ListOfPostsInResponse(**response.json())

@@ -24,15 +24,17 @@ class EventModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
-    post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
     location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
 
-    started_at = Column(DateTime(timezone=True))
+    title = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    thumbnail = Column(String, nullable=True)
+    body = Column(String, nullable=False)
+    started_at = Column(DateTime(timezone=True), nullable=False)
     event_state = Column(Enum(EventState), default=EventState.PLANNED)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     author = relationship("UserModel")
-    post = relationship("PostModel")
     location = relationship("LocationModel")

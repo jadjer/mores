@@ -11,10 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from datetime import datetime
 
 import pytest
 
+from datetime import datetime
 from fastapi import FastAPI, status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,13 +22,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories import UsersRepository
 from app.database.repositories.events import EventsRepository
-from app.database.repositories.posts import PostsRepository
 from app.models.domain.event import Event
 from app.models.domain.location import Location
 from app.models.domain.post import Post
 from app.models.domain.user import User
-from app.models.schemas.events import EventInResponse, ListOfEventsInResponse
-from app.models.schemas.post import PostInResponse, ListOfPostsInResponse
+from app.models.schemas.events import (
+    EventInResponse,
+    ListOfEventsInResponse,
+)
 
 
 @pytest.mark.asyncio
@@ -40,7 +41,7 @@ async def test_user_can_not_create_event_with_duplicated_title(
         "description": "¯\\_(ツ)_/¯",
         "thumbnail": "",
         "body": "does not matter",
-        "started_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "location": {
             "description": "Test location",
             "latitude": 1.23,
@@ -51,7 +52,7 @@ async def test_user_can_not_create_event_with_duplicated_title(
         initialized_app.url_path_for("events:create-event"), json={"event": event_data}
     )
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_409_CONFLICT
     assert "errors" in response.json()
 
 
@@ -64,7 +65,7 @@ async def test_user_can_create_event(
         "description": "¯\\_(ツ)_/¯",
         "thumbnail": "",
         "body": "does not matter",
-        "started_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+        "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "location": {
             "description": "Test location",
             "latitude": 1.23,
@@ -84,7 +85,7 @@ async def test_user_can_create_event(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
-    (("GET", "events:get-event-by-id"), ("PUT", "events:update-event-by-id")),
+    (("GET", "events:get-event"), ("PUT", "events:update-event")),
 )
 async def test_user_can_not_retrieve_not_existing_event(
         initialized_app: FastAPI,
@@ -105,7 +106,7 @@ async def test_user_can_retrieve_event_if_exists(
         initialized_app: FastAPI, authorized_client: AsyncClient, test_event: Event,
 ) -> None:
     response = await authorized_client.get(
-        initialized_app.url_path_for("events:get-event-by-id", event_id=str(test_event.id))
+        initialized_app.url_path_for("events:get-event", event_id=str(test_event.id))
     )
 
     event = EventInResponse(**response.json())
@@ -132,7 +133,7 @@ async def test_user_can_update_event(
         update_value: str
 ) -> None:
     response = await authorized_client.put(
-        initialized_app.url_path_for("events:update-event-by-id", event_id=str(test_event.id)),
+        initialized_app.url_path_for("events:update-event", event_id=str(test_event.id)),
         json={"event": {update_field: update_value}},
     )
 
@@ -147,7 +148,7 @@ async def test_user_can_update_event(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "api_method, route_name",
-    (("PUT", "posts:update-post-by-id"), ("DELETE", "posts:delete-post-by-id")),
+    (("PUT", "events:update-event"), ("DELETE", "events:delete-event")),
 )
 async def test_user_can_not_modify_event_that_is_not_authored_by_him(
         initialized_app: FastAPI,
@@ -192,7 +193,7 @@ async def test_user_can_delete_his_event(
         session: AsyncSession,
 ) -> None:
     response = await authorized_client.delete(
-        initialized_app.url_path_for("events:delete-event-by-id", event_id=str(test_event.id))
+        initialized_app.url_path_for("events:delete-event", event_id=str(test_event.id))
     )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT

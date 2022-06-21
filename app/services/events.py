@@ -27,8 +27,17 @@ async def check_event_exist_by_id(events_repo: EventsRepository, event_id: int) 
     return True
 
 
+async def check_event_exist_by_title(events_repo: EventsRepository, event_title: str) -> bool:
+    try:
+        await events_repo.get_event_by_title(event_title)
+    except EntityDoesNotExists:
+        return False
+
+    return True
+
+
 def check_user_can_modify_event(user_id: int, event: Event) -> bool:
-    return event.author.user_id == user_id
+    return event.author.id == user_id
 
 
 async def check_event_confirmation_exists(

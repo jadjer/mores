@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from loguru import logger
 from datetime import datetime
 from typing import (
     List,
@@ -29,7 +30,6 @@ from app.database.errors import (
 )
 from app.database.models import (
     EventModel,
-    PostModel,
     LocationModel,
 )
 from app.database.repositories.base import BaseRepository
@@ -54,20 +54,18 @@ class EventsRepository(BaseRepository):
             description: Optional[str] = None,
             thumbnail: Optional[str] = None,
     ) -> Event:
+        new_location = LocationModel()
+        new_location.description = location.description
+        new_location.latitude = location.latitude
+        new_location.longitude = location.longitude
+
         new_event = EventModel()
         new_event.author_id = user_id
-        new_event.post = PostModel(
-            author_id=user_id,
-            title=title,
-            description=description,
-            thumbnail=thumbnail,
-            body=body
-        )
-        new_event.location = LocationModel(
-            description=location.description,
-            latitude=location.latitude,
-            longitude=location.longitude
-        )
+        new_event.title = title
+        new_event.description = description
+        new_event.thumbnail = thumbnail
+        new_event.body = body
+        new_event.location = new_location
         new_event.started_at = started_at
         new_event.event_state = EventState.PLANNED
 
@@ -76,9 +74,32 @@ class EventsRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityCreateError from exception
 
         return await self.get_event_by_id(new_event.id)
+
+    async def get_event_by_id(self, event_id: int) -> Event:
+        event_in_db = await self._get_event_model_by_id(event_id)
+        if not event_in_db:
+            raise EntityDoesNotExists
+
+        return self._convert_event_model_to_event(event_in_db)
+
+    async def get_event_by_title(self, title: str) -> Event:
+        query = select(EventModel).where(
+            EventModel.title == title
+        ).options(
+            joinedload(EventModel.author),
+            joinedload(EventModel.location)
+        )
+        result = await self.session.execute(query)
+
+        event_in_db: EventModel = result.scalars().first()
+        if not event_in_db:
+            raise EntityDoesNotExists
+
+        return self._convert_event_model_to_event(event_in_db)
 
     async def get_events_with_filter(
             self,
@@ -87,7 +108,6 @@ class EventsRepository(BaseRepository):
             offset: int = 0,
     ) -> List[Event]:
         query = select(EventModel).where(EventModel.event_state == state).limit(limit).offset(offset).options(
-            joinedload(EventModel.post),
             joinedload(EventModel.author),
             joinedload(EventModel.location)
         )
@@ -96,14 +116,6 @@ class EventsRepository(BaseRepository):
         events_in_db = result.scalars().all()
 
         return [self._convert_event_model_to_event(event_in_db) for event_in_db in events_in_db]
-
-    async def get_event_by_id(self, event_id: int) -> Event:
-        event_in_db = await self._get_event_model_by_id(event_id)
-
-        if not event_in_db:
-            raise EntityDoesNotExists
-
-        return self._convert_event_model_to_event(event_in_db)
 
     async def update_event_by_id_and_user_id(
             self,
@@ -119,22 +131,24 @@ class EventsRepository(BaseRepository):
             event_state: Optional[EventState] = None,
     ) -> Event:
         event_in_db: EventModel = await self._get_event_model_by_id_and_user_id(event_id, user_id)
+        event_in_db.title = title or event_in_db.title
+        event_in_db.description = description or event_in_db.description
+        event_in_db.thumbnail = thumbnail or event_in_db.thumbnail
+        event_in_db.body = body or event_in_db.body
         event_in_db.event_state = event_state or event_in_db.event_state
         event_in_db.started_at = started_at or event_in_db.started_at
-        event_in_db.post.title = title or event_in_db.post.title
-        event_in_db.post.description = description or event_in_db.post.description
-        event_in_db.post.thumbnail = thumbnail or event_in_db.post.thumbnail
-        event_in_db.post.body = body or event_in_db.post.body
-        event_in_db.location.description = location.description or event_in_db.location.description
-        event_in_db.location.latitude = location.latitude or event_in_db.location.latitude
-        event_in_db.location.longitude = location.longitude or event_in_db.location.longitude
+
+        if location:
+            event_in_db.location.description = location.description or event_in_db.location.description
+            event_in_db.location.latitude = location.latitude or event_in_db.location.latitude
+            event_in_db.location.longitude = location.longitude or event_in_db.location.longitude
 
         try:
             await self.session.commit()
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return self._convert_event_model_to_event(event_in_db)
+        return await self.get_event_by_id(event_id)
 
     async def delete_event_by_id_and_user_id(self, event_id: int, user_id: int) -> None:
         event: EventModel = await self._get_event_model_by_id_and_user_id(event_id, user_id)
@@ -147,7 +161,6 @@ class EventsRepository(BaseRepository):
 
     async def _get_event_model_by_id(self, event_id: int) -> EventModel:
         query = select(EventModel).where(EventModel.id == event_id).options(
-            joinedload(EventModel.post),
             joinedload(EventModel.author),
             joinedload(EventModel.location)
         )
@@ -164,7 +177,6 @@ class EventsRepository(BaseRepository):
             EventModel.id == event_id,
             EventModel.author_id == user_id
         ).options(
-            joinedload(EventModel.post),
             joinedload(EventModel.author),
             joinedload(EventModel.location)
         )
@@ -180,13 +192,14 @@ class EventsRepository(BaseRepository):
     def _convert_event_model_to_event(event_model: EventModel) -> Event:
         author = User(**event_model.author.__dict__)
         location = Location(**event_model.location.__dict__)
+
         event = Event(
             id=event_model.id,
             author=author,
-            title=event_model.post.title,
-            description=event_model.post.description,
-            thumbnail=event_model.post.thumbnail,
-            body=event_model.post.body,
+            title=event_model.title,
+            description=event_model.description,
+            thumbnail=event_model.thumbnail,
+            body=event_model.body,
             started_at=event_model.started_at,
             location=location,
             event_state=event_model.event_state,

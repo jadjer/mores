@@ -20,7 +20,7 @@ from fastapi import (
     HTTPException,
 )
 
-from app.api.dependencies.authentication import get_current_user_authorizer, get_current_user_id_authorizer
+from app.api.dependencies.authentication import get_current_user_id_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.events import (
     get_events_filters,
@@ -41,6 +41,7 @@ from app.models.schemas.events import (
     EventInUpdate,
 )
 from app.resources import strings
+from app.services.events import check_event_exist_by_title
 
 router = APIRouter()
 
@@ -56,10 +57,17 @@ async def create_event(
         user_id: int = Depends(get_current_user_id_authorizer()),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
+    event_already_exists = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.EVENT_ALREADY_EXISTS
+    )
     event_create_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.EVENT_CREATE_ERROR
     )
+
+    if await check_event_exist_by_title(events_repo, event_create.title):
+        raise event_already_exists
 
     try:
         event = await events_repo.create_event_by_user_id(user_id, **event_create.__dict__)
@@ -95,7 +103,7 @@ async def get_events(
 @router.get(
     "/{event_id}",
     response_model=EventInResponse,
-    name="events:get-event-by-id",
+    name="events:get-event",
 )
 async def get_event(
         event_id: int = Depends(get_event_id_from_path),
@@ -114,7 +122,7 @@ async def get_event(
 @router.put(
     "/{event_id}",
     response_model=EventInResponse,
-    name="events:update-event-by-id",
+    name="events:update-event",
     dependencies=[
         Depends(check_event_permissions),
     ],
@@ -125,10 +133,17 @@ async def update_event(
         user_id: int = Depends(get_current_user_id_authorizer()),
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> EventInResponse:
+    event_already_exists = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.EVENT_ALREADY_EXISTS
+    )
     event_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.EVENT_DOES_NOT_EXIST_ERROR
     )
+
+    if await check_event_exist_by_title(events_repo, event_update.title):
+        raise event_already_exists
 
     try:
         event = await events_repo.update_event_by_id_and_user_id(event_id, user_id, **event_update.__dict__)
@@ -141,7 +156,7 @@ async def update_event(
 @router.delete(
     "/{event_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    name="events:delete-event-by-id",
+    name="events:delete-event",
     dependencies=[
         Depends(check_event_permissions),
     ],

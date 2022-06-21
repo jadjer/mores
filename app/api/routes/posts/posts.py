@@ -35,6 +35,7 @@ from app.models.schemas.post import (
     ListOfPostsInResponse,
 )
 from app.resources import strings
+from app.services.posts import check_post_exist_by_title
 
 router = APIRouter()
 
@@ -50,7 +51,17 @@ async def create_post(
         user_id: int = Depends(get_current_user_id_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
-    post_create_error = HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.POST_CREATE_ERROR)
+    post_already_exists = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.POST_ALREADY_EXISTS
+    )
+    post_create_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.POST_CREATE_ERROR
+    )
+
+    if await check_post_exist_by_title(posts_repo, post_create.title):
+        raise post_already_exists
 
     try:
         post = await posts_repo.create_post_by_user_id(user_id, **post_create.__dict__)
@@ -63,7 +74,7 @@ async def create_post(
 @router.get(
     "",
     response_model=ListOfPostsInResponse,
-    name="posts:list-posts"
+    name="posts:get-posts"
 )
 async def get_posts_with_filter(
         posts_filter: PostsFilter = Depends(get_posts_filter),
@@ -108,7 +119,17 @@ async def update_post_by_id(
         user_id: int = Depends(get_current_user_id_authorizer()),
         posts_repo: PostsRepository = Depends(get_repository(PostsRepository)),
 ) -> PostInResponse:
-    post_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.POST_DOES_NOT_EXISTS)
+    post_already_exists = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.POST_ALREADY_EXISTS
+    )
+    post_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.POST_DOES_NOT_EXISTS
+    )
+
+    if await check_post_exist_by_title(posts_repo, post_update.title):
+        raise post_already_exists
 
     try:
         post = await posts_repo.update_post_by_id_and_user_id(post_id, user_id, **post_update.__dict__)

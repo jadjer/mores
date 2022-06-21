@@ -11,10 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from datetime import datetime
 
 import pytest
 
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import (
@@ -156,7 +156,7 @@ async def test_post(test_user: User, session: AsyncSession) -> Post:
 
     return await posts_repo.create_post_by_user_id(
         test_user.id,
-        title="Test Slug",
+        title="Test post",
         description="Slug for tests",
         thumbnail="",
         body="Test " * 100,
@@ -173,6 +173,6 @@ async def test_event(session: AsyncSession, test_user: User, test_location: Loca
         description="Test event",
         thumbnail="",
         body="Test " * 100,
-        started_at=datetime.now(),
+        started_at=datetime.now().replace(tzinfo=timezone.utc),
         location=test_location
     )

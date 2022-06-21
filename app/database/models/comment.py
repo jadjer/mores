@@ -22,7 +22,8 @@ class CommentModel(Base):
     __tablename__ = "comment"
 
     id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("post.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.id"))
+    event_id = Column(Integer, ForeignKey("event.id"))
     author_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     body = Column(String, nullable=False)
