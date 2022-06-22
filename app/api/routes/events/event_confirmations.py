@@ -15,16 +15,15 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     status,
 )
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_user_id_authorizer, get_current_user_authorizer
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.events import (
-    get_event_by_id_from_path,
-    get_event_confirmation_from_query,
+    get_event_confirmation_from_query, get_event_by_id_from_path,
 )
+from app.api.dependencies.get_id_from_path import get_event_id_from_path
 from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events_confirmations import EventConfirmationsRepository
 from app.models.domain.event import Event
@@ -32,7 +31,7 @@ from app.models.domain.event_confirmation import (
     EventConfirmationType,
     EventConfirmation,
 )
-from app.models.domain.profile import Profile
+from app.models.domain.user import User
 from app.models.schemas.event_confirmation import EventConfirmationInResponse
 
 router = APIRouter()
@@ -44,21 +43,56 @@ router = APIRouter()
     name="events:confirmation",
     status_code=status.HTTP_200_OK,
 )
-async def confirmation(
+async def create_confirmation(
         event: Event = Depends(get_event_by_id_from_path),
         event_confirmation: EventConfirmationType = Depends(get_event_confirmation_from_query),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         confirmation_repo: EventConfirmationsRepository = Depends(get_repository(EventConfirmationsRepository)),
 ) -> EventConfirmationInResponse:
     confirm: EventConfirmation
 
     try:
-        await confirmation_repo.get_confirmation_by_event_id_for_user(event, profile.user_id)
-        confirm = await confirmation_repo.update_confirmation_by_event_id_for_user(event, profile.user_id, event_confirmation)
+        await confirmation_repo.get_confirmation_by_event_id_and_user_id(event.id, user.id)
+        confirm = await confirmation_repo.update_confirmation_by_event_id_and_user_id(
+            event.id, user.id, event_confirmation
+        )
 
     except EntityDoesNotExists:
-        confirm = await confirmation_repo.create_confirmation_by_event_id_for_user(event, profile.user_id, event_confirmation)
+        confirm = await confirmation_repo.create_confirmation_by_event_id_for_user(
+            event.id, user.id, event_confirmation
+        )
 
     return EventConfirmationInResponse(
         confirmation=confirm
     )
+
+
+@router.get(
+    "/confirmations",
+    response_model=EventConfirmationInResponse,
+    name="events:get-confirmations",
+    status_code=status.HTTP_200_OK,
+)
+async def get_confirmations(
+        event: Event = Depends(get_event_by_id_from_path),
+        event_confirmation: EventConfirmationType = Depends(get_event_confirmation_from_query),
+        user: User = Depends(get_current_user_authorizer()),
+        confirmation_repo: EventConfirmationsRepository = Depends(get_repository(EventConfirmationsRepository)),
+) -> EventConfirmationInResponse:
+    confirm: EventConfirmation
+
+    try:
+        await confirmation_repo.get_confirmation_by_event_id_and_user_id(event.id, user.id)
+        confirm = await confirmation_repo.update_confirmation_by_event_id_and_user_id(
+            event.id, user.id, event_confirmation
+        )
+
+    except EntityDoesNotExists:
+        confirm = await confirmation_repo.create_confirmation_by_event_id_for_user(
+            event.id, user.id, event_confirmation
+        )
+
+    return EventConfirmationInResponse(
+        confirmation=confirm
+    )
+

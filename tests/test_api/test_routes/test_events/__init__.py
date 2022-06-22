@@ -11,21 +11,3 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-from enum import Enum
-
-from app.models.domain.rwmodel import RWModel
-from app.models.domain.user import User
-
-
-class EventConfirmationType(Enum):
-    YES = "yes"
-    MAY_BE_YES = "may_be_yes"
-    MAY_BY = "may_be"
-    MAY_BE_NO = "may_be_no"
-    NO = "no"
-
-
-class EventConfirmation(RWModel):
-    user: User
-    confirm_type: EventConfirmationType

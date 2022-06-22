@@ -28,6 +28,7 @@ from app.models.domain.event_confirmation import (
     EventConfirmation,
     EventConfirmationType,
 )
+from app.models.domain.user import User
 
 
 class EventConfirmationsRepository(BaseRepository):
@@ -50,12 +51,12 @@ class EventConfirmationsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return EventConfirmation(**new_event_confirmation.__dict__)
+        return await self.get_confirmation_by_event_id_and_user_id(event_id, user_id)
 
     async def get_confirmation_by_event_id_and_user_id(self, event_id: int, user_id: int) -> EventConfirmation:
         event_confirmation_in_db = await self._get_confirmation_model_by_event_id_and_user_id(event_id, user_id)
 
-        return EventConfirmation(**event_confirmation_in_db.__dict__)
+        return self._convert_confirmation_model_to_conformation(event_confirmation_in_db)
 
     async def update_confirmation_by_event_id_and_user_id(
             self,
@@ -71,12 +72,10 @@ class EventConfirmationsRepository(BaseRepository):
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return EventConfirmation(**event_confirmation_in_db.__dict__)
+        return await self.get_confirmation_by_event_id_and_user_id(event_id, user_id)
 
     async def _get_confirmation_model_by_event_id_and_user_id(
-            self,
-            event_id: int,
-            user_id: int
+            self, event_id: int, user_id: int
     ) -> EventConfirmationModel:
         query = select(EventConfirmationModel).where(
             and_(
@@ -84,7 +83,6 @@ class EventConfirmationsRepository(BaseRepository):
                 EventConfirmationModel.user_id == user_id,
             )
         ).options(
-            joinedload(EventConfirmationModel.event),
             joinedload(EventConfirmationModel.user)
         )
         result = await self.session.execute(query)
@@ -94,3 +92,14 @@ class EventConfirmationsRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return event_confirmation_in_db
+
+    @staticmethod
+    def _convert_confirmation_model_to_conformation(confirmation: EventConfirmationModel) -> EventConfirmation:
+        user = User(**confirmation.user.__dict__)
+
+        event_confirmation = EventConfirmation(
+            user=user,
+            confirm_type=confirmation.confirmation_type
+        )
+
+        return event_confirmation
