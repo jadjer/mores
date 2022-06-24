@@ -15,6 +15,7 @@
 from typing import List, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.exc import PendingRollbackError
+from loguru import logger
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -32,34 +33,38 @@ class VehiclesRepository(BaseRepository):
     async def create_vehicle_by_user_id(
             self,
             user_id: int,
-            name: str,
+            *,
             brand: str,
             model: str,
+            gen: int,
             year: int,
             color: str,
             mileage: int,
             vin: str,
             registration_plate: str,
+            name: str,
     ) -> Vehicle:
         new_vehicle = VehicleModel()
         new_vehicle.owner_id = user_id
-        new_vehicle.name = name
         new_vehicle.brand = brand
         new_vehicle.model = model
+        new_vehicle.gen = gen
         new_vehicle.year = year
         new_vehicle.color = color
         new_vehicle.mileage = mileage
         new_vehicle.vin = vin
         new_vehicle.registration_plate = registration_plate
+        new_vehicle.name = name
 
         self.session.add(new_vehicle)
 
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityCreateError from exception
 
-        return Vehicle(**new_vehicle.__dict__)
+        return await self.get_vehicle_by_id_and_user_id(new_vehicle.id, user_id)
 
     async def get_vehicle_by_vin(self, vin: str) -> Vehicle:
         query = select(VehicleModel).where(VehicleModel.vin == vin)
@@ -97,6 +102,7 @@ class VehiclesRepository(BaseRepository):
             self,
             vehicle_id: int,
             user_id: int,
+            *,
             name: Optional[str] = None,
             brand: Optional[str] = None,
             model: Optional[str] = None,
@@ -119,6 +125,7 @@ class VehiclesRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityUpdateError from exception
 
         return Vehicle(**vehicle_in_db.__dict__)
@@ -130,6 +137,7 @@ class VehiclesRepository(BaseRepository):
             await self.session.delete(vehicle_in_db)
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityDeleteError from exception
 
     async def _get_vehicle_model_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> VehicleModel:

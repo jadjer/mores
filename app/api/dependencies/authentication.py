@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from loguru import logger
 from typing import (
     Callable,
     Optional,
@@ -43,8 +44,9 @@ class RWAPIKeyHeader(APIKeyHeader):
     async def __call__(self, request: requests.Request) -> Optional[str]:
         try:
             return await super().__call__(request)
-        except FastApiHTTPException as original_auth_exc:
-            raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
+        except FastApiHTTPException as exception:
+            logger.error(exception)
+            raise HTTPException(status_code=exception.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
 def get_current_user_authorizer() -> Callable:
@@ -59,12 +61,16 @@ def _get_authorization_header(
         api_key: str = Security(RWAPIKeyHeader(name=HEADER_KEY)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> str:
-    wrong_token_prefix = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.WRONG_TOKEN_PREFIX)
+    wrong_token_prefix = HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=strings.WRONG_TOKEN_PREFIX
+    )
 
     try:
         token_prefix, token = api_key.split(" ")
-    except ValueError:
-        raise wrong_token_prefix
+    except ValueError as exception:
+        logger.error(exception)
+        raise wrong_token_prefix from exception
 
     if token_prefix != settings.jwt_token_prefix:
         raise wrong_token_prefix
@@ -76,11 +82,15 @@ async def _get_current_user_id(
         token: str = Depends(_get_authorization_header),
         settings: AppSettings = Depends(get_app_settings),
 ) -> int:
-    malformed_payload = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.MALFORMED_PAYLOAD)
+    malformed_payload = HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=strings.MALFORMED_PAYLOAD
+    )
 
     try:
         user_id = jwt.get_user_id_from_token(token, settings.secret_key.get_secret_value())
     except ValueError as exception:
+        logger.error(exception)
         raise malformed_payload from exception
 
     return user_id
@@ -90,11 +100,15 @@ async def _get_current_user(
         user_id: int = Depends(_get_current_user_id),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
 ) -> UserInDB:
-    malformed_payload = HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.MALFORMED_PAYLOAD)
+    malformed_payload = HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=strings.MALFORMED_PAYLOAD
+    )
 
     try:
         user = await users_repo.get_user_by_id(user_id)
     except EntityDoesNotExists as exception:
+        logger.error(exception)
         raise malformed_payload from exception
 
     return user

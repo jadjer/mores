@@ -43,7 +43,6 @@ async def test_user_success_registration(
     response = await client.post(
         initialized_app.url_path_for("auth:register"), json={"user": registration_json}
     )
-    print(response.text)
     assert response.status_code == status.HTTP_201_CREATED
 
     users_repo = UsersRepository(session)

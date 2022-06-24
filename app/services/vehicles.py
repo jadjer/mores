@@ -25,7 +25,7 @@ async def check_vehicle_is_exist(repo: VehiclesRepository, vehicle_id: int, user
     return True
 
 
-async def check_vim_is_taken(repo: VehiclesRepository, vin: str) -> bool:
+async def check_vin_is_taken(repo: VehiclesRepository, vin: str) -> bool:
     try:
         await repo.get_vehicle_by_vin(vin)
     except EntityDoesNotExists:

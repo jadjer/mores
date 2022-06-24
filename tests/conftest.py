@@ -29,10 +29,12 @@ from app.database.repositories import UsersRepository
 from app.database.repositories.events import EventsRepository
 from app.database.repositories.locations import LocationsRepository
 from app.database.repositories.posts import PostsRepository
+from app.database.repositories.vehicles import VehiclesRepository
 from app.models.domain.event import Event
 from app.models.domain.location import Location
 from app.models.domain.post import Post
 from app.models.domain.user import User
+from app.models.domain.vehicle import Vehicle
 from app.services import jwt
 
 
@@ -175,4 +177,22 @@ async def test_event(session: AsyncSession, test_user: User, test_location: Loca
         body="Test " * 100,
         started_at=datetime.now().replace(tzinfo=timezone.utc),
         location=test_location
+    )
+
+
+@pytest.fixture
+async def test_vehicle(session: AsyncSession, test_user: User) -> Vehicle:
+    vehicles_repo = VehiclesRepository(session)
+
+    return await vehicles_repo.create_vehicle_by_user_id(
+        test_user.id,
+        brand="honda",
+        model="xl1000v",
+        gen=3,
+        year=2008,
+        color="Silver",
+        mileage=65500,
+        vin="JVM01234567891011",
+        registration_plate="9112AB2",
+        name="Bullfinch",
     )

@@ -30,6 +30,7 @@ from app.database.errors import (
     EntityUpdateError,
 )
 from app.database.repositories.vehicles import VehiclesRepository
+from app.models.domain.user import User
 from app.models.schemas.vehicle import (
     VehicleInResponse,
     ListOfVehiclesInResponse,
@@ -40,6 +41,9 @@ from app.resources import strings
 from app.services.vehicles import (
     check_mileage_increases,
     update_vehicle_mileage,
+    check_vehicle_is_exist,
+    check_vin_is_taken,
+    check_registration_plate_is_taken,
 )
 
 router = APIRouter()
@@ -52,18 +56,32 @@ router = APIRouter()
 )
 async def create_vehicle(
         vehicle_create: VehicleInCreate = Body(..., embed=True, alias="vehicle"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        user: User = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
 ) -> VehicleInResponse:
-    vin_reg_plate_exist = HTTPException(
+    vin_exist = HTTPException(
         status_code=status.HTTP_409_CONFLICT,
-        detail=strings.VEHICLE_CONFLICT_VIN_OR_REG_PLATE
+        detail=strings.VEHICLE_CONFLICT_VIN_ERROR
+    )
+    reg_plate_exist = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=strings.VEHICLE_CONFLICT_REGISTRATION_PLATE_ERROR
+    )
+    create_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.VEHICLE_CREATE_ERROR
     )
 
+    if await check_vin_is_taken(vehicles_repo, vehicle_create.vin):
+        raise vin_exist
+
+    if await check_registration_plate_is_taken(vehicles_repo, vehicle_create.registration_plate):
+        raise reg_plate_exist
+
     try:
-        vehicle = await vehicles_repo.create_vehicle_by_user_id(user_id, **vehicle_create.__dict__)
+        vehicle = await vehicles_repo.create_vehicle_by_user_id(user.id, **vehicle_create.__dict__)
     except EntityCreateError as exception:
-        raise vin_reg_plate_exist from exception
+        raise create_error from exception
 
     return VehicleInResponse(vehicle=vehicle)
 
