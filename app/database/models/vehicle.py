@@ -19,15 +19,19 @@ from app.database.base import Base
 
 
 class VehicleModel(Base):
-    __tablename__ = "vehicles"
+    __tablename__ = "vehicle"
 
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    name = Column(String, nullable=True)
+    owner_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
     brand = Column(String, nullable=False)
     model = Column(String, nullable=False)
+    gen = Column(Integer, default=1)
     year = Column(Integer, nullable=False)
     color = Column(String, nullable=False)
     mileage = Column(Integer, nullable=False, default=0)
     vin = Column(String, unique=True, nullable=True)
     registration_plate = Column(String, unique=True, nullable=True)
+    name = Column(String, nullable=True)
+
+    owner = relationship("UserModel")

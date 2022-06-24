@@ -12,20 +12,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.posts import PostsRepository
 from app.models.domain.post import Post
 from app.models.domain.user import User
 
 
-async def check_post_exists(posts_repo: PostsRepository, post_id: int) -> bool:
+async def check_post_exists_by_id(posts_repo: PostsRepository, post_id: int) -> bool:
     try:
-        await posts_repo.get_article_by_id(slug=post_id)
-    except EntityDoesNotExist:
+        await posts_repo.get_post_by_id(post_id)
+    except EntityDoesNotExists:
         return False
 
     return True
 
 
-def check_user_can_modify_post(article: Post, user: User) -> bool:
-    return article.author.username == user.username
+async def check_post_exist_by_title(events_repo: PostsRepository, post_title: str) -> bool:
+    try:
+        await events_repo.get_post_by_title(post_title)
+    except EntityDoesNotExists:
+        return False
+
+    return True
+
+
+def check_user_can_modify_post(user: User, post: Post) -> bool:
+    return post.author.id == user.id

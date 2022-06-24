@@ -12,21 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import datetime
-
+from datetime import datetime
 from pydantic import BaseModel, Field, validator
 
 
 class DateTimeModelMixin(BaseModel):
-    created_at: datetime.datetime = None  # type: ignore
-    updated_at: datetime.datetime = None  # type: ignore
+    created_at: datetime = None
+    updated_at: datetime = None
 
     @validator("created_at", "updated_at", pre=True)
-    def default_datetime(
-        cls,  # noqa: N805
-        value: datetime.datetime,  # noqa: WPS110
-    ) -> datetime.datetime:
-        return value or datetime.datetime.now()
+    def default_datetime(cls, value: datetime) -> datetime:
+        return value
 
 
 class IDModelMixin(BaseModel):

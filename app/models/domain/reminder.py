@@ -12,14 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from datetime import date
+
 from app.models.common import IDModelMixin
-from app.models.domain.vehicle import Vehicle
-from app.models.domain.rwmodel import RWModel
 from app.models.domain.service_type import ServiceType
 
 
-class Reminder(IDModelMixin, RWModel):
-    vehicle: Vehicle
+class Reminder(IDModelMixin):
     service_type: ServiceType
     next_mileage: int
-    next_data: str
+    next_date: date

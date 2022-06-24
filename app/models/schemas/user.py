@@ -13,11 +13,14 @@
 #  limitations under the License.
 
 from typing import Optional
+from pydantic import BaseModel
 
-from pydantic import BaseModel, EmailStr, HttpUrl
-
-from app.models.domain.user import User, Gender
+from app.models.domain.user import User
 from app.models.schemas.rwschema import RWSchema
+
+
+class PhoneInVerification(RWSchema):
+    phone: str
 
 
 class UserInLogin(RWSchema):
@@ -26,20 +29,15 @@ class UserInLogin(RWSchema):
 
 
 class UserInCreate(UserInLogin):
-    email: EmailStr
+    phone: str
+    verification_code: int
 
 
 class UserInUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    first_name: Optional[str] = None
-    second_name: Optional[str] = None
-    last_name: Optional[str] = None
-    gender: Optional[Gender] = Gender.UNDEFINED
-    age: Optional[int]
     phone: Optional[str] = None
-    image: Optional[HttpUrl] = None
+    password: Optional[str] = None
+    verification_code: Optional[int] = None
 
 
 class UserWithToken(User):

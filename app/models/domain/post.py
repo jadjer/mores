@@ -14,12 +14,11 @@
 
 from app.models.common import DateTimeModelMixin, IDModelMixin
 from app.models.domain.user import User
-from app.models.domain.rwmodel import RWModel
 
 
-class Post(IDModelMixin, DateTimeModelMixin, RWModel):
+class Post(IDModelMixin, DateTimeModelMixin):
     author: User
     title: str
     description: str
-    picture: str
+    thumbnail: str
     body: str

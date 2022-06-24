@@ -18,7 +18,7 @@ from app.database.base import Base
 
 
 class ServiceTypeModel(Base):
-    __tablename__ = "service_types"
+    __tablename__ = "service_type"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)

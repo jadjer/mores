@@ -18,8 +18,10 @@ from app.models.common import IDModelMixin
 class Vehicle(IDModelMixin):
     brand: str
     model: str
+    gen: int
     year: int
     color: str
     mileage: int
     vin: str
     registration_plate: str
+    name: str

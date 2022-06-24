@@ -23,32 +23,29 @@ DEFAULT_ARTICLES_LIMIT = 20
 DEFAULT_ARTICLES_OFFSET = 0
 
 
-class PostForResponse(RWSchema, Post):
-    pass
-
-
 class PostInResponse(RWSchema):
-    post: PostForResponse
+    post: Post
 
 
 class PostInCreate(RWSchema):
     title: str
     description: str
+    thumbnail: str
     body: str
 
 
 class PostInUpdate(RWSchema):
     title: Optional[str] = None
     description: Optional[str] = None
+    thumbnail: Optional[str] = None
     body: Optional[str] = None
 
 
 class ListOfPostsInResponse(RWSchema):
-    posts: List[PostForResponse]
-    posts_count: int
+    posts: List[Post]
+    count: int
 
 
-class PostsFilters(BaseModel):
-    author: Optional[str] = None
+class PostsFilter(BaseModel):
     limit: int = Field(DEFAULT_ARTICLES_LIMIT, ge=1)
     offset: int = Field(DEFAULT_ARTICLES_OFFSET, ge=0)

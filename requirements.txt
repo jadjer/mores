@@ -8,3 +8,10 @@ passlib
 PyJWT
 alembic
 asyncpg
+pytest-asyncio
+httpx
+phonenumbers
+
+xmltodict
+
+pytest

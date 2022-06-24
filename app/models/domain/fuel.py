@@ -11,12 +11,14 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 from enum import Enum
 
-from app.models.common import IDModelMixin
+from app.models.common import (
+    IDModelMixin,
+    DateTimeModelMixin,
+)
 from app.models.domain.location import Location
-from app.models.domain.vehicle import Vehicle
-from app.models.domain.rwmodel import RWModel
 
 
 class FuelType(Enum):
@@ -29,10 +31,10 @@ class FuelType(Enum):
     ELECTRICITY = "electricity"
 
 
-class Fuel(IDModelMixin, RWModel):
-    vehicle: Vehicle
+class Fuel(IDModelMixin, DateTimeModelMixin):
+    fuel_type: FuelType
     quantity: float
     price: float
-    type: FuelType
+    mileage: int
+    is_full: bool
     location: Location
-    datetime: str

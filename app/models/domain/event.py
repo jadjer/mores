@@ -13,13 +13,11 @@
 #  limitations under the License.
 
 from enum import Enum
-
-import datetime as datetime
+from datetime import datetime
 
 from app.models.common import IDModelMixin, DateTimeModelMixin
-from app.models.domain.user import User
 from app.models.domain.location import Location
-from app.models.domain.rwmodel import RWModel
+from app.models.domain.user import User
 
 
 class EventState(Enum):
@@ -28,12 +26,12 @@ class EventState(Enum):
     CANCELED = "canceled"
 
 
-class Event(IDModelMixin, DateTimeModelMixin, RWModel):
+class Event(IDModelMixin, DateTimeModelMixin):
     author: User
     title: str
     description: str
     thumbnail: str
     body: str
-    started_at: datetime.datetime
+    started_at: datetime
     location: Location
     event_state: EventState

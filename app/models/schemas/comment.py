@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List
+from typing import List, Optional
 
 from app.models.domain.comment import Comment
 from app.models.schemas.rwschema import RWSchema
@@ -28,3 +28,7 @@ class CommentInResponse(RWSchema):
 
 class CommentInCreate(RWSchema):
     body: str
+
+
+class CommentInUpdate(RWSchema):
+    body: Optional[str] = None

@@ -12,16 +12,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, ForeignKey, Enum
+from sqlalchemy import Column, Integer, ForeignKey, Enum, func, DateTime
+from sqlalchemy.orm import relationship
 
 from app.database.base import Base
 from app.models.domain.event_confirmation import EventConfirmationType
 
 
 class EventConfirmationModel(Base):
-    __tablename__ = "event_confirmations"
+    __tablename__ = "event_confirmation"
 
     id = Column(Integer, primary_key=True, index=True)
-    event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    event_id = Column(Integer, ForeignKey("event.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
     confirmation_type = Column(Enum(EventConfirmationType), default=EventConfirmationType.MAY_BY)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    event = relationship("EventModel")
+    user = relationship("UserModel")

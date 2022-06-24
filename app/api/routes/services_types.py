@@ -12,49 +12,55 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, status, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+)
 
-from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.database import get_repository
-from app.api.dependencies.services_types import get_service_type_id_from_path
+from app.api.dependencies.get_id_from_path import get_service_type_id_from_path
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.services_types import ServicesTypesRepository
-from app.models.domain.service import Service
-from app.models.domain.user import UserInDB
-from app.models.schemas.service_type import ServiceTypeInResponse, ListOfServicesTypesInResponse
+from app.models.schemas.service_type import (
+    ServiceTypeInResponse,
+    ListOfServicesTypesInResponse,
+)
+from app.resources import strings
 
 router = APIRouter()
 
 
-@router.get("", response_model=ListOfServicesTypesInResponse, name="services-types:get-all-vehicles")
+@router.get(
+    "",
+    response_model=ListOfServicesTypesInResponse,
+    name="services-types:get-all-vehicles"
+)
 async def get_service_types(
-        user: UserInDB = Depends(get_current_user_authorizer()),
         services_types_repo: ServicesTypesRepository = Depends(get_repository(ServicesTypesRepository)),
 ) -> ListOfServicesTypesInResponse:
-    services_types = await services_types_repo.get_services_types(user)
+    services_types = await services_types_repo.get_services_types()
     return ListOfServicesTypesInResponse(services_types=services_types, count=len(services_types))
 
 
-@router.post("", response_model=ServiceTypeInResponse, name="services-types:create-vehicle")
-async def create_service_type() -> ServiceTypeInResponse:
-    pass
-
-
-@router.get("/{type_id}", response_model=ServiceTypeInResponse, name="services-types:get-vehicle")
+@router.get(
+    "/{service_type_id}",
+    response_model=ServiceTypeInResponse,
+    name="services-types:get-vehicle"
+)
 async def get_service_type(
-        type_id: int = Depends(get_service_type_id_from_path),
+        service_type_id: int = Depends(get_service_type_id_from_path),
+        services_types_repo: ServicesTypesRepository = Depends(get_repository(ServicesTypesRepository)),
 ) -> ServiceTypeInResponse:
-    pass
+    type_not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=strings.SERVICE_TYPE_DOES_NOT_EXIST_ERROR
+    )
 
+    try:
+        service_type = await services_types_repo.get_service_type_by_id(service_type_id)
+    except EntityDoesNotExists as exception:
+        raise type_not_found from exception
 
-@router.put("/{type_id}", response_model=ServiceTypeInResponse, name="services-types:update-vehicle")
-async def update_service_type(
-        type_id: int = Depends(get_service_type_id_from_path),
-) -> ServiceTypeInResponse:
-    pass
-
-
-@router.delete("/{type_id}", response_model=ServiceTypeInResponse, name="services-types:delete-vehicle")
-async def delete_service_type(
-        type_id: int = Depends(get_service_type_id_from_path),
-) -> ServiceTypeInResponse:
-    pass
+    return ServiceTypeInResponse(service_type=service_type)

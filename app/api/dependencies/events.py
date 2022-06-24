@@ -26,15 +26,20 @@
 
 from typing import Optional
 
-from fastapi import Query, Path, Depends, HTTPException, status
+from fastapi import (
+    Query,
+    Depends,
+    HTTPException,
+    status,
+)
 
-from app.api.dependencies.authentication import get_current_user_authorizer
+from app.api.dependencies.authentication import get_current_user_id_authorizer
 from app.api.dependencies.database import get_repository
-from app.database.errors import EntityDoesNotExist
+from app.api.dependencies.get_id_from_path import get_event_id_from_path
+from app.database.errors import EntityDoesNotExists
 from app.database.repositories.events import EventsRepository
 from app.models.domain.event import EventState, Event
 from app.models.domain.event_confirmation import EventConfirmationType
-from app.models.domain.user import User
 from app.models.schemas.events import (
     DEFAULT_ARTICLES_LIMIT,
     DEFAULT_ARTICLES_OFFSET,
@@ -45,21 +50,11 @@ from app.services.events import check_user_can_modify_event
 
 
 def get_events_filters(
-        author: Optional[str] = None,
         state: EventState = EventState.PLANNED,
         limit: int = Query(DEFAULT_ARTICLES_LIMIT, ge=1),
         offset: int = Query(DEFAULT_ARTICLES_OFFSET, ge=0),
 ) -> EventsFilter:
-    return EventsFilter(
-        author=author,
-        state=state,
-        limit=limit,
-        offset=offset,
-    )
-
-
-def get_event_id_from_path(event_id: int = Path(..., ge=1)) -> int:
-    return event_id
+    return EventsFilter(state=state, limit=limit, offset=offset)
 
 
 async def get_event_by_id_from_path(
@@ -67,10 +62,8 @@ async def get_event_by_id_from_path(
         events_repo: EventsRepository = Depends(get_repository(EventsRepository)),
 ) -> Event:
     try:
-        return await events_repo.get_event_by_id(
-            event_id=event_id,
-        )
-    except EntityDoesNotExist:
+        return await events_repo.get_event_by_id(event_id)
+    except EntityDoesNotExists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=strings.EVENT_DOES_NOT_EXIST_ERROR,
@@ -84,12 +77,11 @@ def get_event_confirmation_from_query(
 
 
 def check_event_permissions(
-    event: Event = Depends(get_event_by_id_from_path),
-    user: User = Depends(get_current_user_authorizer()),
+        event: Event = Depends(get_event_by_id_from_path),
+        user_id: int = Depends(get_current_user_id_authorizer()),
 ) -> None:
-    if not check_user_can_modify_event(event, user):
+    if not check_user_can_modify_event(user_id, event):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=strings.USER_IS_NOT_AUTHOR_OF_EVENT,
         )
-

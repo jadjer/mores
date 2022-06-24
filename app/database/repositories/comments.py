@@ -12,107 +12,180 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Optional
+from typing import List
 
-from sqlalchemy.orm import Session
+from loguru import logger
+from sqlalchemy import select, and_
+from sqlalchemy.orm import joinedload
 
-from app.database.errors import EntityDoesNotExist
+from app.database.errors import (
+    EntityDoesNotExists,
+    EntityCreateError,
+    EntityDeleteError,
+    EntityUpdateError,
+)
+from app.database.models import CommentModel
 from app.database.repositories.base import BaseRepository
-from app.database.repositories.users import UsersRepository
-from app.models.domain.post import Post
 from app.models.domain.comment import Comment
 from app.models.domain.user import User
 
 
 class CommentsRepository(BaseRepository):
 
-    def __init__(self, session: Session) -> None:
-        super().__init__(session)
-        self._users_repo = UsersRepository(session)
+    async def create_comment_by_post_id_and_user(self, post_id: int, user: User, *, body: str) -> Comment:
+        new_comment = CommentModel()
+        new_comment.post_id = post_id
+        new_comment.author_id = user.id
+        new_comment.body = body
 
-    async def get_comment_by_id(
-        self,
-        comment_id: int,
-        article: Post,
-        user: Optional[User] = None,
-    ) -> Comment:
-        pass
-        # comment_row = await queries.get_comment_by_id_and_slug(
-        #     self.connection,
-        #     comment_id=comment_id,
-        #     article_slug=article.slug,
-        # )
-        # if comment_row:
-        #     return await self._get_comment_from_db_record(
-        #         comment_row=comment_row,
-        #         author_username=comment_row["author_username"],
-        #         requested_user=user,
-        #     )
-        #
-        # raise EntityDoesNotExist(
-        #     "comment with id {0} does not exist".format(comment_id),
-        # )
+        self.session.add(new_comment)
 
-    async def get_comments_for_article(
-        self,
-        article: Post,
-        user: Optional[User] = None,
-    ) -> List[Comment]:
-        pass
-        # comments_rows = await queries.get_comments_for_article_by_slug(
-        #     self.connection,
-        #     slug=article.slug,
-        # )
-        # return [
-        #     await self._get_comment_from_db_record(
-        #         comment_row=comment_row,
-        #         author_username=comment_row["author_username"],
-        #         requested_user=user,
-        #     )
-        #     for comment_row in comments_rows
-        # ]
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
+            raise EntityCreateError from exception
 
-    async def create_comment_for_article(
-        self,
-        body: str,
-        article: Post,
-        user: User,
-    ) -> Comment:
-        pass
-        # comment_row = await queries.create_new_comment(
-        #     self.connection,
-        #     body=body,
-        #     article_slug=article.slug,
-        #     author_username=user.username,
-        # )
-        # return await self._get_comment_from_db_record(
-        #     comment_row=comment_row,
-        #     author_username=comment_row["author_username"],
-        #     requested_user=user,
-        # )
+        return await self.get_comment_by_id_and_post_id(new_comment.id, post_id)
 
-    async def delete_comment(self, *, comment: Comment) -> None:
-        pass
-        # await queries.delete_comment_by_id(
-        #     self.connection,
-        #     comment_id=comment.id_,
-        #     author_username=comment.author.username,
-        # )
+    async def create_comment_by_event_id_and_user(self, event_id: int, user: User, *, body: str) -> Comment:
+        new_comment = CommentModel()
+        new_comment.event_id = event_id
+        new_comment.author_id = user.id
+        new_comment.body = body
 
-    async def _get_comment_from_db_record(
-        self,
-        comment: Comment,
-        author_username: str,
-        requested_user: Optional[User],
-    ) -> Comment:
-        pass
-        # return Comment(
-        #     id_=comment_row["id"],
-        #     body=comment_row["body"],
-        #     author=await self._profiles_repo.get_profile_by_username(
-        #         username=author_username,
-        #         requested_user=requested_user,
-        #     ),
-        #     created_at=comment_row["created_at"],
-        #     updated_at=comment_row["updated_at"],
-        # )
+        self.session.add(new_comment)
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
+            raise EntityCreateError from exception
+
+        return await self.get_comment_by_id_and_event_id(new_comment.id, event_id)
+
+    async def get_comment_by_id(self, comment_id: int) -> Comment:
+        query = select(CommentModel).where(
+            CommentModel.id == comment_id,
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comment_in_db = result.scalars().first()
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return self._convert_comment_model_to_comment(comment_in_db)
+
+    async def get_comment_by_id_and_post_id(self, comment_id: int, post_id: int) -> Comment:
+        query = select(CommentModel).where(
+            and_(
+                CommentModel.id == comment_id,
+                CommentModel.post_id == post_id
+            )
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comment_in_db = result.scalars().first()
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return self._convert_comment_model_to_comment(comment_in_db)
+
+    async def get_comment_by_id_and_event_id(self, comment_id: int, event_id: int) -> Comment:
+        query = select(CommentModel).where(
+            and_(
+                CommentModel.id == comment_id,
+                CommentModel.event_id == event_id
+            )
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comment_in_db = result.scalars().first()
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return self._convert_comment_model_to_comment(comment_in_db)
+
+    async def get_comments_by_post_id(self, post_id: int) -> List[Comment]:
+        query = select(CommentModel).where(
+            CommentModel.post_id == post_id
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comments_in_db = result.scalars().all()
+        comment_in_db: CommentModel
+
+        return [self._convert_comment_model_to_comment(comment_in_db) for comment_in_db in comments_in_db]
+
+    async def get_comments_by_event_id(self, event_id: int) -> List[Comment]:
+        query = select(CommentModel).where(
+            CommentModel.event_id == event_id
+        ).options(
+            joinedload(CommentModel.author)
+        )
+        result = await self.session.execute(query)
+
+        comments_in_db = result.scalars().all()
+        comment_in_db: CommentModel
+
+        return [self._convert_comment_model_to_comment(comment_in_db) for comment_in_db in comments_in_db]
+
+    async def update_comment_by_id_and_user(self, comment_id: int, user: User, *, body: str) -> Comment:
+        comment_in_db: CommentModel = await self._get_comment_model_by_id_and_user(comment_id, user)
+        comment_in_db.body = body
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
+            raise EntityUpdateError from exception
+
+        return self._convert_comment_model_to_comment(comment_in_db)
+
+    async def delete_comment_by_id_and_user(self, comment_id: int, user: User) -> None:
+        comment_in_db = await self._get_comment_model_by_id_and_user(comment_id, user)
+
+        try:
+            await self.session.delete(comment_in_db)
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
+            raise EntityDeleteError from exception
+
+    async def _get_comment_model_by_id_and_user(self, comment_id: int, user: User) -> CommentModel:
+        query = select(CommentModel).where(
+            and_(
+                CommentModel.id == comment_id,
+                CommentModel.author_id == user.id
+            )
+        ).options(
+            joinedload(CommentModel.author)
+        )
+
+        result = await self.session.execute(query)
+
+        comment_in_db: CommentModel = result.scalars().first()
+        if not comment_in_db:
+            raise EntityDoesNotExists
+
+        return comment_in_db
+
+    @staticmethod
+    def _convert_comment_model_to_comment(comment_model: CommentModel) -> Comment:
+        author = User(**comment_model.author.__dict__)
+        comment = Comment(
+            id=comment_model.id,
+            author=author,
+            body=comment_model.body,
+            created_at=comment_model.created_at,
+            updated_at=comment_model.updated_at,
+        )
+        return comment

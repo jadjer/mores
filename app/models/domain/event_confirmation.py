@@ -14,7 +14,6 @@
 
 from enum import Enum
 
-from app.models.domain.event import Event
 from app.models.domain.rwmodel import RWModel
 from app.models.domain.user import User
 
@@ -28,6 +27,5 @@ class EventConfirmationType(Enum):
 
 
 class EventConfirmation(RWModel):
-    event: Event
     user: User
-    type: EventConfirmationType
+    confirm_type: EventConfirmationType

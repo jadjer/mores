@@ -49,13 +49,13 @@ class EventInCreate(RWSchema):
 
 
 class EventInUpdate(RWSchema):
-    title: str
-    description: str
-    thumbnail: str
-    body: str
-    started_at: datetime
-    location: Location
-    state: EventState
+    title: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail: Optional[str] = None
+    body: Optional[str] = None
+    started_at: Optional[datetime] = None
+    location: Optional[Location] = None
+    event_state: Optional[EventState] = None
 
 
 class ListOfEventsInResponse(RWSchema):
@@ -68,7 +68,6 @@ class EventID(RWSchema):
 
 
 class EventsFilter(RWSchema):
-    author: Optional[str] = None
     state: EventState = EventState.PLANNED
     limit: int = Field(DEFAULT_ARTICLES_LIMIT, ge=1)
     offset: int = Field(DEFAULT_ARTICLES_OFFSET, ge=0)

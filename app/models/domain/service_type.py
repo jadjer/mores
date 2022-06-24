@@ -13,9 +13,8 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.rwmodel import RWModel
 
 
-class ServiceType(IDModelMixin, RWModel):
+class ServiceType(IDModelMixin):
     name: str
     description: str

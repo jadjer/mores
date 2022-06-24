@@ -13,11 +13,9 @@
 #  limitations under the License.
 
 from app.models.common import IDModelMixin
-from app.models.domain.rwmodel import RWModel
 
 
 class Location(IDModelMixin):
-    name: str
     description: str
     latitude: float
     longitude: float
