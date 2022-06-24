@@ -43,13 +43,5 @@ def get_service_type_id_from_path(service_type_id: int = Path(..., ge=1)) -> int
     return service_type_id
 
 
-def get_vehicle_id_from_path(vehicle_id: int = Path(..., ge=1)) -> int:
-    return vehicle_id
-
-
-def get_fuel_id_from_path(fuel_id: int = Path(..., ge=1)) -> int:
-    return fuel_id
-
-
 def get_reminder_id_from_path(reminder_id: int = Path(..., ge=1)) -> int:
     return reminder_id

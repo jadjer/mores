@@ -47,6 +47,7 @@ class FuelsRepository(BaseRepository):
     async def create_fuel_by_vehicle_id(
             self,
             vehicle_id: int,
+            *,
             quantity: float,
             price: float,
             mileage: int,
@@ -54,13 +55,18 @@ class FuelsRepository(BaseRepository):
             location: Location,
             is_full: bool,
     ) -> Fuel:
+        new_location = LocationModel()
+        new_location.description = location.description
+        new_location.latitude = location.latitude
+        new_location.longitude = location.longitude
+
         new_fuel = FuelModel()
         new_fuel.vehicle_id = vehicle_id
         new_fuel.quantity = quantity
         new_fuel.price = price
         new_fuel.mileage = mileage
         new_fuel.fuel_type = fuel_type
-        new_fuel.location = LocationModel(**location.__dict__)
+        new_fuel.location = new_location
         new_fuel.is_full = is_full
         new_fuel.datetime = datetime.now()
 
@@ -71,7 +77,7 @@ class FuelsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Fuel(**new_fuel.__dict__)
+        return await self.get_fuel_by_id_and_vehicle_id(new_fuel.id, vehicle_id)
 
     async def get_fuels_by_vehicle_id(self, vehicle_id: int) -> List[Fuel]:
         query = select(FuelModel).where(
@@ -83,17 +89,18 @@ class FuelsRepository(BaseRepository):
 
         fuels_in_db = result.scalars().all()
 
-        return [Fuel(**fuel_in_db.__dict__) for fuel_in_db in fuels_in_db]
+        return [self._convert_fuel_model_to_fuel(fuel_in_db) for fuel_in_db in fuels_in_db]
 
     async def get_fuel_by_id_and_vehicle_id(self, fuel_id: int, vehicle_id: int) -> Fuel:
         fuel_in_db = await self._get_fuel_model_by_id_and_vehicle_id(fuel_id, vehicle_id)
 
-        return Fuel(**fuel_in_db.__dict__)
+        return self._convert_fuel_model_to_fuel(fuel_in_db)
 
     async def update_fuel_by_id_and_vehicle_id(
             self,
             fuel_id: int,
             vehicle_id: int,
+            *,
             quantity: Optional[float] = None,
             price: Optional[float] = None,
             mileage: Optional[str] = None,
@@ -109,14 +116,16 @@ class FuelsRepository(BaseRepository):
         fuel_in_db.is_full = is_full or fuel_in_db.is_full
 
         if location:
-            fuel_in_db.location = LocationModel(**location.__dict__) or fuel_in_db.location
+            fuel_in_db.location.description = location.description or fuel_in_db.location.description
+            fuel_in_db.location.latitude = location.latitude or fuel_in_db.location.latitude
+            fuel_in_db.location.longitude = location.longitude or fuel_in_db.location.longitude
 
         try:
             await self.session.commit()
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return Fuel(**fuel_in_db.__dict__)
+        return await self.get_fuel_by_id_and_vehicle_id(fuel_id, vehicle_id)
 
     async def delete_fuel_by_id_and_vehicle_id(self, fuel_id: int, vehicle_id: int) -> None:
         fuel_in_db = await self._get_fuel_model_by_id_and_vehicle_id(fuel_id, vehicle_id)
@@ -133,7 +142,9 @@ class FuelsRepository(BaseRepository):
                 FuelModel.id == fuel_id,
                 FuelModel.vehicle_id == vehicle_id
             )
-        ).options(selectinload(FuelModel.location))
+        ).options(
+            selectinload(FuelModel.location)
+        )
         result = await self.session.execute(query)
 
         fuel_model_in_db = result.scalars().first()
@@ -141,3 +152,23 @@ class FuelsRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return fuel_model_in_db
+
+    @staticmethod
+    def _convert_fuel_model_to_fuel(fuel_model: FuelModel) -> Fuel:
+        location = Location(
+            id=fuel_model.location_id,
+            description=fuel_model.location.description,
+            latitude=fuel_model.location.latitude,
+            longitude=fuel_model.location.longitude
+        )
+        fuel = Fuel(
+            fuel_type=fuel_model.fuel_type,
+            quantity=fuel_model.quantity,
+            price=fuel_model.price,
+            mileage=fuel_model.mileage,
+            is_full=fuel_model.is_full,
+            location=location,
+            created_at=fuel_model.created_at,
+            updated_at=fuel_model.updated_at,
+        )
+        return fuel

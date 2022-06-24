@@ -29,10 +29,12 @@ from app.database.repositories import UsersRepository
 from app.database.repositories.events import EventsRepository
 from app.database.repositories.locations import LocationsRepository
 from app.database.repositories.posts import PostsRepository
+from app.database.repositories.services_types import ServicesTypesRepository
 from app.database.repositories.vehicles import VehiclesRepository
 from app.models.domain.event import Event
 from app.models.domain.location import Location
 from app.models.domain.post import Post
+from app.models.domain.service_type import ServiceType
 from app.models.domain.user import User
 from app.models.domain.vehicle import Vehicle
 from app.services import jwt
@@ -196,3 +198,10 @@ async def test_vehicle(session: AsyncSession, test_user: User) -> Vehicle:
         registration_plate="9112AB2",
         name="Bullfinch",
     )
+
+
+@pytest.fixture
+async def test_service_type(session: AsyncSession) -> ServiceType:
+    services_types_repo = ServicesTypesRepository(session)
+
+    return await services_types_repo.create_service_type("Test service", "Test service in description")

@@ -38,31 +38,32 @@ class LocationsRepository(BaseRepository):
         except Exception as exception:
             raise EntityCreateError from exception
 
-        return Location(**new_location.__dict__)
+        return await self.get_location_by_id(new_location.id)
 
     async def get_location_by_id(self, location_id: int) -> Location:
-        location = await self._get_location_model_by_id(location_id)
+        location_in_db = await self._get_location_model_by_id(location_id)
 
-        return Location(**location.__dict__)
+        return self._convert_location_model_to_location(location_in_db)
 
     async def update_location_by_id(
             self,
             location_id: int,
+            *,
             description: Optional[str] = None,
             latitude: Optional[float] = None,
             longitude: Optional[float] = None,
     ) -> Location:
-        location = await self._get_location_model_by_id(location_id)
-        location.description = description or location.description
-        location.latitude = latitude or location.latitude
-        location.longitude = longitude or location.longitude
+        location_in_db = await self._get_location_model_by_id(location_id)
+        location_in_db.description = description or location_in_db.description
+        location_in_db.latitude = latitude or location_in_db.latitude
+        location_in_db.longitude = longitude or location_in_db.longitude
 
         try:
             await self.session.commit()
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return Location(**location.__dict__)
+        return await self.get_location_by_id(location_id)
 
     async def delete_location_by_id(self, location_id: int) -> None:
         location = await self._get_location_model_by_id(location_id)
@@ -79,3 +80,12 @@ class LocationsRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return location
+
+    @staticmethod
+    def _convert_location_model_to_location(location_model: LocationModel) -> Location:
+        return Location(
+            id=location_model.id,
+            description=location_model.description,
+            latitude=location_model.latitude,
+            longitude=location_model.longitude,
+        )

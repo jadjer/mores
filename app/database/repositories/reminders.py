@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from loguru import logger
 from typing import List, Optional
 from datetime import date
 
@@ -32,6 +33,7 @@ from app.database.models import (
 )
 from app.database.repositories.base import BaseRepository
 from app.models.domain.reminder import Reminder
+from app.models.domain.service_type import ServiceType
 
 
 class RemindersRepository(BaseRepository):
@@ -39,6 +41,7 @@ class RemindersRepository(BaseRepository):
     async def create_reminder_by_vehicle_id(
             self,
             vehicle_id: int,
+            *,
             service_type_id: int,
             next_mileage: int,
             next_date: date,
@@ -47,43 +50,40 @@ class RemindersRepository(BaseRepository):
         new_reminder.vehicle_id = vehicle_id
         new_reminder.service_type_id = service_type_id
         new_reminder.next_mileage = next_mileage
-        new_reminder.next_data = next_date
+        new_reminder.next_date = next_date
 
         self.session.add(new_reminder)
 
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityCreateError from exception
 
-        return Reminder(**new_reminder.__dict__)
+        return await self.get_reminder_by_id_and_vehicle_id(new_reminder.id, vehicle_id)
 
     async def get_reminders_by_vehicle_id(self, vehicle_id: int) -> List[Reminder]:
         query = select(ReminderModel).where(
             ReminderModel.vehicle_id == vehicle_id
         ).options(
-            selectinload(ReminderModel.vehicle),
             selectinload(ReminderModel.service_type)
         )
         result = await self.session.execute(query)
 
         reminders_in_db = result.scalars().all()
 
-        for reminder_in_db in reminders_in_db:
-            print("=========================================")
-            print(reminder_in_db.__dict__)
-
-        return [Reminder(**reminder_in_db.__dict__) for reminder_in_db in reminders_in_db]
+        return [self._convert_reminder_model_to_reminder(reminder_in_db) for reminder_in_db in reminders_in_db]
 
     async def get_reminder_by_id_and_vehicle_id(self, reminder_id: int, vehicle_id: int) -> Reminder:
         reminder_in_db = await self._get_reminder_model_by_id_and_vehicle_id(reminder_id, vehicle_id)
 
-        return Reminder(**reminder_in_db.__dict__)
+        return self._convert_reminder_model_to_reminder(reminder_in_db)
 
     async def update_reminder_by_id_and_vehicle_id(
             self,
             reminder_id: int,
             vehicle_id: int,
+            *,
             service_type_id: Optional[int] = None,
             next_mileage: Optional[int] = None,
             next_date: Optional[date] = None,
@@ -91,14 +91,15 @@ class RemindersRepository(BaseRepository):
         reminder_in_db = await self._get_reminder_model_by_id_and_vehicle_id(reminder_id, vehicle_id)
         reminder_in_db.service_type_id = service_type_id or reminder_in_db.service_type_id
         reminder_in_db.next_mileage = next_mileage or reminder_in_db.next_mileage
-        reminder_in_db.next_date = next_date or reminder_in_db.next_data
+        reminder_in_db.next_date = next_date or reminder_in_db.next_date
 
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityUpdateError from exception
 
-        return Reminder(**reminder_in_db.__dict__)
+        return await self.get_reminder_by_id_and_vehicle_id(reminder_id, vehicle_id)
 
     async def delete_reminder_by_id_and_vehicle_id(self, reminder_id: int, vehicle_id: int) -> None:
         reminder_in_db = await self._get_reminder_model_by_id_and_vehicle_id(reminder_id, vehicle_id)
@@ -107,6 +108,7 @@ class RemindersRepository(BaseRepository):
             await self.session.delete(reminder_in_db)
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityDeleteError from exception
 
     async def _get_reminder_model_by_id_and_vehicle_id(self, reminder_id: int, vehicle_id: int) -> ReminderModel:
@@ -116,7 +118,6 @@ class RemindersRepository(BaseRepository):
                 ReminderModel.vehicle_id == vehicle_id
             )
         ).options(
-            selectinload(ReminderModel.vehicle),
             selectinload(ReminderModel.service_type)
         )
         result = await self.session.execute(query)
@@ -126,3 +127,18 @@ class RemindersRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return reminder_model_in_db
+
+    @staticmethod
+    def _convert_reminder_model_to_reminder(reminder_model: ReminderModel) -> Reminder:
+        service_type = ServiceType(
+            id=reminder_model.service_type_id,
+            name=reminder_model.service_type.name,
+            description=reminder_model.service_type.description
+        )
+        reminder = Reminder(
+            id=reminder_model.id,
+            service_type=service_type,
+            next_mileage=reminder_model.next_mileage,
+            next_date=reminder_model.next_date,
+        )
+        return reminder

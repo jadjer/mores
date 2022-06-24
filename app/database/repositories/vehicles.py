@@ -74,7 +74,7 @@ class VehiclesRepository(BaseRepository):
         if not vehicle_in_db:
             raise EntityDoesNotExists
 
-        return Vehicle(**vehicle_in_db.__dict__)
+        return self._convert_vehicle_model_to_vehicle(vehicle_in_db)
 
     async def get_vehicle_by_registration_plate(self, registration_plate: str) -> Vehicle:
         query = select(VehicleModel).where(VehicleModel.registration_plate == registration_plate)
@@ -84,11 +84,11 @@ class VehiclesRepository(BaseRepository):
         if not vehicle_in_db:
             raise EntityDoesNotExists
 
-        return Vehicle(**vehicle_in_db.__dict__)
+        return self._convert_vehicle_model_to_vehicle(vehicle_in_db)
 
     async def get_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> Vehicle:
         vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
-        return Vehicle(**vehicle_in_db.__dict__)
+        return self._convert_vehicle_model_to_vehicle(vehicle_in_db)
 
     async def get_vehicles_by_user_id(self, user_id: int) -> List[Vehicle]:
         query = select(VehicleModel).where(VehicleModel.owner_id == user_id)
@@ -96,7 +96,7 @@ class VehiclesRepository(BaseRepository):
 
         vehicles_in_db = result.scalars().all()
 
-        return [Vehicle(**vehicle_in_db.__dict__) for vehicle_in_db in vehicles_in_db]
+        return [self._convert_vehicle_model_to_vehicle(vehicle_in_db) for vehicle_in_db in vehicles_in_db]
 
     async def update_vehicle_by_id_and_user_id(
             self,
@@ -105,6 +105,7 @@ class VehiclesRepository(BaseRepository):
             *,
             name: Optional[str] = None,
             brand: Optional[str] = None,
+            gen: Optional[int] = None,
             model: Optional[str] = None,
             year: Optional[int] = None,
             color: Optional[str] = None,
@@ -113,14 +114,15 @@ class VehiclesRepository(BaseRepository):
             registration_plate: Optional[str] = None,
     ) -> Vehicle:
         vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
-        vehicle_in_db.name = name or vehicle_in_db.name
         vehicle_in_db.brand = brand or vehicle_in_db.brand
         vehicle_in_db.model = model or vehicle_in_db.model
+        vehicle_in_db.gen = gen or vehicle_in_db.gen
         vehicle_in_db.year = year or vehicle_in_db.year
         vehicle_in_db.color = color or vehicle_in_db.color
         vehicle_in_db.mileage = mileage or vehicle_in_db.mileage
         vehicle_in_db.vin = vin or vehicle_in_db.vin
         vehicle_in_db.registration_plate = registration_plate or vehicle_in_db.registration_plate
+        vehicle_in_db.name = name or vehicle_in_db.name
 
         try:
             await self.session.commit()
@@ -128,7 +130,7 @@ class VehiclesRepository(BaseRepository):
             logger.error(exception)
             raise EntityUpdateError from exception
 
-        return Vehicle(**vehicle_in_db.__dict__)
+        return await self.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
 
     async def delete_vehicle_by_id_and_user_id(self, vehicle_id: int, user_id: int) -> None:
         vehicle_in_db = await self._get_vehicle_model_by_id_and_user_id(vehicle_id, user_id)
@@ -155,3 +157,18 @@ class VehiclesRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return vehicle_model_in_db
+
+    @staticmethod
+    def _convert_vehicle_model_to_vehicle(vehicle_model: VehicleModel) -> Vehicle:
+        return Vehicle(
+            id=vehicle_model.id,
+            brand=vehicle_model.brand,
+            model=vehicle_model.model,
+            gen=vehicle_model.gen,
+            year=vehicle_model.year,
+            color=vehicle_model.color,
+            mileage=vehicle_model.mileage,
+            vin=vehicle_model.vin,
+            registration_plate=vehicle_model.registration_plate,
+            name=vehicle_model.name
+        )

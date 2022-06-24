@@ -56,37 +56,37 @@ class UsersRepository(BaseRepository):
         if not user_in_db:
             raise EntityDoesNotExists
 
-        return UserInDB(**user_in_db.__dict__)
+        return self._convert_user_model_to_model(user_in_db)
 
     async def get_user_by_email(self, email: str) -> UserInDB:
         query = select(UserModel).where(UserModel.email == email)
         result = await self.session.execute(query)
 
-        user = result.scalars().first()
-        if not user:
+        user_in_db = result.scalars().first()
+        if not user_in_db:
             raise EntityDoesNotExists
 
-        return UserInDB(**user.__dict__)
+        return self._convert_user_model_to_model(user_in_db)
 
     async def get_user_by_username(self, username: str) -> UserInDB:
         query = select(UserModel).where(UserModel.username == username)
         result = await self.session.execute(query)
 
-        user = result.scalars().first()
-        if not user:
+        user_in_db = result.scalars().first()
+        if not user_in_db:
             raise EntityDoesNotExists
 
-        return UserInDB(**user.__dict__)
+        return self._convert_user_model_to_model(user_in_db)
 
     async def get_user_by_phone(self, phone: str) -> UserInDB:
         query = select(UserModel).where(UserModel.phone == phone)
         result = await self.session.execute(query)
 
-        user = result.scalars().first()
-        if not user:
+        user_in_db = result.scalars().first()
+        if not user_in_db:
             raise EntityDoesNotExists
 
-        return UserInDB(**user.__dict__)
+        return self._convert_user_model_to_model(user_in_db)
 
     async def update_user_by_user(
             self,
@@ -113,11 +113,23 @@ class UsersRepository(BaseRepository):
         except Exception as exception:
             raise EntityUpdateError from exception
 
-        return UserInDB(**user_in_db.__dict__)
+        return await self.get_user_by_id(user_id)
 
     async def _get_user_model_by_id(self, user_id: int) -> UserModel:
-        user = await self.session.get(UserModel, user_id)
-        if not user:
+        user_in_db: UserModel = await self.session.get(UserModel, user_id)
+        if not user_in_db:
             raise EntityDoesNotExists
 
-        return user
+        return user_in_db
+
+    @staticmethod
+    def _convert_user_model_to_model(user_model: UserModel) -> UserInDB:
+        return UserInDB(
+            id=user_model.id,
+            username=user_model.username,
+            phone=user_model.phone,
+            salt=user_model.salt,
+            password=user_model.password,
+            is_admin=user_model.is_admin,
+            is_blocked=user_model.is_blocked,
+        )

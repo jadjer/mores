@@ -16,7 +16,7 @@ from app.database.errors import EntityDoesNotExists
 from app.database.repositories.vehicles import VehiclesRepository
 
 
-async def check_vehicle_is_exist(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:
+async def check_vehicle_is_exist_by_id_and_user_id(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:
     try:
         await repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
     except EntityDoesNotExists:
@@ -44,7 +44,7 @@ async def check_registration_plate_is_taken(repo: VehiclesRepository, registrati
 
 
 async def check_user_is_owner(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> bool:
-    return await check_vehicle_is_exist(repo, vehicle_id, user_id)
+    return await check_vehicle_is_exist_by_id_and_user_id(repo, vehicle_id, user_id)
 
 
 async def get_current_mileage_by_vehicle_id(repo: VehiclesRepository, vehicle_id: int, user_id: int) -> int:

@@ -21,11 +21,10 @@ from fastapi import (
 )
 
 from app.api.dependencies.database import get_repository
-from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.get_id_from_path import (
-    get_vehicle_id_from_path,
     get_reminder_id_from_path,
 )
+from app.api.dependencies.vehicle import get_vehicle_by_id_from_path
 from app.database.errors import (
     EntityCreateError,
     EntityDoesNotExists,
@@ -33,7 +32,7 @@ from app.database.errors import (
     EntityDeleteError,
 )
 from app.database.repositories.reminders import RemindersRepository
-from app.database.repositories.vehicles import VehiclesRepository
+from app.models.domain.vehicle import Vehicle
 from app.models.schemas.reminder import (
     ReminderInResponse,
     ListOfRemindersInResponse,
@@ -51,28 +50,17 @@ router = APIRouter()
     name="reminders:create-reminder",
 )
 async def create_reminder(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        reminder_create: ReminderInCreate = Body(..., alias="reminder"),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
+        reminder_create: ReminderInCreate = Body(..., embed=True, alias="reminder"),
         reminders_repo: RemindersRepository = Depends(get_repository(RemindersRepository)),
 ) -> ReminderInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     reminder_create_error = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.REMINDER_CREATE_ERROR
     )
 
     try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    try:
-        reminder = await reminders_repo.create_reminder_by_vehicle_id(vehicle_id, **reminder_create.__dict__)
+        reminder = await reminders_repo.create_reminder_by_vehicle_id(vehicle.id, **reminder_create.__dict__)
     except EntityCreateError as exception:
         raise reminder_create_error from exception
 
@@ -85,22 +73,10 @@ async def create_reminder(
     name="reminders:get-all-reminders"
 )
 async def get_reminder(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         reminders_repo: RemindersRepository = Depends(get_repository(RemindersRepository)),
 ) -> ListOfRemindersInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
-
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    reminders = await reminders_repo.get_reminders_by_vehicle_id(vehicle_id)
+    reminders = await reminders_repo.get_reminders_by_vehicle_id(vehicle.id)
     return ListOfRemindersInResponse(reminders=reminders, count=len(reminders))
 
 
@@ -110,28 +86,17 @@ async def get_reminder(
     name="reminders:get-reminder"
 )
 async def get_reminder_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         reminder_id: int = Depends(get_reminder_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         reminders_repo: RemindersRepository = Depends(get_repository(RemindersRepository)),
 ) -> ReminderInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     reminder_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.REMINDER_DOES_NOT_EXIST_ERROR
     )
 
     try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    try:
-        reminder = await reminders_repo.get_reminder_by_id_and_vehicle_id(reminder_id, vehicle_id)
+        reminder = await reminders_repo.get_reminder_by_id_and_vehicle_id(reminder_id, vehicle.id)
     except EntityDoesNotExists as exception:
         raise reminder_not_found from exception
 
@@ -144,17 +109,11 @@ async def get_reminder_by_id(
     name="reminders:update-reminder"
 )
 async def update_reminder_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         reminder_id: int = Depends(get_reminder_id_from_path),
-        reminder_update: ReminderInUpdate = Body(..., alias="reminder"),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+        reminder_update: ReminderInUpdate = Body(..., embed=True, alias="reminder"),
         reminders_repo: RemindersRepository = Depends(get_repository(RemindersRepository)),
 ) -> ReminderInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     reminder_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.REMINDER_DOES_NOT_EXIST_ERROR
@@ -163,16 +122,10 @@ async def update_reminder_by_id(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.REMINDER_UPDATE_ERROR
     )
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
 
     try:
         reminder = await reminders_repo.update_reminder_by_id_and_vehicle_id(
-            reminder_id,
-            vehicle_id,
-            **reminder_update.__dict__
+            reminder_id, vehicle.id, **reminder_update.__dict__
         )
     except EntityDoesNotExists as exception:
         raise reminder_not_found from exception
@@ -188,16 +141,10 @@ async def update_reminder_by_id(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_reminder_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         reminder_id: int = Depends(get_reminder_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         reminders_repo: RemindersRepository = Depends(get_repository(RemindersRepository)),
 ) -> None:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     reminder_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.REMINDER_DOES_NOT_EXIST_ERROR
@@ -206,13 +153,9 @@ async def delete_reminder_by_id(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.REMINDER_DELETE_ERROR
     )
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
 
     try:
-        await reminders_repo.delete_reminder_by_id_and_vehicle_id(reminder_id, vehicle_id)
+        await reminders_repo.delete_reminder_by_id_and_vehicle_id(reminder_id, vehicle.id)
     except EntityDoesNotExists as exception:
         raise reminder_not_found from exception
     except EntityDeleteError as exception:

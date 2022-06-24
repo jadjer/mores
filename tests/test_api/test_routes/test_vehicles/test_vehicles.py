@@ -18,6 +18,7 @@ from fastapi import FastAPI, status
 from httpx import AsyncClient
 
 from app.models.domain.vehicle import Vehicle
+from app.models.schemas.vehicle import VehicleInResponse
 
 
 @pytest.mark.asyncio
@@ -102,3 +103,54 @@ async def test_user_can_not_add_vehicle_with_duplicated_params(
     )
 
     assert response.status_code == status.HTTP_409_CONFLICT
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "update_field, update_value",
+    (
+            ("brand", "Kawasaki"),
+            ("model", "qwe123"),
+            ("gen", 2),
+            ("year", 2022),
+            ("color", "black"),
+            ("mileage", 70000),
+            ("vin", "ABC11109876543210"),
+            ("registration_plate", "1234AB1"),
+            ("name", "Test name"),
+    ),
+)
+async def test_user_can_update_vehicle(
+        initialized_app: FastAPI,
+        authorized_client: AsyncClient,
+        test_vehicle: Vehicle,
+        update_field: str,
+        update_value
+) -> None:
+    response = await authorized_client.put(
+        initialized_app.url_path_for("vehicles:update-vehicle", vehicle_id=str(test_vehicle.id)),
+        json={"vehicle": {update_field: update_value}},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    vehicle = VehicleInResponse(**response.json()).vehicle
+    vehicle_as_dict = vehicle.dict()
+
+    assert vehicle_as_dict[update_field] == update_value
+
+
+@pytest.mark.asyncio
+async def test_user_can_not_reduce_vehicle_mileage(
+        initialized_app: FastAPI,
+        authorized_client: AsyncClient,
+        test_vehicle: Vehicle,
+) -> None:
+    reduce_mileage = test_vehicle.mileage - 1
+    
+    response = await authorized_client.put(
+        initialized_app.url_path_for("vehicles:update-vehicle", vehicle_id=str(test_vehicle.id)),
+        json={"vehicle": {"mileage": reduce_mileage}},
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST

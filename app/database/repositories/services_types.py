@@ -13,8 +13,8 @@
 #  limitations under the License.
 
 from typing import List, Optional
-
 from sqlalchemy import select
+from loguru import logger
 
 from app.database.errors import (
     EntityDoesNotExists,
@@ -39,14 +39,15 @@ class ServicesTypesRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityCreateError from exception
 
-        return ServiceType(**new_service_type.__dict__)
+        return await self.get_service_type_by_id(new_service_type.id)
 
     async def get_service_type_by_id(self, service_type_id: int) -> ServiceType:
-        service_type_model = await self._get_service_type_model_by_id(service_type_id)
+        service_type_in_db = await self._get_service_type_model_by_id(service_type_id)
 
-        return ServiceType(**service_type_model.__dict__)
+        return self._convert_service_type_model_to_service_type(service_type_in_db)
 
     async def get_services_types(self) -> List[ServiceType]:
         query = select(ServiceTypeModel)
@@ -54,11 +55,12 @@ class ServicesTypesRepository(BaseRepository):
 
         services_types_in_db = result.scalars().all()
 
-        return [ServiceType(**service_type_in_db.__dict__) for service_type_in_db in services_types_in_db]
+        return [self._convert_service_type_model_to_service_type(service_type_in_db) for service_type_in_db in services_types_in_db]
 
     async def update_service_type_by_id(
             self,
             service_type_id: int,
+            *,
             name: Optional[str],
             description: Optional[str],
     ) -> ServiceType:
@@ -69,9 +71,10 @@ class ServicesTypesRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityUpdateError from exception
 
-        return ServiceType(**service_type_in_db.__dict__)
+        return await self.get_service_type_by_id(service_type_id)
 
     async def delete_service_type_by_id(self, service_type_id: int) -> None:
         service_type_in_db = await self._get_service_type_model_by_id(service_type_id)
@@ -80,6 +83,7 @@ class ServicesTypesRepository(BaseRepository):
             await self.session.delete(service_type_in_db)
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityDeleteError from exception
 
     async def _get_service_type_model_by_id(self, service_type_id: int) -> ServiceTypeModel:
@@ -91,3 +95,11 @@ class ServicesTypesRepository(BaseRepository):
             raise EntityDoesNotExists
 
         return service_type_in_db
+
+    @staticmethod
+    def _convert_service_type_model_to_service_type(service_type_model: ServiceTypeModel) -> ServiceType:
+        return ServiceType(
+            id=service_type_model.id,
+            name=service_type_model.name,
+            description=service_type_model.description,
+        )

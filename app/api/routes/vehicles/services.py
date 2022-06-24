@@ -23,9 +23,9 @@ from fastapi import (
 from app.api.dependencies.database import get_repository
 from app.api.dependencies.authentication import get_current_user_authorizer
 from app.api.dependencies.get_id_from_path import (
-    get_vehicle_id_from_path,
     get_service_id_from_path,
 )
+from app.api.dependencies.vehicle import get_vehicle_by_id_from_path
 from app.database.errors import (
     EntityCreateError,
     EntityDoesNotExists,
@@ -34,6 +34,8 @@ from app.database.errors import (
 )
 from app.database.repositories.services import ServicesRepository
 from app.database.repositories.vehicles import VehiclesRepository
+from app.models.domain.user import User
+from app.models.domain.vehicle import Vehicle
 from app.models.schemas.service import (
     ServiceInResponse,
     ListOfServicesInResponse,
@@ -42,7 +44,6 @@ from app.models.schemas.service import (
 from app.resources import strings
 from app.services.vehicles import (
     update_vehicle_mileage,
-    check_mileage_increases,
 )
 
 router = APIRouter()
@@ -52,21 +53,14 @@ router = APIRouter()
     "",
     response_model=ServiceInResponse,
     name="services:create-service",
-    dependencies=[
-        Depends(get_current_user_authorizer())
-    ]
 )
 async def create_service(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        service_create: ServiceInCreate = Body(..., alias="service"),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
+        service_create: ServiceInCreate = Body(..., embed=True, alias="service"),
+        user: User = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     vehicle_mileage_reduce = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.VEHICLE_MILEAGE_REDUCE
@@ -76,20 +70,15 @@ async def create_service(
         detail=strings.SERVICE_CREATE_ERROR
     )
 
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    if not await check_mileage_increases(vehicles_repo, vehicle_id, user_id, service_create.mileage):
+    if service_create.mileage and service_create.mileage < vehicle.mileage:
         raise vehicle_mileage_reduce
 
     try:
-        service = await services_repo.create_service_by_vehicle_id(vehicle_id, **service_create.__dict__)
+        service = await services_repo.create_service_by_vehicle_id(vehicle.id, **service_create.__dict__)
     except EntityCreateError as exception:
         raise service_create_error from exception
 
-    await update_vehicle_mileage(vehicles_repo, vehicle_id, user_id, service_create.mileage)
+    await update_vehicle_mileage(vehicles_repo, vehicle.id, user.id, service_create.mileage)
 
     return ServiceInResponse(service=service)
 
@@ -100,22 +89,10 @@ async def create_service(
     name="services:get-all-services"
 )
 async def get_services(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ListOfServicesInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
-
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    services = await services_repo.get_services_by_vehicle_id(vehicle_id)
+    services = await services_repo.get_services_by_vehicle_id(vehicle.id)
     return ListOfServicesInResponse(services=services, count=len(services))
 
 
@@ -125,28 +102,17 @@ async def get_services(
     name="services:get-service"
 )
 async def get_service_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         service_id: int = Depends(get_service_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     service_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.SERVICE_DOES_NOT_EXIST_ERROR
     )
 
     try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
-
-    try:
-        service = await services_repo.get_service_by_id_and_vehicle_id(service_id, vehicle_id)
+        service = await services_repo.get_service_by_id_and_vehicle_id(service_id, vehicle.id)
     except EntityDoesNotExists as exception:
         raise service_not_found from exception
 
@@ -159,17 +125,13 @@ async def get_service_by_id(
     name="services:update-service"
 )
 async def update_service_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         service_id: int = Depends(get_service_id_from_path),
-        service_update: ServiceInUpdate = Body(..., alias="service"),
-        user_id: int = Depends(get_current_user_authorizer()),
+        service_update: ServiceInUpdate = Body(..., embed=True, alias="service"),
+        user: User = Depends(get_current_user_authorizer()),
         vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> ServiceInResponse:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     vehicle_mileage_reduce = HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.VEHICLE_MILEAGE_REDUCE
@@ -182,21 +144,13 @@ async def update_service_by_id(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.SERVICE_UPDATE_ERROR
     )
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
 
-    if service_update.mileage and not await check_mileage_increases(
-            vehicles_repo, vehicle_id, user_id, service_update.mileage
-    ):
+    if service_update.mileage and service_update.mileage < vehicle.mileage:
         raise vehicle_mileage_reduce
 
     try:
         service = await services_repo.update_service_by_id_and_vehicle_id(
-            service_id,
-            vehicle_id,
-            **service_update.__dict__
+            service_id, vehicle.id, **service_update.__dict__
         )
     except EntityDoesNotExists as exception:
         raise service_not_found from exception
@@ -204,7 +158,7 @@ async def update_service_by_id(
         raise service_update_error from exception
 
     if service_update.mileage:
-        await update_vehicle_mileage(vehicles_repo, vehicle_id, user_id, service_update.mileage)
+        await update_vehicle_mileage(vehicles_repo, vehicle.id, user.id, service_update.mileage)
 
     return ServiceInResponse(service=service)
 
@@ -215,16 +169,10 @@ async def update_service_by_id(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_service_by_id(
-        vehicle_id: int = Depends(get_vehicle_id_from_path),
+        vehicle: Vehicle = Depends(get_vehicle_by_id_from_path),
         service_id: int = Depends(get_service_id_from_path),
-        user_id: int = Depends(get_current_user_authorizer()),
-        vehicles_repo: VehiclesRepository = Depends(get_repository(VehiclesRepository)),
         services_repo: ServicesRepository = Depends(get_repository(ServicesRepository)),
 ) -> None:
-    vehicle_not_found = HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=strings.VEHICLE_DOES_NOT_EXIST_ERROR
-    )
     service_not_found = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=strings.SERVICE_DOES_NOT_EXIST_ERROR
@@ -233,13 +181,9 @@ async def delete_service_by_id(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=strings.SERVICE_DELETE_ERROR
     )
-    try:
-        await vehicles_repo.get_vehicle_by_id_and_user_id(vehicle_id, user_id)
-    except EntityDoesNotExists as exception:
-        raise vehicle_not_found from exception
 
     try:
-        await services_repo.delete_service_by_id_and_vehicle_id(service_id, vehicle_id)
+        await services_repo.delete_service_by_id_and_vehicle_id(service_id, vehicle.id)
     except EntityDoesNotExists as exception:
         raise service_not_found from exception
     except EntityDeleteError as exception:
