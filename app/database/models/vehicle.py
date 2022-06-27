@@ -12,7 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -33,5 +40,8 @@ class VehicleModel(Base):
     vin = Column(String, unique=True, nullable=True)
     registration_plate = Column(String, unique=True, nullable=True)
     name = Column(String, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     owner = relationship("UserModel")

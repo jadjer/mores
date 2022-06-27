@@ -12,11 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.models.common import IDModelMixin
+from app.models.common import IDModelMixin, DateTimeModelMixin
 from app.services import security
 
 
-class User(IDModelMixin):
+class User(IDModelMixin, DateTimeModelMixin):
     username: str
     phone: str
     is_admin: bool = False

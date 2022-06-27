@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from loguru import logger
 from typing import Optional
 from sqlalchemy import select
 
@@ -47,6 +48,7 @@ class UsersRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
             raise EntityCreateError from exception
 
         return await self.get_user_by_id(new_user.id)
@@ -95,7 +97,6 @@ class UsersRepository(BaseRepository):
             username: Optional[str] = None,
             phone: Optional[str] = None,
             password: Optional[str] = None,
-
     ) -> UserInDB:
         user_in_db = await self._get_user_model_by_id(user_id)
         user_in_db.username = username or user_in_db.username
@@ -111,6 +112,31 @@ class UsersRepository(BaseRepository):
         try:
             await self.session.commit()
         except Exception as exception:
+            logger.error(exception)
+            raise EntityUpdateError from exception
+
+        return await self.get_user_by_id(user_id)
+
+    async def set_user_by_id_as_admin(self, user_id: int, is_admin: bool) -> UserInDB:
+        user_in_db: UserModel = await self._get_user_model_by_id(user_id)
+        user_in_db.is_admin = is_admin
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
+            raise EntityUpdateError from exception
+
+        return await self.get_user_by_id(user_id)
+
+    async def set_user_by_id_is_blocked(self, user_id: int, is_blocked: bool) -> UserInDB:
+        user_in_db: UserModel = await self._get_user_model_by_id(user_id)
+        user_in_db.is_blocked = is_blocked
+
+        try:
+            await self.session.commit()
+        except Exception as exception:
+            logger.error(exception)
             raise EntityUpdateError from exception
 
         return await self.get_user_by_id(user_id)
@@ -118,6 +144,7 @@ class UsersRepository(BaseRepository):
     async def _get_user_model_by_id(self, user_id: int) -> UserModel:
         user_in_db: UserModel = await self.session.get(UserModel, user_id)
         if not user_in_db:
+            logger.error("User with id {} not found".format(user_id))
             raise EntityDoesNotExists
 
         return user_in_db
@@ -132,4 +159,6 @@ class UsersRepository(BaseRepository):
             password=user_model.password,
             is_admin=user_model.is_admin,
             is_blocked=user_model.is_blocked,
+            created_at=user_model.created_at,
+            updated_at=user_model.updated_at,
         )

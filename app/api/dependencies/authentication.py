@@ -57,6 +57,10 @@ def get_current_user_id_authorizer() -> Callable:
     return _get_current_user_id
 
 
+def get_current_user_is_admin() -> Callable:
+    return _get_current_user_is_admin
+
+
 def _get_authorization_header(
         api_key: str = Security(TokenHeader(name=HEADER_KEY)),
         settings: AppSettings = Depends(get_app_settings),
@@ -112,3 +116,15 @@ async def _get_current_user(
         raise malformed_payload from exception
 
     return user
+
+
+async def _get_current_user_is_admin(user: UserInDB = Depends(_get_current_user)) -> bool:
+    user_not_admin = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=strings.PERMISSION_DENIED
+    )
+
+    if not user.is_admin:
+        raise user_not_admin
+
+    return True

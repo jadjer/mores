@@ -15,6 +15,8 @@
 # API messages
 
 API_KEY_ERROR = "API key error"
+API_KEY_CREATE_ERROR = "API key create error"
+API_KEY_UPDATE_ERROR = "API key update error"
 
 USER_CREATE_ERROR = "User create error"
 
@@ -89,3 +91,5 @@ COMMENT_CREATE_ERROR = "Comment create error"
 
 AUTHENTICATION_REQUIRED = "Authentication required"
 AUTHORIZATION_REQUIRED = "Authorization required"
+
+PERMISSION_DENIED = "Permission denied"

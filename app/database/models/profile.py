@@ -18,6 +18,8 @@ from sqlalchemy import (
     String,
     Enum,
     ForeignKey,
+    DateTime,
+    func,
 )
 from sqlalchemy.orm import relationship
 
@@ -38,5 +40,8 @@ class ProfileModel(Base):
     gender = Column(Enum(Gender), default=Gender.UNDEFINED)
     age = Column(Integer)
     image = Column(String)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     user = relationship("UserModel", uselist=False)

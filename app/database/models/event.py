@@ -12,7 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, func
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    Enum,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base

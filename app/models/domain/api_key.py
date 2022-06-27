@@ -12,4 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.api.routes.api import router
+from app.models.common import (
+    IDModelMixin,
+    DateTimeModelMixin,
+)
+
+
+class ApiKey(IDModelMixin, DateTimeModelMixin):
+    key: str
+    description: str
+    is_revoked: bool

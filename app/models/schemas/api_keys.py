@@ -12,4 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from app.api.routes.api import router
+from typing import List
+
+from app.models.domain.api_key import ApiKey
+from app.models.schemas.rwschema import RWSchema
+
+
+class ListOfKeysInResponse(RWSchema):
+    keys: List[ApiKey]
+    count: int
+
+
+class KeyInResponse(RWSchema):
+    key: ApiKey
+
+
+class KeyInCreate(RWSchema):
+    description: str
+
+
+class KeyInUpdate(RWSchema):
+    description: str
+    is_revoked: bool

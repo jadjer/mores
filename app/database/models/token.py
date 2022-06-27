@@ -12,7 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    DateTime,
+    func,
+)
 from sqlalchemy.orm import relationship
 
 from app.database.base import Base
@@ -26,5 +34,7 @@ class TokenModel(Base):
 
     token = Column(String, nullable=False)
     is_revoked = Column(Boolean, default=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("UserModel")

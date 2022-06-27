@@ -12,7 +12,25 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import typer
 import uvicorn
+from app import app as app_mores
+from app.api.dependencies.database import get_repository
+from app.database.repositories.api_keys import ApiKeysRepository
+
+app_typer = typer.Typer()
+
+
+@app_typer.command()
+def create_api_key(description: str):
+    api_keys_repo: ApiKeysRepository = get_repository(ApiKeysRepository)
+    api_keys_repo
+
+
+@app_typer.command()
+def start():
+    uvicorn.run("app.main:app", host="127.0.0.1", port=10000, reload=True, workers=10)
+
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="127.0.0.1", port=10000, reload=True, workers=10)
+    app_typer()
