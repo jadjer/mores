@@ -13,15 +13,21 @@
 #  limitations under the License.
 
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.exceptions import (
+    RequestValidationError,
+    HTTPException,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors.http_error import http_error_handler
 from app.api.errors.validation_error import http422_error_handler
-from app.api.routes.api import router as api_router
+from app.api.middlewares.process_time import ProcessTimeMiddleware
+from app.api.routes import router as api_router
 from app.core.config import get_app_settings
-from app.core.events import create_start_app_handler, create_stop_app_handler
-from app.api.middlewares.api_key import ApiKeyMiddleware
+from app.core.events import (
+    create_start_app_handler,
+    create_stop_app_handler,
+)
 
 
 def get_application() -> FastAPI:
@@ -37,16 +43,10 @@ def get_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # application.add_middleware(ApiKeyMiddleware)
+    application.add_middleware(ProcessTimeMiddleware)
 
-    application.add_event_handler(
-        "startup",
-        create_start_app_handler(application, settings),
-    )
-    application.add_event_handler(
-        "shutdown",
-        create_stop_app_handler(application),
-    )
+    application.add_event_handler("startup", create_start_app_handler(application, settings))
+    application.add_event_handler("shutdown", create_stop_app_handler(application))
 
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)

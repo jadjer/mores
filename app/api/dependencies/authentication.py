@@ -40,13 +40,13 @@ from app.services import jwt
 HEADER_KEY = "Authorization"
 
 
-class RWAPIKeyHeader(APIKeyHeader):
+class TokenHeader(APIKeyHeader):
     async def __call__(self, request: requests.Request) -> Optional[str]:
         try:
             return await super().__call__(request)
         except FastApiHTTPException as exception:
             logger.error(exception)
-            raise HTTPException(status_code=exception.status_code, detail=strings.AUTHENTICATION_REQUIRED)
+            raise HTTPException(status_code=exception.status_code, detail=strings.AUTHORIZATION_REQUIRED)
 
 
 def get_current_user_authorizer() -> Callable:
@@ -58,7 +58,7 @@ def get_current_user_id_authorizer() -> Callable:
 
 
 def _get_authorization_header(
-        api_key: str = Security(RWAPIKeyHeader(name=HEADER_KEY)),
+        api_key: str = Security(TokenHeader(name=HEADER_KEY)),
         settings: AppSettings = Depends(get_app_settings),
 ) -> str:
     wrong_token_prefix = HTTPException(

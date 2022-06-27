@@ -49,6 +49,9 @@ class AppSettings(BaseAppSettings):
 
     api_prefix: str = "/api/v1"
 
+    authentication_header: str = "x-api-key"
+    authorization_header: str = "Authorization"
+
     jwt_token_prefix: str = "Token"
 
     allowed_hosts: List[str] = ["*"]

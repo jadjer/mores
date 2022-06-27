@@ -12,19 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from starlette.datastructures import Headers
-from starlette.types import ASGIApp, Scope, Receive, Send
+from time import time
+
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
+from starlette.responses import Response
 
 
-class ApiKeyMiddleware:
+class ProcessTimeMiddleware(BaseHTTPMiddleware):
 
-    def __init__(self, app: ASGIApp) -> None:
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        headers = Headers(scope=scope)
-        x_api_key = headers.get("x-api-key")
-
-        if x_api_key is None:
-            await self.app(scope, receive, send)
-            return
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        start_time = time()
+        response = await call_next(request)
+        process_time = time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        return response

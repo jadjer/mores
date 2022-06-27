@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from . import (
+from app.api.routes import (
     authentication,
     users,
     profiles,
@@ -22,10 +22,11 @@ from . import (
     vehicles,
     locations,
     posts,
-    events
+    events,
 )
+from app.api.dependencies.api_key import get_api_key
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_api_key())])
 
 router.include_router(authentication.router, tags=["authentication"], prefix="/auth")
 router.include_router(users.router, tags=["users"], prefix="/user")

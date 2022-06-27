@@ -12,22 +12,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Callable, Optional
+from typing import (
+    Callable,
+    Optional
+)
 
-from fastapi import Depends, HTTPException, Security, requests, status
+from fastapi import (
+    Depends,
+    HTTPException,
+    Security,
+    requests,
+    status,
+)
 from fastapi.security import APIKeyHeader
 from fastapi.exceptions import HTTPException as FastapiHTTPException
 
 from app.api.dependencies.database import get_repository
-from app.core.config import get_app_settings
-from app.core.settings.app import AppSettings
-from app.database.errors import EntityDoesNotExists
-from app.database.repositories.users import UsersRepository
-from app.models.domain.user import User
+from app.database.repositories.api_keys import ApiKeysRepository
 from app.resources import strings
-from app.services import jwt
 
-HEADER_KEY = "x-api-key"
+HEADER_KEY = "X-Api-Key"
 
 
 class ApiKeyHeader(APIKeyHeader):
@@ -38,50 +42,15 @@ class ApiKeyHeader(APIKeyHeader):
             raise HTTPException(status_code=original_auth_exc.status_code, detail=strings.AUTHENTICATION_REQUIRED)
 
 
-def get_current_user_authorizer() -> Callable:  # type: ignore
-    return _get_current_user
+def get_api_key() -> Callable:
+    return _get_api_key
 
 
-def _get_authorization_header(
+async def _get_api_key(
         api_key: str = Security(ApiKeyHeader(name=HEADER_KEY)),
-        settings: AppSettings = Depends(get_app_settings),
+        api_keys_repo: ApiKeysRepository = Depends(get_repository(ApiKeysRepository)),
 ) -> str:
-    try:
-        token_prefix, token = api_key.split(" ")
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.WRONG_TOKEN_PREFIX,
-        )
-    if token_prefix != settings.jwt_token_prefix:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.WRONG_TOKEN_PREFIX,
-        )
+    if await api_keys_repo.is_exists_key(api_key):
+        return api_key
 
-    return token
-
-
-async def _get_current_user(
-        users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
-        token: str = Depends(_get_authorization_header),
-        settings: AppSettings = Depends(get_app_settings),
-) -> User:
-    try:
-        email = jwt.get_email_from_token(
-            token,
-            str(settings.secret_key.get_secret_value()),
-        )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.MALFORMED_PAYLOAD,
-        )
-
-    try:
-        return await users_repo.get_user_by_email(email=email)
-    except EntityDoesNotExists:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=strings.MALFORMED_PAYLOAD,
-        )
+    raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=strings.API_KEY_ERROR)

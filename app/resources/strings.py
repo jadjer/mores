@@ -14,6 +14,8 @@
 
 # API messages
 
+API_KEY_ERROR = "API key error"
+
 USER_CREATE_ERROR = "User create error"
 
 USER_DOES_NOT_EXIST_ERROR = "user does not exist"
@@ -79,10 +81,11 @@ VERIFICATION_CODE_CREATE_ERROR = "Can't create new verification code to phone nu
 VERIFICATION_CODE_DOES_NOT_EXISTS = "Verification code doesn't exists"
 VERIFICATION_CODE_IS_WRONG = "Verification code is wrong"
 
-WRONG_TOKEN_PREFIX = "Unsupported authorization type"  # noqa: S105
+WRONG_TOKEN_PREFIX = "Unsupported authorization type"
 MALFORMED_PAYLOAD = "Could not validate credentials"
 
 COMMENT_DOES_NOT_EXIST = "Comment does not exist"
 COMMENT_CREATE_ERROR = "Comment create error"
 
 AUTHENTICATION_REQUIRED = "Authentication required"
+AUTHORIZATION_REQUIRED = "Authorization required"
