@@ -23,14 +23,14 @@ from app.api.routes import (
     locations,
     posts,
     events,
-    service
+    api_keys
 )
 from app.api.dependencies.api_key import get_api_key
 
 router = APIRouter(dependencies=[Depends(get_api_key())])
 
 router.include_router(authentication.router, tags=["authentication"], prefix="/auth")
-router.include_router(service.router, tags=["service"], prefix="/services")
+router.include_router(api_keys.router, tags=["api_key"], prefix="/api_keys")
 router.include_router(users.router, tags=["users"], prefix="/user")
 router.include_router(profiles.router, tags=["profiles"], prefix="/profiles")
 router.include_router(services_types.router, tags=["services_types"], prefix="/services/types")

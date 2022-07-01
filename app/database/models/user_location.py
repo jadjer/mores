@@ -12,16 +12,26 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import typer
-import uvicorn
+from sqlalchemy import (
+    Column,
+    Integer,
+    DateTime,
+    func,
+    ForeignKey,
+)
+from sqlalchemy.orm import relationship
 
-app_typer = typer.Typer()
+from app.database.base import Base
 
 
-@app_typer.command()
-def start():
-    uvicorn.run("app.main:app", host="127.0.0.1", port=10000, reload=True, workers=10)
+class UserLocationModel(Base):
+    __tablename__ = "user_location"
 
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    location_id = Column(Integer, ForeignKey("location.id"), nullable=False)
 
-if __name__ == "__main__":
-    app_typer()
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("UserModel")
+    location = relationship("LocationModel")

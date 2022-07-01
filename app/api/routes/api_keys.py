@@ -50,7 +50,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/keys",
+    "",
     response_model=KeyInResponse,
     name="service:create-api-key",
     dependencies=[
@@ -75,7 +75,7 @@ async def create_api_key(
 
 
 @router.get(
-    "/keys/{api_key_id}",
+    "/{api_key_id}",
     response_model=KeyInResponse,
     name="service:mark-key-as-revoked",
     dependencies=[
@@ -100,7 +100,7 @@ async def mark_key_as_revoked(
 
 
 @router.get(
-    "/keys",
+    "",
     response_model=ListOfKeysInResponse,
     name="service:get-all-keys",
     dependencies=[

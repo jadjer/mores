@@ -27,6 +27,7 @@ from app.database.errors import EntityDoesNotExists
 from app.database.repositories.users import UsersRepository
 from app.database.repositories.verification_codes import VerificationRepository
 from app.models.domain.user import UserInDB
+from app.models.schemas.location import LocationInCreate
 from app.models.schemas.user import (
     UserInResponse,
     UserInUpdate,
@@ -187,6 +188,29 @@ async def mark_user_as_blocked(
     name="users:unmark-user-as-blocked",
 )
 async def unmark_user_as_blocked(
+        user: UserInDB = Depends(get_current_user_authorizer()),
+        users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
+) -> UserInResponse:
+    user_update_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=strings.PERMISSION_DENIED
+    )
+
+    try:
+        user = await users_repo.set_user_by_id_is_blocked(user.id, False)
+    except EntityDoesNotExists as exception:
+        raise user_update_error from exception
+
+    return UserInResponse(user=user)
+
+
+@router.post(
+    "/update_current_location",
+    response_model=UserInResponse,
+    name="users:update-current-location",
+)
+async def update_current_location(
+        location_create: LocationInCreate = Body(..., embed=True, alias="location"),
         user: UserInDB = Depends(get_current_user_authorizer()),
         users_repo: UsersRepository = Depends(get_repository(UsersRepository)),
 ) -> UserInResponse:

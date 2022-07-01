@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 from typing import List
 
 from loguru import logger
@@ -20,6 +21,7 @@ from app.database.errors import EntityCreateError, EntityDoesNotExists
 from app.database.models import ApiKeyModel
 from app.database.repositories.base import BaseRepository
 from app.models.domain.api_key import ApiKey
+from app.services.security import generate_salt
 
 
 class ApiKeysRepository(BaseRepository):
@@ -27,7 +29,7 @@ class ApiKeysRepository(BaseRepository):
     async def create_key(self, description: str) -> ApiKey:
         new_key = ApiKeyModel()
         new_key.description = description
-        new_key.key = "qwe"
+        new_key.key = generate_salt()
         new_key.is_revoked = False
 
         self.session.add(new_key)
@@ -64,7 +66,8 @@ class ApiKeysRepository(BaseRepository):
         query = select(ApiKeyModel)
         result = await self.session.execute(query)
 
-        keys_in_db: List[ApiKeyModel] = result.scalars().all
+        keys_in_db: List[ApiKeyModel] = result.scalars().all()
+        key_in_db: ApiKeyModel
 
         return [self._convert_key_model_to_key(key_in_db) for key_in_db in keys_in_db]
 
@@ -106,6 +109,7 @@ class ApiKeysRepository(BaseRepository):
             id=key.id,
             key=key.key,
             description=key.description,
+            is_revoked=key.is_revoked,
             created_at=key.created_at,
             updated_at=key.updated_at,
         )
