@@ -22,18 +22,20 @@ from app.services.jwt import create_access_token_for_user
 
 @pytest.mark.asyncio
 async def test_unable_to_login_with_wrong_jwt_prefix(
-        app: FastAPI, client: AsyncClient, token: str
+        initialized_app: FastAPI, client: AsyncClient, token: str
 ) -> None:
     response = await client.get(
-        app.url_path_for("users:get-current-user"),
-        headers={"Authorization": f"WrongPrefix {token}"},
+        initialized_app.url_path_for("users:get-current-user"),
+        headers={
+            "Authorization": f"WrongPrefix {token}"
+        },
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.asyncio
 async def test_unable_to_login_when_user_does_not_exist_any_more(
-        app: FastAPI, client: AsyncClient, authorization_prefix: str
+        initialized_app: FastAPI, client: AsyncClient, authorization_prefix: str
 ) -> None:
     token = create_access_token_for_user(
         user_id=9999999999999,
@@ -42,7 +44,9 @@ async def test_unable_to_login_when_user_does_not_exist_any_more(
         secret_key="secret"
     )
     response = await client.get(
-        app.url_path_for("users:get-current-user"),
-        headers={"Authorization": f"{authorization_prefix} {token}"},
+        initialized_app.url_path_for("users:get-current-user"),
+        headers={
+            "Authorization": f"{authorization_prefix} {token}"
+        },
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN

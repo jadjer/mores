@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from random import randrange
+
 from fastapi import FastAPI
 from fastapi.exceptions import (
     RequestValidationError,
@@ -55,7 +57,10 @@ def get_application() -> FastAPI:
 
     @application.get("/")
     async def root():
-        return {"message": "Hello World"}
+        return {
+            "message": "Hello World",
+            "code": randrange(1000, 9999)
+        }
 
     return application
 

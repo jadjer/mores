@@ -26,11 +26,13 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.settings.app import AppSettings
 from app.database.repositories import UsersRepository
+from app.database.repositories.api_keys import ApiKeysRepository
 from app.database.repositories.events import EventsRepository
 from app.database.repositories.locations import LocationsRepository
 from app.database.repositories.posts import PostsRepository
 from app.database.repositories.services_types import ServicesTypesRepository
 from app.database.repositories.vehicles import VehiclesRepository
+from app.models.domain.api_key import ApiKey
 from app.models.domain.event import Event
 from app.models.domain.location import Location
 from app.models.domain.post import Post
@@ -86,11 +88,23 @@ async def initialized_app(app: FastAPI, session: AsyncSession) -> FastAPI:
 
 
 @pytest.fixture
-async def client(app: FastAPI) -> AsyncClient:
+async def api_key(session: AsyncSession) -> str:
+    api_keys_repo = ApiKeysRepository(session)
+
+    api_key: ApiKey = await api_keys_repo.create_key("Temp key for tests")
+
+    return api_key.key
+
+
+@pytest.fixture
+async def client(app: FastAPI, api_key: str) -> AsyncClient:
     async with AsyncClient(
             app=app,
             base_url="http://localhost:10000",
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                "X-Api-Key": api_key
+            },
     ) as client:
         yield client
 

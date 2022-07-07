@@ -28,12 +28,7 @@ from app.database.models import UserModel
 
 class UsersRepository(BaseRepository):
 
-    async def create_user(
-            self,
-            username: str,
-            phone: str,
-            password: str,
-    ) -> UserInDB:
+    async def create_user(self, *, username: str, phone: str, password: str, ) -> UserInDB:
         user: UserInDB = UserInDB(username=username, phone=phone)
         user.change_password(password)
 
@@ -159,6 +154,6 @@ class UsersRepository(BaseRepository):
             password=user_model.password,
             is_admin=user_model.is_admin,
             is_blocked=user_model.is_blocked,
-            created_at=user_model.created_at,
-            updated_at=user_model.updated_at,
+            # created_at=user_model.created_at,
+            # updated_at=user_model.updated_at,
         )
