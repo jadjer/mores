@@ -20,6 +20,7 @@ from fastapi.exceptions import (
     HTTPException,
 )
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import FileResponse
 
 from app.api.errors.http_error import http_error_handler
 from app.api.errors.validation_error import http422_error_handler
@@ -55,12 +56,16 @@ def get_application() -> FastAPI:
 
     application.include_router(api_router, prefix=settings.api_prefix)
 
-    @application.get("/")
+    @application.get("/", include_in_schema=False)
     async def root():
         return {
             "message": "Hello World",
             "code": randrange(1000, 9999)
         }
+
+    @application.get('/favicon.ico', include_in_schema=False)
+    async def favicon():
+        return FileResponse("favicon.ico")
 
     return application
 
