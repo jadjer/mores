@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-07-21T12:21:23.329Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36" etag="HvMr6CmNgUWL88Mcval4" version="20.1.1" type="github" pages="3">
+<mxfile host="app.diagrams.net" modified="2022-07-21T12:26:28.348Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.143 YaBrowser/22.5.0.1879 (beta) Yowser/2.5 Safari/537.36" etag="HEssl8cXD7HfY0SBn2a0" version="20.1.1" type="github" pages="3">
   <diagram id="uK7g2tgaJ2PW8TSzlvOo" name="database models">
     <mxGraphModel dx="2889" dy="1998" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -692,10 +692,16 @@
         <mxCell id="2nU51WEkxfPEjjPo_ACx-9" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="2nU51WEkxfPEjjPo_ACx-1" target="2nU51WEkxfPEjjPo_ACx-7">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="2nU51WEkxfPEjjPo_ACx-11" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="2nU51WEkxfPEjjPo_ACx-1" target="2nU51WEkxfPEjjPo_ACx-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="2nU51WEkxfPEjjPo_ACx-1" value="mores_api" style="html=1;" vertex="1" parent="1">
           <mxGeometry x="280" y="530" width="110" height="50" as="geometry" />
         </mxCell>
         <mxCell id="2nU51WEkxfPEjjPo_ACx-10" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="2nU51WEkxfPEjjPo_ACx-2" target="2nU51WEkxfPEjjPo_ACx-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2nU51WEkxfPEjjPo_ACx-12" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1" source="2nU51WEkxfPEjjPo_ACx-2" target="2nU51WEkxfPEjjPo_ACx-8">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="2nU51WEkxfPEjjPo_ACx-2" value="ride2_api" style="html=1;" vertex="1" parent="1">
@@ -710,11 +716,11 @@
         <mxCell id="2nU51WEkxfPEjjPo_ACx-4" value="Ngrinx proxy" style="html=1;" vertex="1" parent="1">
           <mxGeometry x="50" y="570" width="110" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="2nU51WEkxfPEjjPo_ACx-7" value="auth&lt;br&gt;" style="html=1;" vertex="1" parent="1">
-          <mxGeometry x="414" y="380" width="110" height="50" as="geometry" />
+        <mxCell id="2nU51WEkxfPEjjPo_ACx-7" value="auth&lt;br&gt;(user_token)" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="370" width="110" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="2nU51WEkxfPEjjPo_ACx-8" value="Object" style="html=1;" vertex="1" parent="1">
-          <mxGeometry x="827" y="610" width="110" height="50" as="geometry" />
+        <mxCell id="2nU51WEkxfPEjjPo_ACx-8" value="secure&lt;br&gt;(api_key)" style="html=1;" vertex="1" parent="1">
+          <mxGeometry x="450" y="370" width="110" height="50" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
